@@ -18,19 +18,23 @@ export const signToken = (
 ): string => {
   const options: SignOptions = { expiresIn };
   return jwt.sign(payload, JWT_SECRET, options);
-}
+};
 
 export async function verifyToken(token: string) {
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET!);
-    return !!payload;
+    console.log("Verified payload:", payload);
+    return payload as { id: string; email: string; isAdmin: boolean };
   } catch {
     return false;
   }
 }
 
 /** Attach cookie to NextResponse */
-export const attachTokenToResponse = (token: string, response: NextResponse) => {
+export const attachTokenToResponse = (
+  token: string,
+  response: NextResponse
+) => {
   response.cookies.set("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -40,7 +44,10 @@ export const attachTokenToResponse = (token: string, response: NextResponse) => 
   return response;
 };
 
-export const clearTokenFromResponse = (token: string, response: NextResponse) => {
+export const clearTokenFromResponse = (
+  token: string,
+  response: NextResponse
+) => {
   response.cookies.set("token", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -49,7 +56,6 @@ export const clearTokenFromResponse = (token: string, response: NextResponse) =>
   });
   return response;
 };
-
 
 /** Standard JSON response */
 export const jsonResponse = (data: object, status: number = 200) => {
