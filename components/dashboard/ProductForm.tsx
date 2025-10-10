@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Upload, X } from "lucide-react";
+import Image from "next/image";
 
 interface Product {
   id?: number;
@@ -37,10 +38,13 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleInputChange = (field: keyof Product, value: string | number | string[] | undefined) => {
-    setFormData(prev => ({
+  const handleInputChange = (
+    field: keyof Product,
+    value: string | number | string[] | undefined
+  ) => {
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -63,10 +67,10 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
       }
 
       const data = await response.json();
-      
-      setFormData(prev => ({
+
+      setFormData((prev) => ({
         ...prev,
-        images: [...prev.images, data.url]
+        images: [...prev.images, data.url],
       }));
 
       toast.success("Image uploaded successfully");
@@ -96,15 +100,15 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
   };
 
   const removeImage = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: prev.images.filter((_, i) => i !== index),
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || formData.price <= 0) {
       toast.error("Please provide product name and valid price");
       return;
@@ -124,7 +128,9 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
       });
 
       if (response.ok) {
-        toast.success(`Product ${product ? "updated" : "created"} successfully`);
+        toast.success(
+          `Product ${product ? "updated" : "created"} successfully`
+        );
         onSuccess();
       } else {
         const error = await response.json();
@@ -158,7 +164,9 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
           <Textarea
             id="description"
             value={formData.description || ""}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange("description", e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              handleInputChange("description", e.target.value)
+            }
             placeholder="Enter product description"
             rows={3}
           />
@@ -174,7 +182,9 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
               id="price"
               type="number"
               value={formData.price}
-              onChange={(e) => handleInputChange("price", parseInt(e.target.value) || 0)}
+              onChange={(e) =>
+                handleInputChange("price", parseInt(e.target.value) || 0)
+              }
               placeholder="0"
               min="0"
               required
@@ -189,7 +199,10 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
               value={formData.salePrice || ""}
               onChange={(e) => {
                 const value = e.target.value;
-                handleInputChange("salePrice", value ? parseInt(value) : undefined);
+                handleInputChange(
+                  "salePrice",
+                  value ? parseInt(value) : undefined
+                );
               }}
               placeholder="0"
               min="0"
@@ -206,7 +219,9 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
             id="stock"
             type="number"
             value={formData.stock}
-            onChange={(e) => handleInputChange("stock", parseInt(e.target.value) || 0)}
+            onChange={(e) =>
+              handleInputChange("stock", parseInt(e.target.value) || 0)
+            }
             placeholder="0"
             min="0"
             required
@@ -217,7 +232,7 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
       {/* Images */}
       <div className="space-y-4">
         <Label>Product Images</Label>
-        
+
         <input
           ref={fileInputRef}
           type="file"
@@ -229,7 +244,9 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
         <div className="grid grid-cols-3 gap-4">
           {formData.images.map((image, index) => (
             <div key={index} className="relative">
-              <img
+              <Image
+                height={96}
+                width={96}
                 src={image}
                 alt={`Product ${index + 1}`}
                 className="w-full h-24 object-cover rounded border"
@@ -269,7 +286,11 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
       {/* Submit */}
       <div className="flex justify-end space-x-2">
         <Button type="submit" disabled={loading || uploading}>
-          {loading ? "Saving..." : product ? "Update Product" : "Create Product"}
+          {loading
+            ? "Saving..."
+            : product
+            ? "Update Product"
+            : "Create Product"}
         </Button>
       </div>
     </form>

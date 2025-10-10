@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { Upload, X } from "lucide-react";
+import Image from "next/image";
 
 interface SettingsData {
   globalDiscountPercent: number;
@@ -226,7 +227,7 @@ const SettingsPage = () => {
           {previewUrl && (
             <div className="mt-3">
               <div className="relative inline-block">
-                <img
+                <Image height={128} width={128}
                   src={previewUrl}
                   alt="QR Code Preview"
                   className="w-32 h-32 object-cover rounded-lg border"

@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   imagekit,
   validateFile,
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const token = req.cookies.get("token")?.value;
 
     if (!token) {
-      return Response.json(
+      return NextResponse.json(
         { error: "Authentication required for file uploads" },
         { status: 401 }
       );
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
     const payload = await verifyToken(token);
     if (!payload || !payload.id) {
-      return Response.json(
+      return NextResponse.json(
         { error: "Invalid authentication token" },
         { status: 401 }
       );
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file") as File;
 
     if (!file) {
-      return Response.json({ error: "No file provided" }, { status: 400 });
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     // Validate file type and size
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       const fileType = file.type.startsWith("video/") ? "video" : "image";
       validateFile(file, fileType);
     } catch (validationError) {
-      return Response.json(
+      return NextResponse.json(
         {
           error:
             validationError instanceof Error
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
       AITags: result.AITags || [],
     };
 
-    return Response.json(responseData);
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error("Upload error:", error);
 
@@ -106,14 +106,14 @@ export async function POST(req: NextRequest) {
       const errorMessage = error.message as string;
 
       if (errorMessage.includes("file size")) {
-        return Response.json(
+        return NextResponse.json(
           { error: "File size exceeds maximum allowed limit" },
           { status: 413 }
         );
       }
 
       if (errorMessage.includes("file type")) {
-        return Response.json(
+        return NextResponse.json(
           {
             error: "Unsupported file type",
             allowedTypes: {
@@ -126,6 +126,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return Response.json({ error: "Failed to upload file" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
   }
 }

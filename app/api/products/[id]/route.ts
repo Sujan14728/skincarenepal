@@ -1,30 +1,27 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
 
+type Context = { params: Promise<{ id: string }> };
+
 // GET /api/products/[id] - Get single product
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, context: Context) {
+  const { id } = await context.params;
   try {
     const product = await prisma.product.findUnique({
       where: {
-        id: parseInt(params.id),
+        id: parseInt(id),
       },
     });
 
     if (!product) {
-      return Response.json(
-        { error: "Product not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    return Response.json(product);
+    return NextResponse.json(product);
   } catch (error) {
     console.error("Error fetching product:", error);
-    return Response.json(
+    return NextResponse.json(
       { error: "Failed to fetch product" },
       { status: 500 }
     );
@@ -32,37 +29,40 @@ export async function GET(
 }
 
 // PUT /api/products/[id] - Update product
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, context: Context) {
+  const { id } = await context.params;
   try {
     // Verify admin authentication
     const token = req.cookies.get("token")?.value;
 
     if (!token) {
-      return Response.json(
+      return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
       );
     }
 
     const payload = await verifyToken(token);
-    if (!payload || typeof payload !== 'object' || !('id' in payload) || !('isAdmin' in payload)) {
-      return Response.json(
+    if (
+      !payload ||
+      typeof payload !== "object" ||
+      !("id" in payload) ||
+      !("isAdmin" in payload)
+    ) {
+      return NextResponse.json(
         { error: "Invalid authentication token" },
         { status: 401 }
       );
     }
 
     if (!payload.isAdmin) {
-      return Response.json(
+      return NextResponse.json(
         { error: "Admin access required" },
         { status: 403 }
       );
     }
 
-    const productId = parseInt(params.id);
+    const productId = parseInt(id);
     const body = await req.json();
 
     // Check if product exists
@@ -71,20 +71,10 @@ export async function PUT(
     });
 
     if (!existingProduct) {
-      return Response.json(
-        { error: "Product not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    const {
-      name,
-      description,
-      price,
-      salePrice,
-      stock,
-      images,
-    } = body;
+    const { name, description, price, salePrice, stock, images } = body;
 
     // Generate new slug if name changed
     let slug = existingProduct.slug;
@@ -114,18 +104,24 @@ export async function PUT(
       data: {
         name: name || existingProduct.name,
         slug,
-        description: description !== undefined ? description : existingProduct.description,
+        description:
+          description !== undefined ? description : existingProduct.description,
         price: price !== undefined ? parseInt(price) : existingProduct.price,
-        salePrice: salePrice !== undefined ? (salePrice ? parseInt(salePrice) : null) : existingProduct.salePrice,
+        salePrice:
+          salePrice !== undefined
+            ? salePrice
+              ? parseInt(salePrice)
+              : null
+            : existingProduct.salePrice,
         stock: stock !== undefined ? parseInt(stock) : existingProduct.stock,
         images: images !== undefined ? images : existingProduct.images,
       },
     });
 
-    return Response.json(updatedProduct);
+    return NextResponse.json(updatedProduct);
   } catch (error) {
     console.error("Error updating product:", error);
-    return Response.json(
+    return NextResponse.json(
       { error: "Failed to update product" },
       { status: 500 }
     );
@@ -133,37 +129,40 @@ export async function PUT(
 }
 
 // DELETE /api/products/[id] - Delete product
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, context: Context) {
+  const { id } = await context.params;
   try {
     // Verify admin authentication
     const token = req.cookies.get("token")?.value;
 
     if (!token) {
-      return Response.json(
+      return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
       );
     }
 
     const payload = await verifyToken(token);
-    if (!payload || typeof payload !== 'object' || !('id' in payload) || !('isAdmin' in payload)) {
-      return Response.json(
+    if (
+      !payload ||
+      typeof payload !== "object" ||
+      !("id" in payload) ||
+      !("isAdmin" in payload)
+    ) {
+      return NextResponse.json(
         { error: "Invalid authentication token" },
         { status: 401 }
       );
     }
 
     if (!payload.isAdmin) {
-      return Response.json(
+      return NextResponse.json(
         { error: "Admin access required" },
         { status: 403 }
       );
     }
 
-    const productId = parseInt(params.id);
+    const productId = parseInt(id);
 
     // Check if product exists
     const existingProduct = await prisma.product.findUnique({
@@ -171,10 +170,7 @@ export async function DELETE(
     });
 
     if (!existingProduct) {
-      return Response.json(
-        { error: "Product not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
     // Check if product is used in any orders
@@ -183,8 +179,11 @@ export async function DELETE(
     });
 
     if (orderItems) {
-      return Response.json(
-        { error: "Cannot delete product that has been ordered. Consider marking it as inactive instead." },
+      return NextResponse.json(
+        {
+          error:
+            "Cannot delete product that has been ordered. Consider marking it as inactive instead.",
+        },
         { status: 400 }
       );
     }
@@ -193,10 +192,10 @@ export async function DELETE(
       where: { id: productId },
     });
 
-    return Response.json({ message: "Product deleted successfully" });
+    return NextResponse.json({ message: "Product deleted successfully" });
   } catch (error) {
     console.error("Error deleting product:", error);
-    return Response.json(
+    return NextResponse.json(
       { error: "Failed to delete product" },
       { status: 500 }
     );

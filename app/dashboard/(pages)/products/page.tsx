@@ -31,17 +31,18 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { 
-  Plus, 
-  Search, 
-  Edit, 
+import {
+  Plus,
+  Search,
+  Edit,
   Trash2,
   Package,
   DollarSign,
   TrendingUp,
-  ShoppingCart
+  ShoppingCart,
 } from "lucide-react";
 import ProductForm from "@/components/dashboard/ProductFormSimple";
+import Image from "next/image";
 
 interface Product {
   id: number;
@@ -94,7 +95,7 @@ const ProductsPage = () => {
     const stats = {
       total: productList.length,
       active: productList.length, // All products are considered active in your schema
-      outOfStock: productList.filter(p => p.stock === 0).length,
+      outOfStock: productList.filter((p) => p.stock === 0).length,
       featured: 0, // No featured field in your schema
     };
     setStats(stats);
@@ -120,9 +121,11 @@ const ProductsPage = () => {
   };
 
   // Filter products based on search
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredProducts = products.filter(
+    (product) =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.description &&
+        product.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   useEffect(() => {
@@ -130,9 +133,9 @@ const ProductsPage = () => {
   }, [fetchProducts]);
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-NP', {
-      style: 'currency',
-      currency: 'NPR',
+    return new Intl.NumberFormat("en-NP", {
+      style: "currency",
+      currency: "NPR",
       minimumFractionDigits: 0,
     }).format(price);
   };
@@ -163,7 +166,7 @@ const ProductsPage = () => {
             Manage your product inventory and details
           </p>
         </div>
-        
+
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -184,24 +187,28 @@ const ProductsPage = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Products
+            </CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Products</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Active Products
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.active}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
@@ -211,7 +218,7 @@ const ProductsPage = () => {
             <div className="text-2xl font-bold">{stats.outOfStock}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Featured</CardTitle>
@@ -264,7 +271,9 @@ const ProductsPage = () => {
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         {product.images[0] && (
-                          <img
+                          <Image
+                            height={40}
+                            width={40}
                             src={product.images[0]}
                             alt={product.name}
                             className="h-10 w-10 rounded object-cover"
@@ -282,16 +291,25 @@ const ProductsPage = () => {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{formatPrice(product.price)}</div>
-                        {product.salePrice && product.salePrice < product.price && (
-                          <div className="text-sm text-muted-foreground line-through">
-                            {formatPrice(product.salePrice)}
-                          </div>
-                        )}
+                        <div className="font-medium">
+                          {formatPrice(product.price)}
+                        </div>
+                        {product.salePrice &&
+                          product.salePrice < product.price && (
+                            <div className="text-sm text-muted-foreground line-through">
+                              {formatPrice(product.salePrice)}
+                            </div>
+                          )}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className={`font-medium ${product.stock <= 10 ? 'text-red-600' : 'text-green-600'}`}>
+                      <span
+                        className={`font-medium ${
+                          product.stock <= 10
+                            ? "text-red-600"
+                            : "text-green-600"
+                        }`}
+                      >
                         {product.stock}
                       </span>
                     </TableCell>
@@ -304,7 +322,7 @@ const ProductsPage = () => {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        
+
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="sm">
@@ -313,9 +331,13 @@ const ProductsPage = () => {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Product</AlertDialogTitle>
+                              <AlertDialogTitle>
+                                Delete Product
+                              </AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete &quot;{product.name}&quot;? This action cannot be undone.
+                                Are you sure you want to delete &quot;
+                                {product.name}&quot;? This action cannot be
+                                undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -336,13 +358,17 @@ const ProductsPage = () => {
               </TableBody>
             </Table>
           )}
-          
+
           {!loading && filteredProducts.length === 0 && (
             <div className="text-center py-8">
               <Package className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No products</h3>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">
+                No products
+              </h3>
               <p className="mt-1 text-sm text-gray-500">
-                {searchTerm ? "No products match your search." : "Get started by creating a new product."}
+                {searchTerm
+                  ? "No products match your search."
+                  : "Get started by creating a new product."}
               </p>
             </div>
           )}
@@ -356,9 +382,9 @@ const ProductsPage = () => {
             <DialogTitle>Edit Product</DialogTitle>
           </DialogHeader>
           {selectedProduct && (
-            <ProductForm 
-              product={selectedProduct} 
-              onSuccess={handleEditSuccess} 
+            <ProductForm
+              product={selectedProduct}
+              onSuccess={handleEditSuccess}
             />
           )}
         </DialogContent>

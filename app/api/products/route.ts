@@ -1,9 +1,9 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
 
 // GET /api/products - Get all products
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const products = await prisma.product.findMany({
       orderBy: {
@@ -11,10 +11,10 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return Response.json(products);
+    return NextResponse.json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
-    return Response.json(
+    return NextResponse.json(
       { error: "Failed to fetch products" },
       { status: 500 }
     );
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const token = req.cookies.get("token")?.value;
 
     if (!token) {
-      return Response.json(
+      return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
       );
@@ -36,14 +36,14 @@ export async function POST(req: NextRequest) {
 
     const payload = await verifyToken(token);
     if (!payload || typeof payload !== 'object' || !('id' in payload) || !('isAdmin' in payload)) {
-      return Response.json(
+      return NextResponse.json(
         { error: "Invalid authentication token" },
         { status: 401 }
       );
     }
 
     if (!payload.isAdmin) {
-      return Response.json(
+      return NextResponse.json(
         { error: "Admin access required" },
         { status: 403 }
       );
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     // Validate required fields
     if (!name || price <= 0) {
-      return Response.json(
+      return NextResponse.json(
         { error: "Please provide name and valid price" },
         { status: 400 }
       );
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (existingProduct) {
-      return Response.json(
+      return NextResponse.json(
         { error: "A product with this name already exists" },
         { status: 400 }
       );
@@ -99,10 +99,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return Response.json(product, { status: 201 });
+    return NextResponse.json(product, { status: 201 });
   } catch (error) {
     console.error("Error creating product:", error);
-    return Response.json(
+    return NextResponse.json(
       { error: "Failed to create product" },
       { status: 500 }
     );

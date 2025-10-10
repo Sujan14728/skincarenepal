@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Upload, X } from "lucide-react";
+import Image from "next/image";
 
 interface Product {
   id?: number;
@@ -236,7 +237,9 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
         <div className="grid grid-cols-3 gap-4">
           {formData.images.map((image, index) => (
             <div key={index} className="relative">
-              <img
+              <Image
+                height={96}
+                width={96}
                 src={image}
                 alt={`Product ${index + 1}`}
                 className="w-full h-24 object-cover rounded border"
