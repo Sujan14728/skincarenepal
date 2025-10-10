@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useRef } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
-import { Upload, X } from "lucide-react";
-import Image from "next/image";
+import { useEffect, useState, useRef } from 'react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { Upload, X } from 'lucide-react';
+import Image from 'next/image';
 
 interface SettingsData {
   globalDiscountPercent: number;
@@ -19,21 +19,21 @@ const SettingsPage = () => {
   const [settings, setSettings] = useState<SettingsData>({
     globalDiscountPercent: 25,
     freeShippingThreshold: 3000,
-    qrImageUrl: "",
+    qrImageUrl: ''
   });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [previewUrl, setPreviewUrl] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((res) => res.json())
-      .then((data) => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
         if (data) {
           setSettings(data);
-          setPreviewUrl(data.qrImageUrl || "");
+          setPreviewUrl(data.qrImageUrl || '');
         }
       });
   }, []);
@@ -43,22 +43,22 @@ const SettingsPage = () => {
     if (!file) return;
 
     // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
       return;
     }
 
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("File size must be less than 5MB");
+      toast.error('File size must be less than 5MB');
       return;
     }
 
     setSelectedFile(file);
-    
+
     // Create preview URL
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = e => {
       setPreviewUrl(e.target?.result as string);
     };
     reader.readAsDataURL(file);
@@ -66,7 +66,7 @@ const SettingsPage = () => {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      toast.error("Please select a file first");
+      toast.error('Please select a file first');
       return;
     }
 
@@ -74,180 +74,182 @@ const SettingsPage = () => {
     try {
       // Create form data
       const formData = new FormData();
-      formData.append("file", selectedFile);
-      formData.append("folder", "settings/qr-codes");
-      formData.append("useUniqueFileName", "true");
-      formData.append("tags", "qr-code,settings");
+      formData.append('file', selectedFile);
+      formData.append('folder', 'settings/qr-codes');
+      formData.append('useUniqueFileName', 'true');
+      formData.append('tags', 'qr-code,settings');
 
       // Upload to ImageKit
-      const uploadRes = await fetch("/api/media/upload", {
-        method: "POST",
-        body: formData,
+      const uploadRes = await fetch('/api/media/upload', {
+        method: 'POST',
+        body: formData
       });
 
       if (!uploadRes.ok) {
         const errorData = await uploadRes.json();
-        throw new Error(errorData.error || "Upload failed");
+        throw new Error(errorData.error || 'Upload failed');
       }
 
       const uploadData = await uploadRes.json();
-      
+
       // Update settings with new QR image URL
       setSettings({
         ...settings,
-        qrImageUrl: uploadData.url,
+        qrImageUrl: uploadData.url
       });
-      
+
       setPreviewUrl(uploadData.url);
       setSelectedFile(null);
-      
+
       // Reset file input
       if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+        fileInputRef.current.value = '';
       }
-      
-      toast.success("QR image uploaded successfully");
+
+      toast.success('QR image uploaded successfully');
     } catch (error) {
-      console.error("Upload error:", error);
-      toast.error(error instanceof Error ? error.message : "Upload failed");
+      console.error('Upload error:', error);
+      toast.error(error instanceof Error ? error.message : 'Upload failed');
     } finally {
       setUploading(false);
     }
   };
 
   const handleRemoveImage = () => {
-    setSettings({ ...settings, qrImageUrl: "" });
-    setPreviewUrl("");
+    setSettings({ ...settings, qrImageUrl: '' });
+    setPreviewUrl('');
     setSelectedFile(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = '';
     }
   };
 
   const handleSave = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
       });
 
       setLoading(false);
 
       if (res.ok) {
-        toast.success("Settings updated successfully");
+        toast.success('Settings updated successfully');
       } else {
-        toast.error("Failed to update settings");
+        toast.error('Failed to update settings');
       }
     } catch (err) {
       setLoading(false);
-      toast.error("Server error");
+      toast.error('Server error');
       console.error(err);
     }
   };
 
   return (
-    <Card className="max-w-lg mx-auto">
+    <Card className='mx-auto max-w-lg'>
       <CardHeader>
         <CardTitle>Site Settings</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className='space-y-4'>
         <div>
-          <Label htmlFor="discount">Global Discount (%)</Label>
+          <Label htmlFor='discount'>Global Discount (%)</Label>
           <Input
-            id="discount"
-            type="number"
+            id='discount'
+            type='number'
             value={settings.globalDiscountPercent}
-            onChange={(e) =>
+            onChange={e =>
               setSettings({
                 ...settings,
-                globalDiscountPercent: parseInt(e.target.value, 10),
+                globalDiscountPercent: parseInt(e.target.value, 10)
               })
             }
           />
         </div>
-        
+
         <div>
-          <Label htmlFor="freeShipping">Free Shipping Threshold (Rs)</Label>
+          <Label htmlFor='freeShipping'>Free Shipping Threshold (Rs)</Label>
           <Input
-            id="freeShipping"
-            type="number"
+            id='freeShipping'
+            type='number'
             value={settings.freeShippingThreshold}
-            onChange={(e) =>
+            onChange={e =>
               setSettings({
                 ...settings,
-                freeShippingThreshold: parseInt(e.target.value, 10),
+                freeShippingThreshold: parseInt(e.target.value, 10)
               })
             }
           />
         </div>
-        
+
         <div>
-          <Label htmlFor="qrImage">Payment QR Code</Label>
-          
+          <Label htmlFor='qrImage'>Payment QR Code</Label>
+
           {/* File Input */}
           <input
             ref={fileInputRef}
-            type="file"
-            accept="image/*"
+            type='file'
+            accept='image/*'
             onChange={handleFileSelect}
-            className="hidden"
-            id="qr-file-input"
+            className='hidden'
+            id='qr-file-input'
           />
-          
+
           {/* Upload Area */}
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-gray-400 transition-colors"
+              className='cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-4 text-center transition-colors hover:border-gray-400'
             >
-              <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-              <p className="text-sm text-gray-600">
-                {selectedFile ? selectedFile.name : "Click to select QR code image"}
+              <Upload className='mx-auto mb-2 h-8 w-8 text-gray-400' />
+              <p className='text-sm text-gray-600'>
+                {selectedFile
+                  ? selectedFile.name
+                  : 'Click to select QR code image'}
               </p>
-              <p className="text-xs text-gray-400 mt-1">
-                PNG, JPG up to 5MB
-              </p>
+              <p className='mt-1 text-xs text-gray-400'>PNG, JPG up to 5MB</p>
             </div>
-            
+
             {selectedFile && (
               <Button
                 onClick={handleUpload}
                 disabled={uploading}
-                className="w-full"
-                variant="outline"
+                className='w-full'
+                variant='outline'
               >
-                {uploading ? "Uploading..." : "Upload QR Image"}
+                {uploading ? 'Uploading...' : 'Upload QR Image'}
               </Button>
             )}
           </div>
-          
+
           {/* Image Preview */}
           {previewUrl && (
-            <div className="mt-3">
-              <div className="relative inline-block">
-                <Image height={128} width={128}
+            <div className='mt-3'>
+              <div className='relative inline-block'>
+                <Image
+                  height={128}
+                  width={128}
                   src={previewUrl}
-                  alt="QR Code Preview"
-                  className="w-32 h-32 object-cover rounded-lg border"
+                  alt='QR Code Preview'
+                  className='h-32 w-32 rounded-lg border object-cover'
                 />
                 <Button
                   onClick={handleRemoveImage}
-                  size="sm"
-                  variant="destructive"
-                  className="absolute -top-2 -right-2 w-6 h-6 p-0 rounded-full"
+                  size='sm'
+                  variant='destructive'
+                  className='absolute -top-2 -right-2 h-6 w-6 rounded-full p-0'
                 >
-                  <X className="h-3 w-3" />
+                  <X className='h-3 w-3' />
                 </Button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Current QR Code</p>
+              <p className='mt-1 text-xs text-gray-500'>Current QR Code</p>
             </div>
           )}
         </div>
-        
-        <Button onClick={handleSave} disabled={loading} className="w-full">
-          {loading ? "Saving..." : "Save Settings"}
+
+        <Button onClick={handleSave} disabled={loading} className='w-full'>
+          {loading ? 'Saving...' : 'Save Settings'}
         </Button>
       </CardContent>
     </Card>
