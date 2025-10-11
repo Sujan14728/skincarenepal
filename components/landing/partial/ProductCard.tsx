@@ -1,7 +1,11 @@
 // components/ProductCard.tsx
+'use client';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { addItemToCart, getCartFromLocal } from '@/lib/utils/local-storage';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 interface ProductCardProps {
   id: number;
@@ -10,6 +14,7 @@ interface ProductCardProps {
   description: string;
   salePrice: number;
   price?: number;
+  keyBenefits?: string[];
 }
 
 export function ProductCard({
@@ -18,8 +23,10 @@ export function ProductCard({
   title,
   description,
   salePrice,
-  price
+  price,
+  keyBenefits
 }: ProductCardProps) {
+  const [isInCart, setIsInCart] = useState(false);
   const isOnSale = price && price > salePrice;
   const priceFormatter = new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -32,6 +39,23 @@ export function ProductCard({
   const formattedOriginalPrice = price
     ? priceFormatter.format(price).replace('₹', 'Rs. ')
     : '';
+
+  useEffect(() => {
+    const cart = getCartFromLocal();
+    setIsInCart(cart.some(item => item.id === id));
+  }, [id]);
+
+  const addToCart = (productId: number) => {
+    addItemToCart({
+      id: productId,
+      name: title,
+      price: price || salePrice,
+      salePrice: salePrice,
+      quantity: 1,
+      image: image
+    });
+    setIsInCart(true);
+  };
 
   return (
     <Link
@@ -50,7 +74,7 @@ export function ProductCard({
           alt={title}
           width={400}
           height={300}
-          className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]'
+          className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.1]'
         />
       </div>
 
@@ -71,6 +95,23 @@ export function ProductCard({
           {description}
         </p>
 
+        {keyBenefits && keyBenefits.length > 0 && (
+          <div className='mb-4 flex flex-col gap-2'>
+            <div className='text-muted-foreground text-sm'>Key Benefits:</div>
+            <div className='flex gap-2'>
+              {keyBenefits.map(benefit => (
+                <Badge
+                  key={benefit}
+                  variant='default'
+                  className='px-2 py-1 text-xs'
+                >
+                  {benefit}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className='mt-auto flex items-center justify-between pt-2'>
           <div className='flex flex-col'>
             <span className='text-foreground text-xl font-bold'>
@@ -82,7 +123,16 @@ export function ProductCard({
               </span>
             )}
           </div>
-          <Button>Add to Cart</Button>
+          <Button
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              addToCart(id);
+            }}
+            disabled={isInCart}
+          >
+            {isInCart ? 'Added to Cart' : 'Add to Cart'}
+          </Button>
         </div>
       </div>
     </Link>
