@@ -5,14 +5,13 @@ import { prisma } from '@/lib/prisma';
 import AddToCartButton from '@/components/landing/shared/AddToCartButton';
 
 interface ProductPageProps {
-  params: {
-    slug: string;
-  };
+  params: Promise<{ slug: string }>;
 }
 
 const ProductPage = async ({ params }: ProductPageProps) => {
+  const { slug } = await params;
   const product = await prisma.product.findUnique({
-    where: { slug: params.slug }
+    where: { slug }
   });
 
   if (!product) return notFound();
