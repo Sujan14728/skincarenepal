@@ -40,3 +40,5 @@ export const calculateCartTotals = (items: ICartItem[]): ICartTotals => {
     remainingForFreeShipping
   };
 };
+
+

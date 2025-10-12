@@ -44,6 +44,7 @@ export const saveCartToLocal = (items: ICartItem[]): void => {
   try {
     const serializedCart = JSON.stringify(items);
     localStorage.setItem(CART_STORAGE_KEY, serializedCart);
+    window.dispatchEvent(new Event('cartUpdated'));
   } catch (error) {
     console.error('Error saving cart to local storage:', error);
   }
@@ -72,4 +73,9 @@ export const addItemToCart = (item: ICartItem) => {
   }
 
   saveCartToLocal(updatedCart);
+};
+
+export const totalItemsInCart = () => {
+  const cart = getCartFromLocal();
+  return cart.length;
 };

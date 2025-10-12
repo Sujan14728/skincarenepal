@@ -41,20 +41,9 @@ import {
   TrendingUp,
   ShoppingCart
 } from 'lucide-react';
-import ProductForm from '@/components/dashboard/ProductFormSimple';
+import ProductForm from '@/components/dashboard/ProductForm';
 import Image from 'next/image';
-
-interface Product {
-  id: number;
-  name: string;
-  description?: string;
-  price: number;
-  salePrice?: number;
-  stock: number;
-  images: string[];
-  createdAt: string;
-  updatedAt: string;
-}
+import { Product } from '@/lib/types/product';
 
 const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -174,7 +163,7 @@ const ProductsPage = () => {
               Add Product
             </Button>
           </DialogTrigger>
-          <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
+          <DialogContent className='max-h-[90vh] !max-w-[60vw] overflow-y-auto'>
             <DialogHeader>
               <DialogTitle>Create New Product</DialogTitle>
             </DialogHeader>
@@ -377,7 +366,7 @@ const ProductsPage = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
+        <DialogContent className='max-h-[90vh] !max-w-[60vw] overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Edit Product</DialogTitle>
           </DialogHeader>

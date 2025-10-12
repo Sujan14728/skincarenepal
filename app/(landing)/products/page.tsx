@@ -1,34 +1,27 @@
 // app/products/page.tsx
 import Footer from '@/components/landing/Footer';
 import { ProductCard } from '@/components/landing/partial/ProductCard';
+import { prisma } from '@/lib/prisma';
 
-// NOTE: CategoryFilter and Search are removed as requested.
+const ProductPage = async () => {
+  const products = await prisma.product.findMany({
+    orderBy: {
+      createdAt: 'desc'
+    },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      excerpt: true,
+      description: true,
+      keyBenefits: true,
+      price: true,
+      salePrice: true,
+      stock: true,
+      images: true
+    }
+  });
 
-// Mock Data (Enhanced to include Key Benefits)
-const mockProducts = [
-  {
-    id: 1,
-    image: '/images/products/facepack.jpg',
-    title: 'Himalayan Rose Face Cream',
-    description:
-      'Luxurious face cream enriched with Himalayan rose extracts and natural botanicals for deep hydration and...',
-    salePrice: 1250,
-    price: 1650,
-    keyBenefits: ['Deep hydration', 'Anti-aging properties']
-  },
-  {
-    id: 2,
-    image: '/images/products/facepack.jpg',
-    title: 'Turmeric Glow Serum',
-    description:
-      'Powerful brightening serum with turmeric and saffron for even skin tone and luminous complexion.',
-    salePrice: 1850,
-    price: 2300,
-    keyBenefits: ['Brightens skin', 'Reduces dark spots']
-  }
-];
-
-export default function ProductPage() {
   return (
     <div className='flex min-h-screen flex-col'>
       <main className='bg-background flex-grow py-12 md:pb-16'>
@@ -40,8 +33,8 @@ export default function ProductPage() {
 
           {/* Product Grid */}
           <div className='grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
-            {mockProducts.map((product, index) => (
-              <ProductCard key={index} {...product} />
+            {products?.map((product, index) => (
+              <ProductCard key={index} {...product} image={product.images[0]} />
             ))}
           </div>
         </div>
@@ -50,4 +43,5 @@ export default function ProductPage() {
       <Footer />
     </div>
   );
-}
+};
+export default ProductPage;
