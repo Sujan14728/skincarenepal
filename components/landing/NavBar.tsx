@@ -2,8 +2,9 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { LuMenu, LuShoppingCart } from 'react-icons/lu';
+import { LuMenu} from 'react-icons/lu';
 import Image from 'next/image';
+import CartBadge from './cart/CartBadge';
 
 // Define your navigation links
 const navLinks = [
@@ -49,11 +50,7 @@ export function NavBar() {
         >
           Orders
         </Link>
-        <Button variant='ghost' size='icon' asChild>
-          <Link href='/cart'>
-            <LuShoppingCart className='h-5 w-5' />
-          </Link>
-        </Button>
+        <CartBadge />
 
         <div className='md:hidden'>
           <Sheet>

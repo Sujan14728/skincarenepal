@@ -4,15 +4,22 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Upload, X } from 'lucide-react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
+import 'suneditor/dist/css/suneditor.min.css';
+
+const SunEditor = dynamic(() => import('suneditor-react'), {
+  ssr: false
+});
 
 interface Product {
   id?: number;
   name: string;
+  excerpt?: string;
   description?: string;
+  keyBenefits: string[];
   price: number;
   salePrice?: number;
   stock: number;
@@ -27,7 +34,9 @@ interface ProductFormProps {
 const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
   const [formData, setFormData] = useState<Product>({
     name: product?.name || '',
+    excerpt: product?.excerpt || '',
     description: product?.description || '',
+    keyBenefits: product?.keyBenefits || [],
     price: product?.price || 0,
     salePrice: product?.salePrice || undefined,
     stock: product?.stock || 0,
@@ -45,6 +54,27 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleDescriptionChange = (content: string) => {
+    setFormData(prev => ({ ...prev, description: content }));
+  };
+
+  const handleKeyBenefitsChange = (index: number, value: string) => {
+    const updated = [...formData.keyBenefits];
+    updated[index] = value;
+    setFormData(prev => ({ ...prev, keyBenefits: updated }));
+  };
+
+  const addKeyBenefit = () => {
+    setFormData(prev => ({ ...prev, keyBenefits: [...prev.keyBenefits, ''] }));
+  };
+
+  const removeKeyBenefit = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      keyBenefits: prev.keyBenefits.filter((_, i) => i !== index)
     }));
   };
 
@@ -158,19 +188,61 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
             required
           />
         </div>
+        
+        <div>
+          <Label htmlFor='excerpt'>Excerpt</Label>
+          <Input
+            id='excerpt'
+            value={formData.excerpt}
+            onChange={e => handleInputChange('excerpt', e.target.value)}
+            placeholder='Short description'
+          />
+        </div>
 
         <div>
           <Label htmlFor='description'>Description</Label>
-          <Textarea
-            id='description'
-            value={formData.description || ''}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-              handleInputChange('description', e.target.value)
-            }
-            placeholder='Enter product description'
-            rows={3}
+          <SunEditor
+            setContents={formData.description}
+            onChange={handleDescriptionChange}
+            setOptions={{
+              height: '200px',
+              buttonList: [
+                ['undo', 'redo'],
+                ['font', 'fontSize'],
+                ['bold', 'italic', 'underline', 'strike'],
+                ['align', 'list'],
+                ['fontColor', 'hiliteColor'],
+                ['link', 'image', 'video'],
+                ['removeFormat']
+              ]
+            }}
           />
         </div>
+      </div>
+
+      {/* Key Benefits */}
+      <div className='space-y-2'>
+        <Label>Key Benefits</Label>
+        {formData.keyBenefits.map((benefit, idx) => (
+          <div key={idx} className='flex items-center space-x-2'>
+            <Input
+              value={benefit}
+              onChange={e => handleKeyBenefitsChange(idx, e.target.value)}
+              placeholder='Enter benefit'
+            />
+            <Button
+              type='button'
+              variant='destructive'
+              size='sm'
+              onClick={() => removeKeyBenefit(idx)}
+            >
+              <X className='h-3 w-3' />
+            </Button>
+          </div>
+        ))}
+        <Button type='button' onClick={addKeyBenefit}>
+          Add Benefit
+        </Button>
       </div>
 
       {/* Pricing */}

@@ -2,7 +2,7 @@ export interface ICartItem {
   id: number;
   name: string;
   price: number;
-  salePrice: number;
+  salePrice: number | null;
   quantity: number;
   image: string;
 }

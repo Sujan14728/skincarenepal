@@ -16,8 +16,9 @@ const CartItem: React.FC<CartItemProps> = ({
   onUpdateQuantity,
   onRemove
 }) => {
-  console.log(item);
-  const subtotal = item.salePrice * item.quantity;
+  const subtotal = item.salePrice
+    ? item.salePrice * item.quantity
+    : item.price * item.quantity;
 
   const handleUpdate = useCallback(
     (newQuantity: number) => {
@@ -33,7 +34,7 @@ const CartItem: React.FC<CartItemProps> = ({
         <Image
           height={112}
           width={112}
-          src='https://placehold.co/112x112/f0f0f0/6b7280?text=Product'
+          src={item.image}
           alt={item.name}
           className='h-full w-full object-cover'
           onError={e => {
@@ -49,7 +50,7 @@ const CartItem: React.FC<CartItemProps> = ({
         <h3 className='text-foreground text-lg font-semibold'>{item.name}</h3>
         <div className='mb-3 flex items-center space-x-2'>
           <p className='text-primary text-lg font-bold'>
-            {formatCurrency(item.salePrice)}
+            {formatCurrency(item.salePrice || item.price)}
           </p>
           {item.price !== item.salePrice && (
             <p className='text-muted-foreground text-sm line-through'>

@@ -28,7 +28,9 @@ model Product {
 	id         Int         @id @default(autoincrement())
 	name       String
 	slug       String      @unique
+	excerpt    String	   @default("")
 	description String?
+	keyBenefits String[]    @default([])
 	price      Int
 	salePrice  Int?
 	stock      Int         @default(0)
