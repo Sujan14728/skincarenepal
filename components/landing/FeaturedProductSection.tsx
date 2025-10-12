@@ -6,8 +6,10 @@ import { ProductCard } from './partial/ProductCard';
 const mockProducts = [
   {
     id: 1,
+    slug: 'himalayan-rose-face-cream',
+    excerpt:" Luxurious face cream enriched with Himalayan rose extracts and natural botanicals for deep hydration and a glowing complexion.",
     image: '/images/products/facepack.jpg',
-    title: 'Himalayan Rose Face Cream',
+    name: 'Himalayan Rose Face Cream',
     description:
       'Luxurious face cream enriched with Himalayan rose extracts and natural botanicals for deep hydration and a glowing complexion.',
     salePrice: 1250,
@@ -15,8 +17,10 @@ const mockProducts = [
   },
   {
     id: 2,
+    slug: 'himalayan-rose-face-cream',
+    excerpt:" Luxurious face cream enriched with Himalayan rose extracts and natural botanicals for deep hydration and a glowing complexion.",
     image: '/images/products/facepack.jpg',
-    title: 'Himalayan Rose Face Cream',
+    name: 'Himalayan Rose Face Cream',
     description:
       'Luxurious face cream enriched with Himalayan rose extracts and natural botanicals for deep hydration and a glowing complexion.',
     salePrice: 1250,
@@ -24,8 +28,10 @@ const mockProducts = [
   },
   {
     id: 3,
+    slug: 'himalayan-rose-face-cream',
+    excerpt:" Luxurious face cream enriched with Himalayan rose extracts and natural botanicals for deep hydration and a glowing complexion.",
     image: '/images/products/facepack.jpg',
-    title: 'Himalayan Rose Face Cream',
+    name: 'Himalayan Rose Face Cream',
     description:
       'Luxurious face cream enriched with Himalayan rose extracts and natural botanicals for deep hydration and a glowing complexion.',
     salePrice: 1250,
@@ -48,7 +54,7 @@ export function FeaturedProductsSection() {
 
         <div className='mb-12 grid grid-cols-1 gap-8 md:grid-cols-3'>
           {mockProducts.map((product, index) => (
-            <ProductCard key={index} {...product} />
+            <ProductCard key={index} {...product} slug={product.slug} />
           ))}
         </div>
 
