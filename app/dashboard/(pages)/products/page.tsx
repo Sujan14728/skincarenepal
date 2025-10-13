@@ -37,7 +37,6 @@ import {
   Edit,
   Trash2,
   Package,
-  DollarSign,
   TrendingUp,
   ShoppingCart
 } from 'lucide-react';

@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import { ICartItem } from '../types/cart';
 
 const CART_STORAGE_KEY = 'ecomm_shopping_cart';
@@ -73,6 +74,7 @@ export const addItemToCart = (item: ICartItem) => {
   }
 
   saveCartToLocal(updatedCart);
+  toast.success('Item added to cart');
 };
 
 export const totalItemsInCart = () => {

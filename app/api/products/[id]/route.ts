@@ -79,6 +79,9 @@ export async function PUT(req: NextRequest, context: Context) {
       excerpt,
       description,
       keyBenefits,
+      keyIngredients,
+      howToUse,
+      suitableFor,
       price,
       salePrice,
       stock,
@@ -116,6 +119,13 @@ export async function PUT(req: NextRequest, context: Context) {
         excerpt: excerpt !== undefined ? excerpt : existingProduct.excerpt,
         keyBenefits:
           keyBenefits !== undefined ? keyBenefits : existingProduct.keyBenefits,
+        keyIngredients:
+          keyIngredients !== undefined
+            ? keyIngredients
+            : existingProduct.keyIngredients,
+        howToUse: howToUse !== undefined ? howToUse : existingProduct.howToUse,
+        suitableFor:
+          suitableFor !== undefined ? suitableFor : existingProduct.suitableFor,
         description:
           description !== undefined ? description : existingProduct.description,
         price: price !== undefined ? parseInt(price) : existingProduct.price,
