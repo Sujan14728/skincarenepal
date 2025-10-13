@@ -1,7 +1,8 @@
+import { SiteSetting } from '@prisma/client';
 import { ICartItem, ICartTotals } from '../types/cart';
 
 export const SHIPPING_COST = 100;
-export const FREE_SHIPPING_THRESHOLD = 2000;
+export let FREE_SHIPPING_THRESHOLD = 2000;
 
 /**
  * @function formatCurrency
@@ -19,7 +20,10 @@ export const formatCurrency = (amount: number): string => {
  * @param items - The array of cart items.
  * @returns The calculated totals.
  */
-export const calculateCartTotals = (items: ICartItem[]): ICartTotals => {
+export const calculateCartTotals = (
+  items: ICartItem[],
+  settings: SiteSetting
+): ICartTotals => {
   const subtotal = items.reduce(
     (sum, item) =>
       sum +
@@ -29,6 +33,11 @@ export const calculateCartTotals = (items: ICartItem[]): ICartTotals => {
         item.quantity,
     0
   );
+  
+
+  if (settings && settings.freeShippingThreshold) {
+    FREE_SHIPPING_THRESHOLD = settings.freeShippingThreshold;
+  }
 
   const isFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const shipping = isFreeShipping ? 0 : SHIPPING_COST;

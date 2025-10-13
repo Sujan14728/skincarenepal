@@ -1,5 +1,3 @@
-// app/products/page.tsx
-import Footer from '@/components/landing/Footer';
 import { ProductCard } from '@/components/landing/partial/ProductCard';
 import { prisma } from '@/lib/prisma';
 
@@ -41,8 +39,6 @@ const ProductPage = async () => {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };

@@ -1,5 +1,4 @@
 // components/ProductCard.tsx
-import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import Link from 'next/link';
 import AddToCartButton from '../shared/AddToCartButton';
@@ -23,7 +22,6 @@ export function ProductCard({
   excerpt,
   salePrice,
   price,
-  keyBenefits
 }: ProductCardProps) {
   const isOnSale = salePrice && price > salePrice;
   const priceFormatter = new Intl.NumberFormat('en-IN', {
@@ -68,10 +66,10 @@ export function ProductCard({
           {excerpt}
         </p>
 
-        {keyBenefits && keyBenefits.length > 0 && (
+        {/* {keyBenefits && keyBenefits.length > 0 && (
           <div className='mb-4 flex flex-col gap-2'>
             <div className='text-muted-foreground text-sm'>Key Benefits:</div>
-            <div className='flex gap-2'>
+            <div className='flex gap-2 flex-wrap'>
               {keyBenefits.map(benefit => {
                 if (!benefit || benefit.trim() === '') return null;
                 return (
@@ -86,7 +84,7 @@ export function ProductCard({
               })}
             </div>
           </div>
-        )}
+        )} */}
 
         <div className='mt-auto flex items-center justify-between pt-2'>
           <div className='flex flex-col'>

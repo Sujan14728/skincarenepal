@@ -1,20 +1,39 @@
 'use client';
 import CartList from '@/components/landing/cart/CartList';
 import CartSummary from '@/components/landing/cart/CartSummary';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ICartItem } from '@/lib/types/cart';
 import { calculateCartTotals } from '@/lib/utils/cart-utils';
 import { getCartFromLocal, saveCartToLocal } from '@/lib/utils/local-storage';
+import { SiteSetting } from '@prisma/client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const CartPage: React.FC = () => {
   const [cartItems, setCartItems] = useState<ICartItem[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [settings, setSettings] = useState<SiteSetting | undefined>();
+  const [loading, setLoading] = useState(true);
 
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch('/api/settings');
+      const data: SiteSetting = await response.json();
+      setSettings(data);
+    } catch {
+      console.error('Error fetching settings:');
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
     const storedCart = getCartFromLocal();
     if (storedCart.length > 0) {
       setCartItems(storedCart);
     }
+
+    fetchSettings();
+
     setIsHydrated(true);
   }, []);
 
@@ -41,7 +60,11 @@ const CartPage: React.FC = () => {
 
   // --- Cart Totals Calculation ---
 
-  const totals = useMemo(() => calculateCartTotals(cartItems), [cartItems]);
+  const totals = useMemo(() => {
+    if (settings) {
+      return calculateCartTotals(cartItems, settings);
+    }
+  }, [cartItems, settings]);
 
   if (!isHydrated) {
     return (
@@ -69,9 +92,19 @@ const CartPage: React.FC = () => {
           </div>
 
           {/* Order Summary Column */}
-          <div className='lg:col-span-1'>
-            <CartSummary totals={totals} />
-          </div>
+          {!loading && settings && totals ? (
+            <div className='lg:col-span-1'>
+              <CartSummary totals={totals} />
+            </div>
+          ) : (
+            <Card className='sticky top-4 flex flex-col space-y-1 p-4'>
+              <Skeleton className='h-8 !w-44 w-full' />
+              <Skeleton className='h-28 w-full' />
+              <Skeleton className='h-8 w-full' />
+              <Skeleton className='h-12 w-full' />
+              <Skeleton className='h-12 w-full' />
+            </Card>
+          )}
         </div>
       </div>
     </div>

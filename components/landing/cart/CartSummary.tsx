@@ -14,7 +14,7 @@ interface CartSummaryProps {
 
 const CartSummary: React.FC<CartSummaryProps> = ({ totals }) => {
   return (
-    <Card className='sticky top-4 flex flex-col space-y-4 p-4'>
+    <Card className='sticky top-4 flex flex-col space-y-0 p-4'>
       <h2 className='text-foreground border-border mb-2 border-b pb-3 text-xl font-bold'>
         Order Summary
       </h2>
