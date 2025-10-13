@@ -4,17 +4,27 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Upload, X } from 'lucide-react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
+import 'suneditor/dist/css/suneditor.min.css';
+
+const SunEditor = dynamic(() => import('suneditor-react'), {
+  ssr: false
+});
 
 interface Product {
   id?: number;
   name: string;
-  description?: string;
+  excerpt?: string;
+  description?: string | null;
+  keyBenefits: string[];
+  keyIngredients: string[]; // Added
+  howToUse: string[]; // Added
+  suitableFor: string[]; // Added
   price: number;
-  salePrice?: number;
+  salePrice?: number | null;
   stock: number;
   images: string[];
 }
@@ -27,7 +37,12 @@ interface ProductFormProps {
 const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
   const [formData, setFormData] = useState<Product>({
     name: product?.name || '',
+    excerpt: product?.excerpt || '',
     description: product?.description || '',
+    keyBenefits: product?.keyBenefits || [],
+    keyIngredients: product?.keyIngredients || [], // Initialize
+    howToUse: product?.howToUse || [], // Initialize
+    suitableFor: product?.suitableFor || [], // Initialize
     price: product?.price || 0,
     salePrice: product?.salePrice || undefined,
     stock: product?.stock || 0,
@@ -47,6 +62,41 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
       [field]: value
     }));
   };
+
+  const handleDescriptionChange = (content: string) => {
+    setFormData(prev => ({ ...prev, description: content }));
+  };
+
+  // --- Dynamic List Handlers ---
+
+  const createListHandlers = (
+    fieldName: 'keyBenefits' | 'keyIngredients' | 'howToUse' | 'suitableFor'
+  ) => {
+    const handleChange = (index: number, value: string) => {
+      const updated = [...formData[fieldName]];
+      updated[index] = value;
+      setFormData(prev => ({ ...prev, [fieldName]: updated }));
+    };
+
+    const addItem = () => {
+      setFormData(prev => ({ ...prev, [fieldName]: [...prev[fieldName], ''] }));
+    };
+
+    const removeItem = (index: number) => {
+      setFormData(prev => ({
+        ...prev,
+        [fieldName]: prev[fieldName].filter((_, i) => i !== index)
+      }));
+    };
+    return { handleChange, addItem, removeItem };
+  };
+
+  const benefitsHandlers = createListHandlers('keyBenefits');
+  const ingredientsHandlers = createListHandlers('keyIngredients');
+  const howToUseHandlers = createListHandlers('howToUse');
+  const suitableForHandlers = createListHandlers('suitableFor');
+
+  // --- Image Handlers (Unchanged) ---
 
   const handleImageUpload = async (file: File) => {
     setUploading(true);
@@ -106,6 +156,8 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
     }));
   };
 
+  // --- Submission Handler (Unchanged) ---
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -116,6 +168,7 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
 
     setLoading(true);
     try {
+      console.log('Submitting form data:', formData); // Debug log
       const url = product ? `/api/products/${product.id}` : '/api/products';
       const method = product ? 'PUT' : 'POST';
 
@@ -148,6 +201,7 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
     <form onSubmit={handleSubmit} className='space-y-6'>
       {/* Basic Information */}
       <div className='space-y-4'>
+        {/* Name Input */}
         <div>
           <Label htmlFor='name'>Product Name *</Label>
           <Input
@@ -159,23 +213,177 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
           />
         </div>
 
+        {/* Excerpt Input */}
+        <div>
+          <Label htmlFor='excerpt'>Excerpt</Label>
+          <Input
+            id='excerpt'
+            value={formData.excerpt}
+            onChange={e => handleInputChange('excerpt', e.target.value)}
+            placeholder='Short description'
+          />
+        </div>
+
+        {/* Description Rich Editor */}
         <div>
           <Label htmlFor='description'>Description</Label>
-          <Textarea
-            id='description'
-            value={formData.description || ''}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-              handleInputChange('description', e.target.value)
-            }
-            placeholder='Enter product description'
-            rows={3}
+          <SunEditor
+            setContents={formData.description ?? ''}
+            onChange={handleDescriptionChange}
+            setOptions={{
+              height: '200px',
+              buttonList: [
+                ['undo', 'redo'],
+                ['font', 'fontSize'],
+                ['bold', 'italic', 'underline', 'strike'],
+                ['align', 'list'],
+                ['fontColor', 'hiliteColor'],
+                ['link'],
+                ['removeFormat']
+              ]
+            }}
           />
         </div>
       </div>
 
-      {/* Pricing */}
+      <div className='grid gap-6 md:grid-cols-2'>
+        {/* Key Benefits (Original) */}
+        <div className='space-y-2'>
+          <Label>Key Benefits</Label>
+          {formData.keyBenefits.map((benefit, idx) => (
+            <div key={idx} className='flex items-center space-x-2'>
+              <Input
+                value={benefit}
+                onChange={e =>
+                  benefitsHandlers.handleChange(idx, e.target.value)
+                }
+                placeholder='Enter benefit'
+              />
+              <Button
+                type='button'
+                variant='destructive'
+                size='sm'
+                onClick={() => benefitsHandlers.removeItem(idx)}
+              >
+                <X className='h-3 w-3' />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type='button'
+            onClick={benefitsHandlers.addItem}
+            variant='outline'
+            className='mt-2'
+          >
+            Add Benefit
+          </Button>
+        </div>
+
+        {/* Key Ingredients (ADDED) */}
+        <div className='space-y-2'>
+          <Label>Key Ingredients</Label>
+          {formData.keyIngredients.map((ingredient, idx) => (
+            <div key={idx} className='flex items-center space-x-2'>
+              <Input
+                value={ingredient}
+                onChange={e =>
+                  ingredientsHandlers.handleChange(idx, e.target.value)
+                }
+                placeholder='e.g., Turmeric Extract, Hyaluronic Acid'
+              />
+              <Button
+                type='button'
+                variant='destructive'
+                size='sm'
+                onClick={() => ingredientsHandlers.removeItem(idx)}
+              >
+                <X className='h-3 w-3' />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type='button'
+            onClick={ingredientsHandlers.addItem}
+            variant='outline'
+            className='mt-2'
+          >
+            Add Ingredient
+          </Button>
+        </div>
+      </div>
+
+      <div className='grid gap-6 md:grid-cols-2'>
+        {/* How To Use (ADDED) */}
+        <div className='space-y-2'>
+          <Label>How To Use Steps</Label>
+          {formData.howToUse.map((step, idx) => (
+            <div key={idx} className='flex items-center space-x-2'>
+              <span className='text-sm font-medium text-gray-500'>
+                {idx + 1}.
+              </span>
+              <Input
+                value={step}
+                onChange={e =>
+                  howToUseHandlers.handleChange(idx, e.target.value)
+                }
+                placeholder='e.g., Apply 3-5 drops to face...'
+              />
+              <Button
+                type='button'
+                variant='destructive'
+                size='sm'
+                onClick={() => howToUseHandlers.removeItem(idx)}
+              >
+                <X className='h-3 w-3' />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type='button'
+            onClick={howToUseHandlers.addItem}
+            variant='outline'
+            className='mt-2'
+          >
+            Add Step
+          </Button>
+        </div>
+
+        {/* Suitable For (ADDED) */}
+        <div className='space-y-2'>
+          <Label>Suitable For (Skin Types/Concerns)</Label>
+          {formData.suitableFor.map((tag, idx) => (
+            <div key={idx} className='flex items-center space-x-2'>
+              <Input
+                value={tag}
+                onChange={e =>
+                  suitableForHandlers.handleChange(idx, e.target.value)
+                }
+                placeholder='e.g., Dull Skin, All Skin Types'
+              />
+              <Button
+                type='button'
+                variant='destructive'
+                size='sm'
+                onClick={() => suitableForHandlers.removeItem(idx)}
+              >
+                <X className='h-3 w-3' />
+              </Button>
+            </div>
+          ))}
+          <Button
+            type='button'
+            onClick={suitableForHandlers.addItem}
+            variant='outline'
+            className='mt-2'
+          >
+            Add Tag
+          </Button>
+        </div>
+      </div>
+
+      {/* --- Pricing and Stock (Unchanged) --- */}
       <div className='space-y-4'>
-        <div className='grid grid-cols-2 gap-4'>
+        <div className='grid grid-cols-3 gap-4'>
           <div>
             <Label htmlFor='price'>Price (Rs) *</Label>
             <Input
@@ -211,25 +419,25 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
               Leave empty if no sale price
             </p>
           </div>
-        </div>
 
-        <div>
-          <Label htmlFor='stock'>Stock Quantity *</Label>
-          <Input
-            id='stock'
-            type='number'
-            value={formData.stock}
-            onChange={e =>
-              handleInputChange('stock', parseInt(e.target.value) || 0)
-            }
-            placeholder='0'
-            min='0'
-            required
-          />
+          <div>
+            <Label htmlFor='stock'>Stock Quantity *</Label>
+            <Input
+              id='stock'
+              type='number'
+              value={formData.stock}
+              onChange={e =>
+                handleInputChange('stock', parseInt(e.target.value) || 0)
+              }
+              placeholder='0'
+              min='0'
+              required
+            />
+          </div>
         </div>
       </div>
 
-      {/* Images */}
+      {/* --- Images (Unchanged) --- */}
       <div className='space-y-4'>
         <Label>Product Images</Label>
 
