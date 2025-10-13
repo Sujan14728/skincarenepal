@@ -18,7 +18,7 @@ export async function sendOrderConfirmationEmail(
     from: process.env.EMAIL_USER,
     to,
     subject: 'Order Confirmation',
-    text: `Thank you for your order. Your order number is ${orderNumber}.`,
+    text: `Thank you for your order. Order number is ${orderNumber}.`,
     html: `<h2>Thank you for your order!</h2>
            <p>Your order number is <b>${orderNumber}</b>.</p>
            <p>We will notify you when your order is shipped.</p>`
