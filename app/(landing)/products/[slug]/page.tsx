@@ -6,11 +6,11 @@ import { ProductTabs } from '@/components/landing/product-page/ProductTabs';
 import Link from 'next/link';
 
 interface ProductPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 const ProductPage = async ({ params }: ProductPageProps) => {
-  const { slug } = params;
+  const { slug } = await params;
 
   const product = await prisma.product.findUnique({ where: { slug } });
 
