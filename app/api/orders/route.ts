@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
+import { sendOrderConfirmationEmail } from '@/lib/email';
 
 // GET /api/orders Get all orders
 export async function GET(req: NextRequest) {
@@ -90,7 +91,10 @@ export async function POST(req: NextRequest) {
         items: true
       }
     });
-    console.log('Created order:', order);
+    // Send confirmation email to the customer if email is provided
+    if (order.email && order.orderNumber) {
+      await sendOrderConfirmationEmail(order.email, order.orderNumber);
+    }
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
     console.error('Error creating order:', error);
