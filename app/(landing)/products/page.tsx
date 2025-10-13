@@ -3,6 +3,8 @@ import Footer from '@/components/landing/Footer';
 import { ProductCard } from '@/components/landing/partial/ProductCard';
 import { prisma } from '@/lib/prisma';
 
+export const revalidate = 0;
+
 const ProductPage = async () => {
   const products = await prisma.product.findMany({
     orderBy: {

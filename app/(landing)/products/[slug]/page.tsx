@@ -9,6 +9,8 @@ interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
 
+export const revalidate = 0;
+
 const ProductPage = async ({ params }: ProductPageProps) => {
   const { slug } = await params;
 
@@ -26,7 +28,7 @@ const ProductPage = async ({ params }: ProductPageProps) => {
     : 0;
 
   return (
-    <div className='container mx-auto px-4 py-12 mb-10'>
+    <div className='container mx-auto mb-10 px-4 py-12'>
       <nav className='mb-6 text-sm text-gray-500'>
         <Link href='/' className='hover:text-green-600'>
           Home
