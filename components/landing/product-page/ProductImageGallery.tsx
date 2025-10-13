@@ -20,7 +20,7 @@ export const ProductImageGallery = ({
   const [selectedImage, setSelectedImage] = useState(images[0]);
 
   return (
-    <div>
+    <div className=' border-2'>
       {/* Main Image */}
       <div className='relative overflow-hidden rounded-xl bg-gray-100'>
         {hasDiscount && (
@@ -33,7 +33,7 @@ export const ProductImageGallery = ({
           alt={productName}
           width={600}
           height={600}
-          className='h-auto w-full object-cover'
+          className='h-[32rem] w-full object-contain scale-[0.9]'
           priority
         />
       </div>
