@@ -21,7 +21,12 @@ export const formatCurrency = (amount: number): string => {
  */
 export const calculateCartTotals = (items: ICartItem[]): ICartTotals => {
   const subtotal = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) =>
+      sum +
+      (item.salePrice && item.salePrice < item.price
+        ? item.salePrice
+        : item.price) *
+        item.quantity,
     0
   );
 
@@ -40,5 +45,3 @@ export const calculateCartTotals = (items: ICartItem[]): ICartTotals => {
     remainingForFreeShipping
   };
 };
-
-
