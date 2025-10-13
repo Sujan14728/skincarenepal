@@ -53,9 +53,11 @@ const CartSummary: React.FC<CartSummaryProps> = ({ totals }) => {
         </p>
       )}
 
-      <Button variant='default' className='h-12 w-full text-lg'>
-        Proceed to Checkout
-      </Button>
+      <Link href={'/checkout'} className='w-full'>
+        <Button variant='default' className='h-12 w-full text-lg'>
+          Proceed to Checkout
+        </Button>
+      </Link>
       <Link href={'/products'} className='w-full'>
         <Button
           variant='secondary'
