@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(
       new URL('/order-confirmed?order=confirmed', req.url)
     );
-  } catch (e) {
+  } catch {
     return NextResponse.redirect(
       new URL('/order-confirmed?order=error', req.url)
     );

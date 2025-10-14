@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyToken } from "@/lib/auth";
 import { getUserFromRequestEdge, hasRequiredRole } from "./lib/auth-edge";
 
 export async function middleware(req: NextRequest) {
@@ -13,11 +12,8 @@ export async function middleware(req: NextRequest) {
     !pathname.startsWith("/dashboard/login") &&
     !pathname.startsWith("/dashboard/register")
   ) {
-    const token = req.cookies.get("token")?.value;
 
     const user = await getUserFromRequestEdge(req);
-
-    console.log("User from token:", user);
 
     // Verify token
     try {

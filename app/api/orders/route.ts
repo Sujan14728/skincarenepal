@@ -4,7 +4,6 @@ import { verifyToken } from '@/lib/auth';
 import { sendOrderPlacementEmail } from '@/lib/email';
 import crypto from 'crypto';
 
-// GET /api/orders Get all orders
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get('token')?.value;
@@ -41,7 +40,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/orders  Create a new order
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -86,6 +84,7 @@ export async function POST(req: NextRequest) {
         placementTokenHash: tokenHash,
         placementTokenExpiresAt: tokenExpiry,
         items: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           create: items.map((i: any) => ({
             productId: i.productId,
             quantity: i.quantity,

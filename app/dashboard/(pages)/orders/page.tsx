@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Product } from '@/lib/types/product';
 
 const OrdersPage = () => {
   const [orders, setOrders] = useState<OrderWithRelations[]>([]);
@@ -56,7 +57,7 @@ const OrdersPage = () => {
       if (!res.ok) throw new Error('Delete failed');
       toast.success('Order deleted');
       fetchOrders();
-    } catch (e) {
+    } catch {
       toast.error('Failed to delete order');
     }
   };
@@ -74,7 +75,7 @@ const OrdersPage = () => {
           name: string;
           quantity: number;
           price: number;
-          product?: any;
+          product?: Product;
         }>;
       })
     | null
@@ -102,7 +103,7 @@ const OrdersPage = () => {
       });
       if (!res.ok) throw new Error('Failed to update status');
       toast.success('Order status updated');
-    } catch (e) {
+    } catch {
       toast.error('Failed to update status');
       // revert by refetching
       fetchOrders();
