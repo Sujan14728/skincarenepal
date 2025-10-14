@@ -33,7 +33,7 @@ const Footer = () => {
         <div className='border-border grid grid-cols-1 gap-12 border-b pb-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-8'>
           <div className='space-y-4'>
             <h3 className='text-primary-foreground text-xl font-bold'>
-              Skin Care Nepal
+              Care and Clean Nepal
             </h3>
             <p className='text-muted-foreground text-sm'>
               Your trusted partner for natural and organic skincare solutions.
@@ -119,7 +119,7 @@ const Footer = () => {
                 {/* Use theme primary for the icon color */}
                 <LuMapPin className='text-primary mt-0.5 h-5 w-5 flex-shrink-0' />
                 <span className='text-muted-foreground text-sm'>
-                  Thamel, Kathmandu, Nepal
+                  Dhangadhi, Kailali, Nepal
                 </span>
               </li>
               <li className='flex items-start space-x-2'>
@@ -138,7 +138,7 @@ const Footer = () => {
                   href='mailto:info@skincareneapl.com'
                   className='hover:text-primary text-muted-foreground text-sm transition-colors'
                 >
-                  info@skincareneapl.com
+                  info@careandcleannp.com
                 </a>
               </li>
             </ul>
@@ -146,8 +146,9 @@ const Footer = () => {
         </div>
 
         <div className='text-muted-foreground pt-8 text-center text-sm'>
-          &copy; {currentYear} **Skin Care Nepal**. All rights reserved. Made
-          with <span className='text-destructive-foreground'>❤️</span> in Nepal
+          &copy; {currentYear} **Care and Clean Nepal**. All rights reserved.
+          Made with <span className='text-destructive-foreground'>❤️</span> in
+          Nepal
         </div>
       </div>
     </footer>

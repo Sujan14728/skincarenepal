@@ -52,7 +52,7 @@ function SidebarContent() {
   return (
     <div className='flex h-full flex-col justify-between'>
       <div>
-        <div className='mb-6 text-lg font-bold'>Skin Care Nepal</div>
+        <div className='mb-6 text-lg font-bold'>Care and Clean Nepal</div>
         <nav className='space-y-1'>
           <SidebarLink href='/dashboard' label='Dashboard' icon={Home} />
           <SidebarLink
