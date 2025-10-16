@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
-import { sendOrderConfirmationEmail } from '@/lib/email';
+import { sendOrderPlacementEmail } from '@/lib/email';
+import crypto from 'crypto';
 
-// GET /api/orders Get all orders
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get('token')?.value;
@@ -40,14 +40,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-type OrderItemInput = {
-  productId: number;
-  quantity: number;
-  price: number;
-  name: string;
-};
-
-// POST /api/orders  Create a new order
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -72,6 +64,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const tokenExpiry = new Date(Date.now() + 1000 * 60 * 60 * 24);
+
     const order = await prisma.order.create({
       data: {
         userId: userId || null,
@@ -84,8 +80,12 @@ export async function POST(req: NextRequest) {
         discount,
         shipping,
         total,
+        paymentSlipUrl: body.paymentSlipUrl || null,
+        placementTokenHash: tokenHash,
+        placementTokenExpiresAt: tokenExpiry,
         items: {
-          create: (items as OrderItemInput[]).map((i: OrderItemInput) => ({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          create: items.map((i: any) => ({
             productId: i.productId,
             quantity: i.quantity,
             price: i.price,
@@ -98,9 +98,20 @@ export async function POST(req: NextRequest) {
         items: true
       }
     });
-    // Send confirmation email to the customer if email is provided
     if (order.email && order.orderNumber) {
-      await sendOrderConfirmationEmail(order.email, order.orderNumber);
+      const baseUrl =
+        process.env.NEXT_PUBLIC_BASE_URL ||
+        process.env.VERCEL_URL ||
+        'http://localhost:3000';
+      const origin = baseUrl.startsWith('http')
+        ? baseUrl
+        : `https://${baseUrl}`;
+      const confirmLink = `${origin}/api/orders/confirm?token=${token}&order=${order.orderNumber}`;
+      await sendOrderPlacementEmail(
+        order.email,
+        order.orderNumber,
+        confirmLink
+      );
     }
     return NextResponse.json(order, { status: 201 });
   } catch (error) {

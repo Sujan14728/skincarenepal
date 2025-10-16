@@ -5,28 +5,27 @@ import {
   ALLOWED_IMAGE_TYPES,
   ALLOWED_VIDEO_TYPES,
 } from "@/lib/media/imagekit";
-import { verifyToken } from "@/lib/auth";
 
 // POST /api/media/upload - Server-side upload to ImageKit
 export async function POST(req: NextRequest) {
   try {
     // Verify user authentication
-    const token = req.cookies.get("token")?.value;
+    // const token = req.cookies.get("token")?.value;
 
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication required for file uploads" },
-        { status: 401 }
-      );
-    }
+    // if (!token) {
+    //   return NextResponse.json(
+    //     { error: "Authentication required for file uploads" },
+    //     { status: 401 }
+    //   );
+    // }
 
-    const payload = await verifyToken(token);
-    if (!payload || !payload.id) {
-      return NextResponse.json(
-        { error: "Invalid authentication token" },
-        { status: 401 }
-      );
-    }
+    // const payload = await verifyToken(token);
+    // if (!payload || !payload.id) {
+    //   return NextResponse.json(
+    //     { error: "Invalid authentication token" },
+    //     { status: 401 }
+    //   );
+    // }
 
     // Parse multipart form data
     const formData = await req.formData();
@@ -76,9 +75,7 @@ export async function POST(req: NextRequest) {
       useUniqueFileName: useUniqueFileName,
       tags: tags
         ? tags.split(",").map((tag) => tag.trim())
-        : [`uploaded_by_${payload.id}`],
-      // Note: customMetadata fields need to be predefined in ImageKit dashboard
-      // We'll remove this for now to avoid the error
+        : [`skincarenepal`],
     };
 
     const result = await imagekit.upload(uploadOptions);
