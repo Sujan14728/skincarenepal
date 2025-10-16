@@ -40,6 +40,13 @@ export async function GET(req: NextRequest) {
   }
 }
 
+type OrderItemInput = {
+  productId: number;
+  quantity: number;
+  price: number;
+  name: string;
+};
+
 // POST /api/orders  Create a new order
 export async function POST(req: NextRequest) {
   try {
@@ -78,7 +85,7 @@ export async function POST(req: NextRequest) {
         shipping,
         total,
         items: {
-          create: items.map((i: any) => ({
+          create: (items as OrderItemInput[]).map((i: OrderItemInput) => ({
             productId: i.productId,
             quantity: i.quantity,
             price: i.price,

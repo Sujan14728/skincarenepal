@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { LuMenu} from 'react-icons/lu';
+import { LuMenu } from 'react-icons/lu';
 import Image from 'next/image';
 import CartBadge from './cart/CartBadge';
 
@@ -11,8 +11,8 @@ const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/products', label: 'Products' },
   { href: '/about', label: 'About' },
-  { href: '/contact', label: 'Contact' },
-  { href: '/careers', label: 'Careers' }
+  { href: '/contact', label: 'Contact' }
+  // { href: '/careers', label: 'Careers' }
 ];
 
 export function NavBar() {

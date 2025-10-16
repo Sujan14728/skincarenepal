@@ -65,6 +65,7 @@ function SidebarContent() {
             label='Orders'
             icon={ShoppingBag}
           />
+          <SidebarLink href='/dashboard/about' label='About Us' icon={Home} />
           <SidebarLink
             href='/dashboard/settings'
             label='Settings'

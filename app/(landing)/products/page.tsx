@@ -42,7 +42,7 @@ const ProductPage = async () => {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };
