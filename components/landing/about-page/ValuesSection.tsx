@@ -42,7 +42,7 @@ const values = [
 export default function ValuesSection() {
   return (
     <section>
-      <h2 className='mb-6 text-center text-2xl font-bold text-gray-500'>
+      <h2 className='mb-6 text-center text-2xl font-bold text-gray-600'>
         Our Values
       </h2>
 

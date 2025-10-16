@@ -2,6 +2,13 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
+type TeamMember = {
+  id: number;
+  name: string;
+  title: string;
+  image: string;
+};
+
 // const teamMembers = [
 //   {
 //     name: 'PARASH BALAYAR',
@@ -28,6 +35,7 @@ export default function TeamSection() {
       .then(res => res.json())
       .then(setTeamMembers);
   }, []);
+
   return (
     <section className='pb-10'>
       <h2 className='mb-10 text-center text-3xl font-bold text-gray-600'>
@@ -35,7 +43,7 @@ export default function TeamSection() {
       </h2>
 
       <div className='flex flex-wrap justify-center gap-6'>
-        {teamMembers.map((member: any) => (
+        {teamMembers.map((member: TeamMember) => (
           <div
             key={member.id}
             className='flex w-80 flex-col items-center rounded-2xl bg-white p-6'
