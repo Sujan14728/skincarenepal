@@ -4,10 +4,9 @@
 import { useState } from 'react';
 import { Truck, ShieldCheck, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { QuantitySelector } from './QuantitySelector';
 import { Product } from '@/lib/types/product';
-import { addItemToCart } from '@/lib/utils/local-storage';
+// import { addItemToCart } from '@/lib/utils/local-storage';
 import BuyNowButton from '../shared/BuyNowButton';
 
 // Note: Replace 'any' with your actual Product type from Prisma
@@ -21,16 +20,16 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
   const originalPrice = product.price.toLocaleString();
   const suitabilityTags = product.suitableFor;
 
-  const addToCart = (productId: number) => {
-    addItemToCart({
-      id: productId,
-      name: product.name,
-      price: product.price,
-      salePrice: product.salePrice ?? null,
-      quantity: quantity,
-      image: product.images[0] || ''
-    });
-  };
+  // const addToCart = (productId: number) => {
+  //   addItemToCart({
+  //     id: productId,
+  //     name: product.name,
+  //     price: product.price,
+  //     salePrice: product.salePrice ?? null,
+  //     quantity: quantity,
+  //     image: product.images[0] || ''
+  //   });
+  // };
 
   return (
     <div className='flex flex-col space-y-6'>

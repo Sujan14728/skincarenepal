@@ -13,7 +13,7 @@ type TeamMember = {
 export default function TeamDashboardSection() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [form, setForm] = useState({ name: '', title: '', image: '' });
-  const [file, setFile] = useState<File | null>(null);
+  const [_, setFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
 

@@ -73,6 +73,7 @@ export async function sendOrderPlacementEmail(
   to: string,
   orderNumber: string,
   confirmLink: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   order?: any
 ) {
   if (!EMAIL_CONFIGURED) return;
@@ -80,6 +81,7 @@ export async function sendOrderPlacementEmail(
   const items = order?.items || [];
   const itemsHtml = items
     .map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (i: any) =>
         `<tr><td style="padding:6px 8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:center">${i.quantity}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price * i.quantity}</td></tr>`
     )
@@ -123,6 +125,7 @@ export async function sendOrderStatusEmail(
   to: string,
   orderNumber: string,
   status: OrderStatus,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   order?: any
 ) {
   if (!EMAIL_CONFIGURED) return;
@@ -135,6 +138,7 @@ export async function sendOrderStatusEmail(
   const items = order?.items || [];
   const itemsHtml = items
     .map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (i: any) =>
         `<tr><td style="padding:6px 8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:center">${i.quantity}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price * i.quantity}</td></tr>`
     )
@@ -174,6 +178,7 @@ export async function sendCustomOrderEmail(
   to: string,
   subject: string,
   message: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   order?: any
 ) {
   if (!EMAIL_CONFIGURED) return;
@@ -181,6 +186,7 @@ export async function sendCustomOrderEmail(
   const items = order?.items || [];
   const itemsText = items
     .map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (i: any) =>
         `- ${i.name} x${i.quantity} @ Rs. ${i.price} = Rs. ${i.price * i.quantity}`
     )
@@ -188,6 +194,7 @@ export async function sendCustomOrderEmail(
 
   const itemsHtml = items
     .map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (i: any) =>
         `<tr><td style="padding:6px 8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:center">${i.quantity}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price * i.quantity}</td></tr>`
     )
