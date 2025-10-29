@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,17 @@ export default function CheckoutPage() {
   const [note, setNote] = useState('');
   const [paymentImage, setPaymentImage] = useState<File | null>(null);
   const [placing, setPlacing] = useState(false);
-  const cartItems = useMemo<ICartItem[]>(() => getCartFromLocal() || [], []);
+  const search = useSearchParams();
+  const buyParam = search?.get('buy');
+
+  // cartItems may come from localStorage or from a single-product 'buy now' flow
+  const [cartItems, setCartItems] = useState<ICartItem[]>(
+    () => getCartFromLocal() || []
+  );
+
+  const [singleProductMode, setSingleProductMode] = useState(false);
+  const [singleQty, setSingleQty] = useState<number>(1);
+  const [singleProduct, setSingleProduct] = useState<any | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -38,6 +49,41 @@ export default function CheckoutPage() {
     };
     load();
   }, []);
+
+  // If we have a buy param, fetch the product and use it instead of local cart
+  useEffect(() => {
+    if (!buyParam) return;
+    const id = Number(buyParam);
+    if (Number.isNaN(id)) return;
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/products/${id}`);
+        if (!res.ok) throw new Error('Product fetch failed');
+        const p = await res.json();
+        if (!mounted) return;
+        setSingleProduct(p);
+        setSingleQty(1);
+        setSingleProductMode(true);
+        // override cart items with single product
+        setCartItems([
+          {
+            id: p.id,
+            name: p.name,
+            image: Array.isArray(p.images) && p.images[0] ? p.images[0] : '',
+            price: p.price,
+            salePrice: p.salePrice ?? null,
+            quantity: 1
+          }
+        ]);
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [buyParam]);
 
   const placeOrder = async () => {
     try {
@@ -94,6 +140,18 @@ export default function CheckoutPage() {
       });
       if (!res.ok) throw new Error('Order failed');
       toast.success('Order placed. Check your email to confirm.');
+      // if we used buy-now flow, clear query and reset
+      if (singleProductMode) {
+        // small UX: remove buy param by navigating to /checkout without params
+        try {
+          // client-side navigation — lazy import to avoid SSR issues
+          const { useRouter } = await import('next/navigation');
+          // can't call hook here; use location fallback
+          window.history.replaceState({}, '', '/checkout');
+        } catch {
+          window.history.replaceState({}, '', '/checkout');
+        }
+      }
     } catch {
       toast.error('Failed to place order');
     } finally {
@@ -152,6 +210,82 @@ export default function CheckoutPage() {
             value={note}
             onChange={e => setNote(e.target.value)}
           />
+          {singleProductMode && singleProduct && (
+            <div className='space-y-2'>
+              <h3 className='text-sm font-semibold'>Buying</h3>
+              <div className='flex items-center gap-3'>
+                {singleProduct.images && singleProduct.images[0] ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={singleProduct.images[0]}
+                    alt={singleProduct.name}
+                    className='h-16 w-16 rounded object-cover'
+                  />
+                ) : null}
+                <div className='flex-1'>
+                  <div className='font-medium'>{singleProduct.name}</div>
+                  <div className='text-muted-foreground text-sm'>
+                    {singleProduct.salePrice ? (
+                      <div>
+                        <span className='font-semibold'>
+                          Rs. {singleProduct.salePrice}
+                        </span>{' '}
+                        <span className='text-muted-foreground text-sm line-through'>
+                          Rs. {singleProduct.price}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className='font-semibold'>
+                        Rs. {singleProduct.price}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <div className='flex items-center gap-2'>
+                    <button
+                      className='rounded border px-2'
+                      onClick={() => {
+                        if (singleQty <= 1) return;
+                        setSingleQty(q => {
+                          const next = q - 1;
+                          setCartItems(items =>
+                            items.map(it =>
+                              it.id === singleProduct.id
+                                ? { ...it, quantity: next }
+                                : it
+                            )
+                          );
+                          return next;
+                        });
+                      }}
+                    >
+                      -
+                    </button>
+                    <div className='w-8 text-center'>{singleQty}</div>
+                    <button
+                      className='rounded border px-2'
+                      onClick={() => {
+                        setSingleQty(q => {
+                          const next = q + 1;
+                          setCartItems(items =>
+                            items.map(it =>
+                              it.id === singleProduct.id
+                                ? { ...it, quantity: next }
+                                : it
+                            )
+                          );
+                          return next;
+                        });
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           <Button className='w-full' onClick={placeOrder} disabled={placing}>
             {placing ? 'Placing Order...' : 'Place Order'}
           </Button>

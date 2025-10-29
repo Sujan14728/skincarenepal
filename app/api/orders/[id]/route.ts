@@ -86,10 +86,16 @@ export async function PUT(
       }
     });
     if (body.status && updated.email) {
+      // fetch full order with items to include in status email
+      const full = await prisma.order.findUnique({
+        where: { id: updated.id },
+        include: { items: true }
+      });
       await sendOrderStatusEmail(
         updated.email,
         updated.orderNumber,
-        body.status
+        body.status,
+        full || undefined
       );
     }
     return NextResponse.json(updated);

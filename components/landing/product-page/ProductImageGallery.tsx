@@ -20,7 +20,7 @@ export const ProductImageGallery = ({
   const [selectedImage, setSelectedImage] = useState(images[0]);
 
   return (
-    <div className=' border-2'>
+    <div className=''>
       {/* Main Image */}
       <div className='relative overflow-hidden rounded-xl bg-gray-100'>
         {hasDiscount && (

@@ -110,7 +110,8 @@ export async function POST(req: NextRequest) {
       await sendOrderPlacementEmail(
         order.email,
         order.orderNumber,
-        confirmLink
+        confirmLink,
+        order
       );
     }
     return NextResponse.json(order, { status: 201 });

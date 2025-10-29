@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { QuantitySelector } from './QuantitySelector';
 import { Product } from '@/lib/types/product';
 import { addItemToCart } from '@/lib/utils/local-storage';
+import BuyNowButton from '../shared/BuyNowButton';
 
 // Note: Replace 'any' with your actual Product type from Prisma
 interface ProductDetailsProps {
@@ -83,10 +84,20 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
 
       {/* Action Buttons */}
       <div className='flex space-x-4 pt-4'>
-        <Button className='flex-1 rounded-lg bg-green-600 py-6 text-lg font-semibold hover:bg-green-700'>
+        {/* <Button className='flex-1 rounded-lg bg-green-600 py-6 text-lg font-semibold hover:bg-green-700'>
           Buy Now
-        </Button>
-        <Button
+        </Button> */}
+        <BuyNowButton
+          product={{
+            id: product.id,
+            image: product.images[0] || '',
+            name: product.name,
+            price: product.price,
+            salePrice: product.salePrice ?? null
+          }}
+          className='flex-1 rounded-lg bg-green-600 py-6 text-lg font-semibold hover:bg-green-700'
+        />
+        {/* <Button
           onClick={e => {
             e.preventDefault();
             e.stopPropagation();
@@ -96,7 +107,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
           className='flex-1 rounded-lg border-2 border-green-600 py-6 text-lg font-semibold text-green-600 hover:bg-green-50'
         >
           Add to Cart
-        </Button>
+        </Button> */}
       </div>
 
       {/* Shipping/Payment Icons */}
