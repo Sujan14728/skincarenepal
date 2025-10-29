@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { LuMenu } from 'react-icons/lu';
-import CartBadge from './cart/CartBadge';
+// import CartBadge from './cart/CartBadge';
 
 // Define your navigation links
 const navLinks = [

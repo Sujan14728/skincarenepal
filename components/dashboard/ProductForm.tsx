@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 import { Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import 'suneditor/dist/css/suneditor.min.css';
 
 const SunEditor = dynamic(() => import('suneditor-react'), {
   ssr: false
