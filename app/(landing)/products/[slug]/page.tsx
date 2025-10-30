@@ -9,47 +9,39 @@ import { Metadata } from 'next';
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
-
+export const dynamic = 'force-dynamic';
 export const revalidate = 60;
 
 export async function generateStaticParams() {
-  const products = await prisma.product.findMany({
-    select: { slug: true }
-  });
-
-  return products.map(p => ({ slug: p.slug }));
+  return [];
 }
 
-export async function generateMetadata({
-  params
-}: ProductPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = await prisma.product.findUnique({
-    where: { slug }
-  });
 
-  if (!product) return {}; // fallback metadata
+  try {
+    const product = await prisma.product.findUnique({ where: { slug } });
+    if (!product) return { title: 'Product not found' };
 
-  return {
-    title: product.name,
-    description: product.excerpt || product.description || '',
-    openGraph: {
+    return {
       title: product.name,
       description: product.excerpt || product.description || '',
-      images: product.images.map(src => ({
-        url: src,
-        width: 800,
-        height: 800
-      })),
-      type: 'website'
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: product.name,
-      description: product.excerpt || product.description || '',
-      images: product.images[0] ? [product.images[0]] : []
-    }
-  };
+      openGraph: {
+        title: product.name,
+        description: product.excerpt || product.description || '',
+        images: product.images.map((src) => ({ url: src, width: 800, height: 800 })),
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: product.name,
+        description: product.excerpt || product.description || '',
+        images: product.images[0] ? [product.images[0]] : [],
+      },
+    };
+  } catch (e) {
+    console.error('Failed to generate metadata for', slug, e);
+    return { title: 'Product' };
+  }
 }
 
 const ProductPage = async ({ params }: ProductPageProps) => {
