@@ -4,7 +4,8 @@
 import { ProductCard } from '@/components/landing/partial/ProductCard';
 import { prisma } from '@/lib/prisma';
 
-export const revalidate = 0;
+export const revalidate = 60;
+
 
 const ProductPage = async () => {
   const products = await prisma.product.findMany({

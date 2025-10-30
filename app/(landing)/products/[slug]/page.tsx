@@ -1,15 +1,56 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { ProductDetails } from '@/components/landing/product-page/ProductDetails';
-import { ProductImageGallery } from '@/components/landing/product-page/ProductImageGallery';
-import { ProductTabs } from '@/components/landing/product-page/ProductTabs';
+import ProductDetails from '@/components/landing/product-page/ProductDetails';
+import ProductImageGallery from '@/components/landing/product-page/ProductImageGallery';
+import ProductTabs from '@/components/landing/product-page/ProductTabs';
 import Link from 'next/link';
+import { Metadata } from 'next';
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export const revalidate = 0;
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  const products = await prisma.product.findMany({
+    select: { slug: true }
+  });
+
+  return products.map(p => ({ slug: p.slug }));
+}
+
+export async function generateMetadata({
+  params
+}: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await prisma.product.findUnique({
+    where: { slug }
+  });
+
+  if (!product) return {}; // fallback metadata
+
+  return {
+    title: product.name,
+    description: product.excerpt || product.description || '',
+    openGraph: {
+      title: product.name,
+      description: product.excerpt || product.description || '',
+      images: product.images.map(src => ({
+        url: src,
+        width: 800,
+        height: 800
+      })),
+      type: 'website'
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: product.name,
+      description: product.excerpt || product.description || '',
+      images: product.images[0] ? [product.images[0]] : []
+    }
+  };
+}
 
 const ProductPage = async ({ params }: ProductPageProps) => {
   const { slug } = await params;

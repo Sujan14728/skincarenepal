@@ -11,7 +11,7 @@ interface ProductImageGalleryProps {
   discountedPercent?: number;
 }
 
-export const ProductImageGallery = ({
+const ProductImageGallery = ({
   images,
   productName,
   hasDiscount,
@@ -33,7 +33,7 @@ export const ProductImageGallery = ({
           alt={productName}
           width={600}
           height={600}
-          className='h-[32rem] w-full object-contain scale-[0.9]'
+          className='h-[32rem] w-full scale-[0.9] object-contain'
           priority
         />
       </div>
@@ -63,3 +63,5 @@ export const ProductImageGallery = ({
     </div>
   );
 };
+
+export default ProductImageGallery;

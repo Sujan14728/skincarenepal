@@ -14,7 +14,7 @@ interface ProductDetailsProps {
   product: Product;
 }
 
-export const ProductDetails = ({ product }: ProductDetailsProps) => {
+const ProductDetails = ({ product }: ProductDetailsProps) => {
   const [quantity, setQuantity] = useState(1);
   const discountedPrice = product.salePrice?.toLocaleString();
   const originalPrice = product.price.toLocaleString();
@@ -127,3 +127,5 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
     </div>
   );
 };
+
+export default ProductDetails;
