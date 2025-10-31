@@ -37,8 +37,8 @@ export default function TeamSection() {
   }, []);
 
   return (
-    <section className='pb-10'>
-      <h2 className='mb-10 text-center text-3xl font-bold text-gray-600'>
+    <section className='mb-24 pb-10'>
+      <h2 className='mb-10 text-center text-3xl font-bold text-gray-800'>
         Meet Our Team
       </h2>
 
@@ -67,7 +67,7 @@ export default function TeamSection() {
             <div className='text-lg font-semibold text-gray-600'>
               {member.name}
             </div>
-            <div className='mb-2 text-sm font-bold text-green-700'>
+            <div className='mb-2 text-sm font-bold text-[var(--primary)]'>
               {member.title}
             </div>
           </div>

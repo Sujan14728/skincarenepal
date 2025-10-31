@@ -108,3 +108,34 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
 }
+
+
+model Contact {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  email     String
+  subject   String
+  message   String
+  status    ContactStatus @default(UNREAD)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+enum ContactStatus {
+  UNREAD
+  READ
+  REPLIED
+  ARCHIVED
+}
+
+
+model CompanyInfo {
+  id              Int      @id @default(autoincrement()) 
+  companyEmails   String[]
+  companyPhones   String[]
+  companyLocation String?
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+}

@@ -41,8 +41,8 @@ const values = [
 
 export default function ValuesSection() {
   return (
-    <section>
-      <h2 className='mb-6 text-center text-2xl font-bold text-gray-600'>
+    <section className='mb-24'>
+      <h2 className='mb-6 text-center text-3xl font-bold text-gray-800'>
         Our Values
       </h2>
 
@@ -52,7 +52,7 @@ export default function ValuesSection() {
             key={value.title}
             className='flex flex-col rounded-xl bg-white p-6 text-center shadow'
           >
-            <div className='mb-2 flex h-14 w-14 items-center justify-center rounded-xl bg-green-600 text-left text-4xl'>
+            <div className='mb-2 flex h-14 w-14 items-center justify-center rounded-xl bg-[var(--primary)] text-left text-4xl'>
               {value.icon}
             </div>
             <div className='mb-1 text-start font-bold'>{value.title}</div>
