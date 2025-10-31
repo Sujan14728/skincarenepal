@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { transporter } from '@/lib/email';
+import { sendCustomOrderEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,20 +23,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
     const order = await prisma.order.findUnique({
-      where: { id: Number(orderId) }
+      where: { id: Number(orderId) },
+      include: { items: true }
     });
     if (!order || !order.email)
       return NextResponse.json(
         { error: 'Order or email not found' },
         { status: 404 }
       );
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: order.email,
-      subject,
-      text: message,
-      html: `<p>${message}</p>`
-    });
+
+
+    await sendCustomOrderEmail(order.email, subject, message, order);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(

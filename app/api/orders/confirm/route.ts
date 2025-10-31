@@ -37,10 +37,15 @@ export async function GET(req: NextRequest) {
       }
     });
     if (updated.email) {
+      const full = await prisma.order.findUnique({
+        where: { id: updated.id },
+        include: { items: true }
+      });
       await sendOrderStatusEmail(
         updated.email,
         updated.orderNumber,
-        updated.status
+        updated.status,
+        full || undefined
       );
     }
     return NextResponse.redirect(

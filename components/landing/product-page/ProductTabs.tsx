@@ -9,7 +9,7 @@ interface ProductTabsProps {
   product: Product;
 }
 
-export const ProductTabs = ({ product }: ProductTabsProps) => {
+const ProductTabs = ({ product }: ProductTabsProps) => {
   console.log(product);
   return (
     <div className='mt-12 rounded-lg p-4 shadow-lg'>
@@ -121,3 +121,5 @@ export const ProductTabs = ({ product }: ProductTabsProps) => {
     </div>
   );
 };
+
+export default ProductTabs;

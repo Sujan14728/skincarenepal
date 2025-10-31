@@ -1,15 +1,48 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { ProductDetails } from '@/components/landing/product-page/ProductDetails';
-import { ProductImageGallery } from '@/components/landing/product-page/ProductImageGallery';
-import { ProductTabs } from '@/components/landing/product-page/ProductTabs';
+import ProductDetails from '@/components/landing/product-page/ProductDetails';
+import ProductImageGallery from '@/components/landing/product-page/ProductImageGallery';
+import ProductTabs from '@/components/landing/product-page/ProductTabs';
 import Link from 'next/link';
+import { Metadata } from 'next';
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
+export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
-export const revalidate = 0;
+export async function generateStaticParams() {
+  return [];
+}
+
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+
+  try {
+    const product = await prisma.product.findUnique({ where: { slug } });
+    if (!product) return { title: 'Product not found' };
+
+    return {
+      title: product.name,
+      description: product.excerpt || product.description || '',
+      openGraph: {
+        title: product.name,
+        description: product.excerpt || product.description || '',
+        images: product.images.map((src) => ({ url: src, width: 800, height: 800 })),
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: product.name,
+        description: product.excerpt || product.description || '',
+        images: product.images[0] ? [product.images[0]] : [],
+      },
+    };
+  } catch (e) {
+    console.error('Failed to generate metadata for', slug, e);
+    return { title: 'Product' };
+  }
+}
 
 const ProductPage = async ({ params }: ProductPageProps) => {
   const { slug } = await params;

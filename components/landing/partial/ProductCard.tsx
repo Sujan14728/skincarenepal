@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import AddToCartButton from '../shared/AddToCartButton';
+import BuyNowButton from '../shared/BuyNowButton';
 
 interface ProductCardProps {
   id: number;
@@ -97,7 +98,8 @@ export function ProductCard({
               </span>
             )}
           </div>
-          <AddToCartButton product={{ id, image, name, price, salePrice }} />
+          {/* <AddToCartButton product={{ id, image, name, price, salePrice }} /> */}
+          <BuyNowButton product={{ id, image, name, price, salePrice }} />
         </div>
       </div>
     </Link>

@@ -3,8 +3,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { LuMenu } from 'react-icons/lu';
-import Image from 'next/image';
-import CartBadge from './cart/CartBadge';
+// import CartBadge from './cart/CartBadge';
 
 // Define your navigation links
 const navLinks = [
@@ -12,22 +11,25 @@ const navLinks = [
   { href: '/products', label: 'Products' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' }
-  // { href: '/careers', label: 'Careers' }
 ];
 
 export function NavBar() {
   return (
-    <nav className='border-border bg-background text-muted-foreground flex items-center justify-between border-b px-4'>
+    <nav className='border-border bg-background text-muted-foreground flex h-20 items-center justify-between border-b px-4'>
       <div className='flex items-center space-x-2'>
-        <div className='bg-primary text-primary-foreground flex h-20 w-20 items-center justify-center'>
-          <Image
+        <div className='text-primary flex items-center justify-center gap-2'>
+          {/* <Image
             height={24}
             width={24}
             alt='Care And Clean Nepal'
             src={'/images/logo.jpg'}
             className='h-full w-full'
             unoptimized
-          />
+          /> */}
+          <div className='border-muted-foreground flex flex-col items-center'>
+            <span className='text-md font-semibold'>Care and Clean</span>
+            <span className='text-xs'>Nepal</span>
+          </div>
         </div>
       </div>
 
@@ -44,13 +46,7 @@ export function NavBar() {
       </div>
 
       <div className='flex items-center space-x-4'>
-        <Link
-          href='/orders'
-          className='hover:text-primary hidden transition-colors md:block'
-        >
-          Orders
-        </Link>
-        <CartBadge />
+        {/* <CartBadge /> */}
 
         <div className='md:hidden'>
           <Sheet>
@@ -60,7 +56,7 @@ export function NavBar() {
               </Button>
             </SheetTrigger>
             <SheetContent side='right'>
-              <div className='flex flex-col space-y-4 pt-8'>
+              <div className='mx-5 flex flex-col space-y-4 pt-8'>
                 {navLinks.map(link => (
                   <Link
                     key={link.href}
@@ -70,12 +66,6 @@ export function NavBar() {
                     {link.label}
                   </Link>
                 ))}
-                <Link
-                  href='/orders'
-                  className='hover:text-primary text-lg transition-colors'
-                >
-                  Orders
-                </Link>
               </div>
             </SheetContent>
           </Sheet>
