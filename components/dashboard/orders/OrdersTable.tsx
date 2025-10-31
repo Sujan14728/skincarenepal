@@ -73,6 +73,7 @@ const OrdersTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {rowsToRender.map((order: any, idx: number) => {
             if (loading) {
               return (
