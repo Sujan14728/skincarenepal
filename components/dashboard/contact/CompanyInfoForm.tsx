@@ -12,6 +12,12 @@ type CompanyInfo = {
   companyLocation?: string | null;
 };
 
+type CompanyInfoBody = {
+  companyEmails?: string[];
+  companyPhones?: string[];
+  companyLocation?: string;
+};
+
 export default function CompanyInfoForm() {
   const [form, setForm] = useState<CompanyInfo>({
     companyEmail: '',
@@ -42,7 +48,7 @@ export default function CompanyInfoForm() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const body: any = {};
+      const body: CompanyInfoBody = {};
 
       if (form.companyEmail && form.companyEmail.trim() !== '') {
         body.companyEmails = form.companyEmail.split(',').map(e => e.trim());
@@ -73,7 +79,6 @@ export default function CompanyInfoForm() {
       if (res.ok && data.success) {
         toast.success('Company info updated');
 
-        // Reset form fields to empty
         setForm({
           companyEmail: '',
           companyPhone: '',

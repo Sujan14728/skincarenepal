@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import { Mail, Phone, MapPin, Clock, Send } from 'lucide-react';
 
 type CompanyInfo = {
-  companyEmails?: string[]; // array from backend
-  companyPhones?: string[]; // array from backend
+  companyEmails?: string[];
+  companyPhones?: string[];
   companyLocation?: string | null;
   updatedAt?: string;
 };
