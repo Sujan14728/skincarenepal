@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma, ContactStatus } from '@prisma/client';
 import { verifyToken } from '@/lib/auth';
 import { isEmail, isNonEmptyString } from '@/lib/validate';
 
@@ -49,6 +50,7 @@ export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get('token')?.value ?? '';
     const user = await verifyToken(token);
+
     if (!user || !user.isAdmin) {
       return NextResponse.json(
         { error: 'unauthorized access required' },
@@ -64,8 +66,16 @@ export async function GET(req: NextRequest) {
     const status = url.searchParams.get('status');
     const q = url.searchParams.get('q');
 
-    const where: any = {};
-    if (status) where.status = status;
+    const where: Prisma.ContactWhereInput = {};
+
+    // ✅ FIX: Use ContactStatus directly
+    if (
+      status &&
+      Object.values(ContactStatus).includes(status as ContactStatus)
+    ) {
+      where.status = status as ContactStatus;
+    }
+
     if (q) {
       where.OR = [
         { name: { contains: q, mode: 'insensitive' } },
@@ -74,6 +84,7 @@ export async function GET(req: NextRequest) {
         { message: { contains: q, mode: 'insensitive' } }
       ];
     }
+
     const [total, contacts] = await Promise.all([
       prisma.contact.count({ where }),
       prisma.contact.findMany({
@@ -83,6 +94,7 @@ export async function GET(req: NextRequest) {
         take: limit
       })
     ]);
+
     return NextResponse.json({
       total,
       page,

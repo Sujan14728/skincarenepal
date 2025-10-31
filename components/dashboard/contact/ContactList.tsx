@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ContactDetails } from './ContactDetails';
@@ -21,7 +21,7 @@ export default function ContactList() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const fetchContacts = async () => {
+  const fetchContacts = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/contact?q=${search}`);
@@ -33,11 +33,11 @@ export default function ContactList() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search]);
 
   useEffect(() => {
     fetchContacts();
-  }, []);
+  }, [fetchContacts]);
 
   // Delete contact
   const handleDelete = async (id: number) => {
@@ -54,7 +54,7 @@ export default function ContactList() {
       } else {
         toast.error(data.error || 'Failed to delete contact');
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to delete contact');
     }
   };

@@ -13,7 +13,7 @@ function isValidImageKitUrl(url: unknown): boolean {
 // =====================================
 // GET all members
 // =====================================
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     // Add connection retry logic
     let retries = 3;

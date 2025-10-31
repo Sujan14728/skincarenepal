@@ -80,7 +80,7 @@ export default function ContactPage() {
         Get In Touch
       </h1>
       <p className='mb-8 max-w-lg text-center text-gray-600'>
-        Have a question or feedback? We'd love to hear from you. Send us a
+        Have a question or feedback? We&apos;d love to hear from you. Send us a
         message and we’ll respond as soon as possible.
       </p>
 

@@ -1,30 +1,34 @@
-// app/api/dashboard/contacts/[id]/route.ts
 import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
+import { ContactStatus, Prisma } from '@prisma/client';
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+type Context = { params: { id: string } };
+
+export async function GET(req: NextRequest, context: Context) {
+  const { params } = context;
+  const id = Number(params.id);
+
   try {
     const token = req.cookies.get('token')?.value ?? '';
     const user = await verifyToken(token);
+
     if (!user || !user.isAdmin)
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 401 }
       );
 
-    const id = Number(params.id);
     const contact = await prisma.contact.findUnique({ where: { id } });
     if (!contact)
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    // Optionally mark as READ when admin views
-    if (contact.status === 'UNREAD') {
-      await prisma.contact.update({ where: { id }, data: { status: 'READ' } });
-      contact.status = 'READ';
+    if (contact.status === ContactStatus.UNREAD) {
+      await prisma.contact.update({
+        where: { id },
+        data: { status: ContactStatus.READ }
+      });
+      contact.status = ContactStatus.READ;
     }
 
     return NextResponse.json({ contact });
@@ -34,10 +38,10 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, context: Context) {
+  const { params } = context;
+  const id = Number(params.id);
+
   try {
     const token = req.cookies.get('token')?.value ?? '';
     const user = await verifyToken(token);
@@ -47,17 +51,25 @@ export async function PATCH(
         { status: 401 }
       );
 
-    const id = Number(params.id);
     const body = await req.json();
-    const { status, replyMessage } = body ?? {}; // status should be one of enum values
+    const { status, replyMessage } = body ?? {};
 
-    const data: any = {};
-    if (status) data.status = status;
-    if (replyMessage)
-      data.message = `${(await prisma.contact.findUnique({ where: { id } })).message}\n\n---\nReply:\n${replyMessage}`;
+    const data: Prisma.ContactUpdateInput = {};
 
-    // If replying, you might want to send an email via your mailer here and set status to REPLIED
-    if (replyMessage && !status) data.status = 'REPLIED';
+    if (status && Object.values(ContactStatus).includes(status)) {
+      data.status = status as ContactStatus;
+    }
+
+    if (replyMessage) {
+      const existingContact = await prisma.contact.findUnique({
+        where: { id }
+      });
+      if (!existingContact)
+        return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+      data.message = `${existingContact.message}\n\n---\nReply:\n${replyMessage}`;
+      if (!status) data.status = ContactStatus.REPLIED;
+    }
 
     const updated = await prisma.contact.update({ where: { id }, data });
     return NextResponse.json({ success: true, contact: updated });
@@ -67,10 +79,10 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, context: Context) {
+  const { params } = context;
+  const id = Number(params.id);
+
   try {
     const token = req.cookies.get('token')?.value ?? '';
     const user = await verifyToken(token);
@@ -80,11 +92,7 @@ export async function DELETE(
         { status: 401 }
       );
 
-    const id = Number(params.id);
-
-    // Permanently delete the contact
     await prisma.contact.delete({ where: { id } });
-
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Delete contact error:', err);

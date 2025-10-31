@@ -31,7 +31,7 @@ export default function TeamSection() {
   const [teamMembers, setTeamMembers] = useState([]);
 
   useEffect(() => {
-    fetch('/api/team-member')
+    fetch('/api/team-member', { cache: 'force-cache' })
       .then(res => res.json())
       .then(setTeamMembers);
   }, []);
