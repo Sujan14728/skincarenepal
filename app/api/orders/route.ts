@@ -22,15 +22,84 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    const url = req.nextUrl;
+    const qp = url.searchParams;
+
+    const parseNumber = (val: string | null, fallback: number) => {
+      if (!val) return fallback;
+      const n = parseInt(val, 10);
+      return Number.isFinite(n) && n > 0 ? n : fallback;
+    };
+
+    const page = parseNumber(qp.get('page'), 1);
+    const perPage = Math.min(parseNumber(qp.get('perPage'), 20), 200);
+    const skip = (page - 1) * perPage;
+
+    const orderId = qp.get('orderId')?.trim() || null;
+    const name = qp.get('name')?.trim() || null;
+    const phone = qp.get('phone')?.trim() || null;
+    const status = qp.get('status')?.trim() || null;
+    const date = qp.get('date')?.trim() || null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {};
+
+    if (orderId) {
+      where.orderNumber = orderId;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const and: any[] = [];
+
+    if (name) {
+      and.push({
+        OR: [
+          { name: { contains: name, mode: 'insensitive' } },
+          { user: { name: { contains: name, mode: 'insensitive' } } }
+        ]
+      });
+    }
+
+    if (phone) {
+      and.push({ phone: { contains: phone, mode: 'insensitive' } });
+    }
+
+    if (status) {
+      and.push({ status });
+    }
+
+    if (date) {
+      const d = new Date(date);
+      if (!Number.isNaN(d.getTime())) {
+        const start = new Date(d);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(d);
+        end.setHours(23, 59, 59, 999);
+        and.push({ placedAt: { gte: start, lte: end } });
+      }
+    }
+
+    if (and.length > 0) {
+      where.AND = and;
+    }
+
+    const total = await prisma.order.count({ where });
+
     const orders = await prisma.order.findMany({
+      where,
       orderBy: { placedAt: 'desc' },
+      skip,
+      take: perPage,
       include: {
         user: { select: { id: true, name: true, email: true } },
         items: { include: { product: true } }
       }
     });
 
-    return NextResponse.json(orders);
+    const totalPages = Math.max(1, Math.ceil(total / perPage));
+
+    return NextResponse.json({
+      data: orders,
+      meta: { page, perPage, total, totalPages }
+    });
   } catch (error) {
     console.error('Error fetching orders:', error);
     return NextResponse.json(
