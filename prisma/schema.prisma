@@ -139,3 +139,21 @@ model CompanyInfo {
   updatedAt       DateTime @updatedAt
   createdAt       DateTime @default(now())
 }
+
+
+model PopupContent {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  popupdetails  PopupDetails[]
+}
+
+model PopupDetails {
+  id              Int      @id @default(autoincrement())
+  name            String
+  image           String
+  popupContentId  Int
+  popupContent    PopupContent @relation(fields: [popupContentId], references: [id])
+}

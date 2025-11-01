@@ -24,7 +24,7 @@ export default function StorySection() {
           products like Face Wash, Sunscreen, and Moisturizer. Our goal is
           simple-to bring natural care and clean beauty to every home across
           Nepal.
-          <span>“Care from Nature, Clean by Choice.”</span>
+          <span> “Care from Nature, Clean by Choice.”</span>
         </p>
       </div>
 

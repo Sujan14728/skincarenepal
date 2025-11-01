@@ -180,35 +180,59 @@ export default function CheckoutClient() {
             onChange={e => setPaymentImage(e.target.files?.[0] || null)}
           />
         </Card>
-        <Card className='space-y-3 p-4'>
+        <Card className='px-4'>
           <h2 className='text-lg font-semibold'>Customer Details</h2>
-          <Input
-            placeholder='Name'
-            value={name}
-            onChange={e => setName(e.target.value)}
-          />
-          <Input
-            placeholder='Email'
-            type='email'
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-          />
-          <Input
-            placeholder='Phone'
-            type='tel'
-            value={phone}
-            onChange={e => setPhone(e.target.value)}
-          />
-          <Textarea
-            placeholder='Shipping Address'
-            value={shippingAddress}
-            onChange={e => setShippingAddress(e.target.value)}
-          />
-          <Textarea
-            placeholder='Note'
-            value={note}
-            onChange={e => setNote(e.target.value)}
-          />
+          <div className='mb-1 flex flex-col text-gray-700'>
+            <label htmlFor='name'>Name</label>
+            <Input
+              placeholder='eg. Ram Joshi'
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className='text-xs'
+            />
+          </div>
+          <div className='mb-2 flex flex-col text-gray-700'>
+            <label htmlFor='email'>Email</label>
+            <Input
+              placeholder='eg. ram12@gmial.com'
+              type='email'
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className='text-xs'
+            />
+          </div>
+
+          <div className='mb-2 flex flex-col text-gray-700'>
+            <label htmlFor='phone'>Phone</label>
+            <Input
+              placeholder='eg. 9808800808'
+              type='tel'
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              className='text-xs'
+            />
+          </div>
+
+          <div className='mb-2 flex flex-col text-gray-700'>
+            <label htmlFor='shippingaddress'>Shipping Address</label>
+            <Textarea
+              placeholder='eg. Near KKFC, Maitidevi, Kathmandu'
+              value={shippingAddress}
+              onChange={e => setShippingAddress(e.target.value)}
+              className='pt-4'
+            />
+          </div>
+
+          <div className='mb-2 flex flex-col space-y-1 text-gray-700'>
+            <label htmlFor='note'>Note</label>
+            <Textarea
+              placeholder='eg. Deliver within 4 days if possible !'
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              className='text-x pt-5'
+            />
+          </div>
+
           {singleProductMode && singleProduct && (
             <div className='space-y-2'>
               <h3 className='text-sm font-semibold'>Buying</h3>

@@ -69,6 +69,7 @@ function SidebarContent() {
           />
           <SidebarLink href='/dashboard/about' label='About Us' icon={Phone} />
           <SidebarLink href='/dashboard/contact' label='Contact' icon={Info} />
+          <SidebarLink href='/dashboard/popup' label='Popup' icon={Home} />
           <SidebarLink
             href='/dashboard/settings'
             label='Settings'
