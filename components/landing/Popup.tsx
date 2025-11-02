@@ -104,10 +104,10 @@ export default function GlobalPopupDialog() {
               transition={{ duration: 0.8, ease: 'easeInOut' }}
             >
               <DialogHeader>
-                <DialogTitle className='text-center text-2xl font-bold text-[var(--primary)]'>
+                <DialogTitle className='text-primary text-center text-2xl font-bold'>
                   {popupData.title}
                 </DialogTitle>
-                <DialogDescription className='text-center'>
+                <DialogDescription className='px-8 text-center font-semibold text-gray-600'>
                   {popupData.description}
                 </DialogDescription>
               </DialogHeader>

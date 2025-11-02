@@ -157,3 +157,11 @@ model PopupDetails {
   popupContentId  Int
   popupContent    PopupContent @relation(fields: [popupContentId], references: [id])
 }
+
+
+model Marquee {
+  id        Int      @id @default(autoincrement())
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
