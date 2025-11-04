@@ -1,6 +1,9 @@
 // components/NavBar.tsx
+'use client';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { LuMenu } from 'react-icons/lu';
 // import CartBadge from './cart/CartBadge';
@@ -14,6 +17,12 @@ const navLinks = [
 ];
 
 export function NavBar() {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
   return (
     <nav className='border-border bg-background text-muted-foreground flex h-20 items-center justify-between border-b px-4'>
       <div className='flex items-center space-x-2'>
@@ -49,7 +58,7 @@ export function NavBar() {
         {/* <CartBadge /> */}
 
         <div className='md:hidden'>
-          <Sheet>
+          <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant='ghost' size='icon'>
                 <LuMenu className='h-6 w-6' />
