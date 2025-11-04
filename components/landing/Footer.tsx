@@ -41,7 +41,7 @@ const Footer = () => {
             </p>
             <div className='flex space-x-3 pt-2'>
               <a
-                href='https://facebook.com'
+                href='https://www.facebook.com/careandcleannepal'
                 target='_blank'
                 rel='noopener noreferrer'
                 className='bg-primary hover:bg-primary/90 rounded-full p-2 transition-colors'
@@ -59,7 +59,7 @@ const Footer = () => {
                 <LuLinkedin className='text-primary-foreground h-5 w-5' />
               </a>
               <a
-                href='https://instagram.com'
+                href='https://www.instagram.com/careandclean_nepal/'
                 target='_blank'
                 rel='noopener noreferrer'
                 className='bg-primary hover:bg-primary/90 rounded-full p-2 transition-colors'

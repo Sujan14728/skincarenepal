@@ -10,7 +10,7 @@ export default function AboutPage() {
       <ValuesSection />
 
       {/* Join Our Journey */}
-      <div className='mb-16 rounded-xl bg-gradient-to-r from-green-800 to-green-600 p-8 text-center text-white'>
+      <div className='mb-16 rounded-xl bg-[var(--primary)] p-8 text-center text-white'>
         <h3 className='mb-2 text-xl font-bold'>Join Our Journey</h3>
         <p>
           Be part of a community that values natural beauty, sustainability, and
