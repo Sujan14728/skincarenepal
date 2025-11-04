@@ -3,25 +3,28 @@ import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
 import { ContactStatus, Prisma } from '@prisma/client';
 
-type Context = { params: { id: string } };
-
-export async function GET(req: NextRequest, context: Context) {
-  const { params } = context;
+// GET /api/contact/[id]
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   const id = Number(params.id);
 
   try {
     const token = req.cookies.get('token')?.value ?? '';
     const user = await verifyToken(token);
 
-    if (!user || !user.isAdmin)
+    if (!user || !user.isAdmin) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 401 }
       );
+    }
 
     const contact = await prisma.contact.findUnique({ where: { id } });
-    if (!contact)
+    if (!contact) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
 
     if (contact.status === ContactStatus.UNREAD) {
       await prisma.contact.update({
@@ -38,18 +41,22 @@ export async function GET(req: NextRequest, context: Context) {
   }
 }
 
-export async function PATCH(req: NextRequest, context: Context) {
-  const { params } = context;
+// PATCH /api/contact/[id]
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   const id = Number(params.id);
 
   try {
     const token = req.cookies.get('token')?.value ?? '';
     const user = await verifyToken(token);
-    if (!user || !user.isAdmin)
+    if (!user || !user.isAdmin) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 401 }
       );
+    }
 
     const body = await req.json();
     const { status, replyMessage } = body ?? {};
@@ -64,9 +71,9 @@ export async function PATCH(req: NextRequest, context: Context) {
       const existingContact = await prisma.contact.findUnique({
         where: { id }
       });
-      if (!existingContact)
+      if (!existingContact) {
         return NextResponse.json({ error: 'Not found' }, { status: 404 });
-
+      }
       data.message = `${existingContact.message}\n\n---\nReply:\n${replyMessage}`;
       if (!status) data.status = ContactStatus.REPLIED;
     }
@@ -79,18 +86,22 @@ export async function PATCH(req: NextRequest, context: Context) {
   }
 }
 
-export async function DELETE(req: NextRequest, context: Context) {
-  const { params } = context;
+// DELETE /api/contact/[id]
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   const id = Number(params.id);
 
   try {
     const token = req.cookies.get('token')?.value ?? '';
     const user = await verifyToken(token);
-    if (!user || !user.isAdmin)
+    if (!user || !user.isAdmin) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 401 }
       );
+    }
 
     await prisma.contact.delete({ where: { id } });
     return NextResponse.json({ success: true });

@@ -1,7 +1,7 @@
 // components/ProductCard.tsx
 import Image from 'next/image';
 import Link from 'next/link';
-import AddToCartButton from '../shared/AddToCartButton';
+// import AddToCartButton from '../shared/AddToCartButton';
 import BuyNowButton from '../shared/BuyNowButton';
 
 interface ProductCardProps {
@@ -22,7 +22,7 @@ export function ProductCard({
   name,
   excerpt,
   salePrice,
-  price,
+  price
 }: ProductCardProps) {
   const isOnSale = salePrice && price > salePrice;
   const priceFormatter = new Intl.NumberFormat('en-IN', {

@@ -42,7 +42,7 @@ export default function TeamSection() {
         Meet Our Team
       </h2>
 
-      <div className='flex flex-wrap justify-center gap-6'>
+      <div className='flex flex-wrap justify-center gap-6 md:justify-start'>
         {teamMembers.map((member: TeamMember) => (
           <div
             key={member.id}

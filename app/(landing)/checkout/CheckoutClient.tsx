@@ -28,6 +28,7 @@ export default function CheckoutClient() {
   const [note, setNote] = useState('');
   const [paymentImage, setPaymentImage] = useState<File | null>(null);
   const [placing, setPlacing] = useState(false);
+
   const search = useSearchParams();
   const buyParam = search?.get('buy');
 
@@ -86,7 +87,41 @@ export default function CheckoutClient() {
     };
   }, [buyParam]);
 
+  const isEmailValid = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const isPhoneValid = (phone: string) => /^(?:\+977)?9\d{9}$/.test(phone); // Example: Nepal phone
+
+  const isFormValid = () => {
+    if (!name.trim()) {
+      toast.error('Name is required');
+      return false;
+    }
+    if (!phone.trim()) {
+      toast.error('Phone is required');
+      return false;
+    }
+    if (!isPhoneValid(phone.trim())) {
+      toast.error('Invalid phone number');
+      return false;
+    }
+    if (email && !isEmailValid(email.trim())) {
+      toast.error('Invalid email');
+      return false;
+    }
+    if (!shippingAddress.trim()) {
+      toast.error('Shipping address is required');
+      return false;
+    }
+    if (cartItems.length === 0) {
+      toast.error('Cart is empty');
+      return false;
+    }
+    return true;
+  };
+
   const placeOrder = async () => {
+    if (!isFormValid()) return;
     try {
       setPlacing(true);
       if (!phone.trim() || !shippingAddress || cartItems.length === 0) {
@@ -141,6 +176,7 @@ export default function CheckoutClient() {
       });
       if (!res.ok) throw new Error('Order failed');
       toast.success('Order placed. Check your email to confirm.');
+
       // if we used buy-now flow, clear query and reset
       if (singleProductMode) {
         // small UX: remove buy param by navigating to /checkout without params
@@ -213,8 +249,10 @@ export default function CheckoutClient() {
             />
           </div>
 
-          <div className='mb-2 flex flex-col text-gray-700'>
-            <label htmlFor='shippingaddress'>Shipping Address</label>
+          <div className='mb-1 flex flex-col text-gray-700'>
+            <label className='pb-1' htmlFor='shippingaddress'>
+              Shipping Address
+            </label>
             <Textarea
               placeholder='eg. Near KKFC, Maitidevi, Kathmandu'
               value={shippingAddress}
