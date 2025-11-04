@@ -3,9 +3,9 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = parseInt(params.id);
+  const id = parseInt((await params).id);
   if (isNaN(id))
     return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 
@@ -25,9 +25,9 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = parseInt(params.id);
+  const id = parseInt((await params).id);
   const { text } = await req.json();
 
   if (isNaN(id))
@@ -52,9 +52,9 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = parseInt(params.id);
+  const id = parseInt((await params).id);
   if (isNaN(id))
     return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 

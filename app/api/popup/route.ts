@@ -9,7 +9,7 @@ export async function GET() {
     while (retries > 0) {
       try {
         const popups = await prisma.popupContent.findMany({
-          include: { popupdetails: true },
+          include: { PopupDetails: true },
           orderBy: { createdAt: 'desc' }
         });
         return NextResponse.json({ popups });
@@ -20,11 +20,13 @@ export async function GET() {
         // Retry on connection issues/timeouts
         const message =
           typeof err === 'object' && err !== null && 'message' in err
-            ? String((err as any).message || '')
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              String((err as any).message || '')
             : '';
         const code =
           typeof err === 'object' && err !== null && 'code' in err
-            ? String((err as any).code || '')
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              String((err as any).code || '')
             : '';
 
         if (
@@ -44,7 +46,8 @@ export async function GET() {
     console.error('Error fetching popups:', error);
     const code =
       typeof error === 'object' && error !== null && 'code' in error
-        ? String((error as any).code || '')
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          String((error as any).code || '')
         : '';
     if (code === 'P2024') {
       return NextResponse.json(
@@ -71,16 +74,17 @@ export async function POST(req: NextRequest) {
       data: {
         title,
         description: description || '',
-        popupdetails: {
+        PopupDetails: {
           create: (popupdetails || []).map(
             (d: { name: string; image: string }) => ({
               name: d.name,
               image: d.image
             })
           )
-        }
+        },
+        updatedAt: new Date()
       },
-      include: { popupdetails: true }
+      include: { PopupDetails: true }
     });
 
     return NextResponse.json(popup, { status: 201 });

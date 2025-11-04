@@ -23,7 +23,9 @@ export async function POST(req: Request) {
     if (!text)
       return NextResponse.json({ error: 'Text is required' }, { status: 400 });
 
-    const newMarquee = await prisma.marquee.create({ data: { text } });
+    const newMarquee = await prisma.marquee.create({
+      data: { text, updatedAt: new Date() }
+    });
     return NextResponse.json(newMarquee);
   } catch (err) {
     console.error(err);

@@ -3,12 +3,13 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const id = Number((await params).id);
     const popup = await prisma.popupContent.findUnique({
-      where: { id: Number(params.id) },
-      include: { popupdetails: true }
+      where: { id },
+      include: { PopupDetails: true }
     });
 
     if (!popup) {
@@ -24,25 +25,26 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { title, description, popupdetails } = await req.json();
+    const id = Number((await params).id);
 
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
     await prisma.popupDetails.deleteMany({
-      where: { popupContentId: Number(params.id) }
+      where: { popupContentId: id }
     });
 
     const popup = await prisma.popupContent.update({
-      where: { id: Number(params.id) },
+      where: { id },
       data: {
         title,
         description: description || '',
-        popupdetails: {
+        PopupDetails: {
           create: (popupdetails || []).map(
             (d: { name: string; image: string }) => ({
               name: d.name,
@@ -51,7 +53,7 @@ export async function PUT(
           )
         }
       },
-      include: { popupdetails: true }
+      include: { PopupDetails: true }
     });
 
     return NextResponse.json(popup);
@@ -63,14 +65,15 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const id = Number((await params).id);
     await prisma.popupDetails.deleteMany({
-      where: { popupContentId: Number(params.id) }
+      where: { popupContentId: id }
     });
 
-    await prisma.popupContent.delete({ where: { id: Number(params.id) } });
+    await prisma.popupContent.delete({ where: { id } });
 
     return NextResponse.json({ message: 'Popup deleted successfully' });
   } catch (error) {

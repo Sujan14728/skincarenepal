@@ -33,7 +33,8 @@ export async function POST(req: Request) {
         email: email.trim(),
         phone: phone ? String(phone).trim() : null,
         subject: subject.trim(),
-        message: message.trim()
+        message: message.trim(),
+        updatedAt: new Date()
       }
     });
     return NextResponse.json({ success: true, contact }, { status: 201 });
