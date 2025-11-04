@@ -28,6 +28,7 @@ export default function CheckoutClient() {
   const [note, setNote] = useState('');
   const [paymentImage, setPaymentImage] = useState<File | null>(null);
   const [placing, setPlacing] = useState(false);
+  const [isQrOpen, setIsQrOpen] = useState(false);
   const search = useSearchParams();
   const buyParam = search?.get('buy');
 
@@ -39,6 +40,7 @@ export default function CheckoutClient() {
   const [singleProductMode, setSingleProductMode] = useState(false);
   const [singleQty, setSingleQty] = useState<number>(1);
   const [singleProduct, setSingleProduct] = useState<Product | null>(null);
+  const [loadingProduct, setLoadingProduct] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -54,8 +56,11 @@ export default function CheckoutClient() {
   // If we have a buy param, fetch the product and use it instead of local cart
   useEffect(() => {
     if (!buyParam) return;
+
     const id = Number(buyParam);
     if (Number.isNaN(id)) return;
+    setSingleProductMode(true);
+    setLoadingProduct(true);
     let mounted = true;
     (async () => {
       try {
@@ -79,6 +84,8 @@ export default function CheckoutClient() {
         ]);
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoadingProduct(false);
       }
     })();
     return () => {
@@ -158,6 +165,17 @@ export default function CheckoutClient() {
     }
   };
 
+  const ProductSkeleton = () => (
+    <div className='flex animate-pulse items-center gap-3'>
+      <div className='h-16 w-16 rounded bg-gray-200' />
+      <div className='flex-1 space-y-2'>
+        <div className='h-5 w-32 rounded bg-gray-200' />
+        <div className='h-4 w-24 rounded bg-gray-200' />
+      </div>
+      <div className='h-9 w-20 rounded-lg bg-gray-200' />
+    </div>
+  );
+
   return (
     <div className='mx-auto max-w-4xl space-y-6 p-4'>
       <h1 className='text-2xl font-semibold'>Checkout</h1>
@@ -165,14 +183,36 @@ export default function CheckoutClient() {
         <Card className='space-y-3 p-4'>
           <h2 className='text-lg font-semibold'>Payment</h2>
           {settings?.qrImageUrl && (
-            <div className='relative h-64 w-full overflow-hidden rounded-md border'>
-              <Image
-                src={settings.qrImageUrl}
-                alt='QR'
-                fill
-                className='object-contain'
-              />
-            </div>
+            <>
+              <div
+                className='relative h-64 w-full cursor-pointer overflow-hidden rounded-md border'
+                onClick={() => setIsQrOpen(true)}
+              >
+                <Image
+                  src={settings.qrImageUrl}
+                  alt='QR'
+                  fill
+                  className='object-contain'
+                />
+              </div>
+
+              {isQrOpen && (
+                <div
+                  className='fixed inset-0 z-50 flex items-center justify-center bg-black/70'
+                  onClick={() => setIsQrOpen(false)}
+                >
+                  <div className='relative max-h-[90vh] max-w-[90vw] p-4'>
+                    <Image
+                      src={settings.qrImageUrl}
+                      alt='QR Enlarged'
+                      width={600}
+                      height={600}
+                      className='rounded shadow-lg'
+                    />
+                  </div>
+                </div>
+              )}
+            </>
           )}
           <Input
             type='file'
@@ -209,80 +249,83 @@ export default function CheckoutClient() {
             value={note}
             onChange={e => setNote(e.target.value)}
           />
-          {singleProductMode && singleProduct && (
+          {singleProductMode && (
             <div className='space-y-2'>
               <h3 className='text-sm font-semibold'>Buying</h3>
-              <div className='flex items-center gap-3'>
-                {singleProduct.images && singleProduct.images[0] ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={singleProduct.images[0]}
-                    alt={singleProduct.name}
-                    className='h-16 w-16 rounded object-cover'
-                  />
-                ) : null}
-                <div className='flex-1'>
-                  <div className='font-medium'>{singleProduct.name}</div>
-                  <div className='text-muted-foreground text-sm'>
-                    {singleProduct.salePrice ? (
-                      <div>
-                        <span className='font-semibold'>
-                          Rs. {singleProduct.salePrice}
-                        </span>{' '}
-                        <span className='text-muted-foreground text-sm line-through'>
+              {loadingProduct ? (
+                <ProductSkeleton />
+              ) : singleProduct ? (
+                <div className='flex items-center gap-3'>
+                  {singleProduct.images && singleProduct.images[0] && (
+                    <img
+                      src={singleProduct.images[0]}
+                      alt={singleProduct.name}
+                      className='h-16 w-16 rounded object-cover'
+                    />
+                  )}
+                  <div className='flex-1'>
+                    <div className='font-medium'>{singleProduct.name}</div>
+                    <div className='text-muted-foreground text-sm'>
+                      {singleProduct.salePrice ? (
+                        <div>
+                          <span className='font-semibold'>
+                            Rs. {singleProduct.salePrice}
+                          </span>{' '}
+                          <span className='text-muted-foreground text-sm line-through'>
+                            Rs. {singleProduct.price}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className='font-semibold'>
                           Rs. {singleProduct.price}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className='font-semibold'>
-                        Rs. {singleProduct.price}
-                      </div>
-                    )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <div className='flex items-center gap-2'>
+                      <button
+                        className='rounded border px-2'
+                        onClick={() => {
+                          if (singleQty <= 1) return;
+                          setSingleQty(q => {
+                            const next = q - 1;
+                            setCartItems(items =>
+                              items.map(it =>
+                                it.id === singleProduct.id
+                                  ? { ...it, quantity: next }
+                                  : it
+                              )
+                            );
+                            return next;
+                          });
+                        }}
+                      >
+                        -
+                      </button>
+                      <div className='w-8 text-center'>{singleQty}</div>
+                      <button
+                        className='rounded border px-2'
+                        onClick={() => {
+                          setSingleQty(q => {
+                            const next = q + 1;
+                            setCartItems(items =>
+                              items.map(it =>
+                                it.id === singleProduct.id
+                                  ? { ...it, quantity: next }
+                                  : it
+                              )
+                            );
+                            return next;
+                          });
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <div className='flex items-center gap-2'>
-                    <button
-                      className='rounded border px-2'
-                      onClick={() => {
-                        if (singleQty <= 1) return;
-                        setSingleQty(q => {
-                          const next = q - 1;
-                          setCartItems(items =>
-                            items.map(it =>
-                              it.id === singleProduct.id
-                                ? { ...it, quantity: next }
-                                : it
-                            )
-                          );
-                          return next;
-                        });
-                      }}
-                    >
-                      -
-                    </button>
-                    <div className='w-8 text-center'>{singleQty}</div>
-                    <button
-                      className='rounded border px-2'
-                      onClick={() => {
-                        setSingleQty(q => {
-                          const next = q + 1;
-                          setCartItems(items =>
-                            items.map(it =>
-                              it.id === singleProduct.id
-                                ? { ...it, quantity: next }
-                                : it
-                            )
-                          );
-                          return next;
-                        });
-                      }}
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              </div>
+              ) : null}
             </div>
           )}
           <Button className='w-full' onClick={placeOrder} disabled={placing}>
