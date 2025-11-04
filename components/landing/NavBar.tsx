@@ -1,6 +1,9 @@
 // components/NavBar.tsx
+'use client';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { LuMenu } from 'react-icons/lu';
 import Image from 'next/image';
@@ -15,16 +18,22 @@ const navLinks = [
 ];
 
 export function NavBar() {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
   return (
     <nav className='border-border bg-background text-muted-foreground flex h-20 items-center justify-between border-b px-4'>
       <div className='flex items-center space-x-2'>
         <div className='text-primary flex items-center justify-center'>
           <Image
             height={24}
-            width={24}
+            width={20}
             alt='Care And Clean Nepal'
             src={'/images/logo1.png'}
-            className='h-15 w-18 md:h-24 md:w-30'
+            className='h-15 w-18 md:h-28 md:w-25'
             unoptimized
           />
           <div className='border-muted-foreground flex flex-col items-center'>
@@ -54,7 +63,7 @@ export function NavBar() {
         {/* <CartBadge /> */}
 
         <div className='md:hidden'>
-          <Sheet>
+          <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant='ghost' size='icon'>
                 <LuMenu className='h-6 w-6' />

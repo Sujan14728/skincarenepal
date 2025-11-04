@@ -67,26 +67,6 @@ export function ProductCard({
           {excerpt}
         </p>
 
-        {/* {keyBenefits && keyBenefits.length > 0 && (
-          <div className='mb-4 flex flex-col gap-2'>
-            <div className='text-muted-foreground text-sm'>Key Benefits:</div>
-            <div className='flex gap-2 flex-wrap'>
-              {keyBenefits.map(benefit => {
-                if (!benefit || benefit.trim() === '') return null;
-                return (
-                  <Badge
-                    key={benefit}
-                    variant='default'
-                    className='px-2 py-1 text-xs'
-                  >
-                    {benefit}
-                  </Badge>
-                );
-              })}
-            </div>
-          </div>
-        )} */}
-
         <div className='mt-auto flex items-center justify-between pt-2'>
           <div className='flex flex-col'>
             <span className='text-foreground text-xl font-bold'>
