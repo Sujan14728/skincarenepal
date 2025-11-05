@@ -9,6 +9,14 @@ import { Upload, X } from 'lucide-react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import 'suneditor/dist/css/suneditor.min.css';
+import { ProductStatus } from '@/lib/enum/product';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '../ui/select';
 const SunEditor = dynamic(() => import('suneditor-react'), {
   ssr: false
 });
@@ -26,6 +34,7 @@ interface Product {
   salePrice?: number | null;
   stock: number;
   images: string[];
+  status: ProductStatus;
 }
 
 interface ProductFormProps {
@@ -45,7 +54,8 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
     price: product?.price || 0,
     salePrice: product?.salePrice || undefined,
     stock: product?.stock || 0,
-    images: product?.images || []
+    images: product?.images || [],
+    status: product?.status || 'IN_STOCK'
   });
 
   const [uploading, setUploading] = useState(false);
@@ -488,6 +498,26 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
         <p className='text-muted-foreground text-xs'>
           Upload up to 5 images. Supported formats: JPG, PNG (max 5MB each)
         </p>
+      </div>
+
+      <div className='flex items-center gap-4'>
+        <Label htmlFor='status'>Product Status:</Label>
+        <Select
+          value={formData.status}
+          onValueChange={value => handleInputChange('status', value)}
+        >
+          <SelectTrigger className='w-[180px]'>
+            <SelectValue placeholder='Select status' />
+          </SelectTrigger>
+
+          <SelectContent>
+            {Object.values(ProductStatus).map(status => (
+              <SelectItem key={status} value={status}>
+                {status.replaceAll('_', ' ')}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Submit */}

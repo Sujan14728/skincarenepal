@@ -14,6 +14,7 @@ const BuyNowButton = ({
     name: string;
     price: number;
     salePrice: number | null;
+    status?: string;
   };
   className?: string;
 }) => {
@@ -24,10 +25,20 @@ const BuyNowButton = ({
   };
   return (
     <Button
-      className={cn(className)}
+      className={cn(
+        className,
+        product.status === 'COMING_SOON' || product.status === 'DISCONTINUED'
+          ? 'cursor-not-allowed opacity-50'
+          : ''
+      )}
       onClick={e => {
         e.preventDefault();
         e.stopPropagation();
+        if (
+          product.status === 'COMING_SOON' ||
+          product.status === 'DISCONTINUED'
+        )
+          return;
         buyNow(product.id);
       }}
     >

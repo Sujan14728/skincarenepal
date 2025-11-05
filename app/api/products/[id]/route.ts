@@ -85,7 +85,8 @@ export async function PUT(req: NextRequest, context: Context) {
       price,
       salePrice,
       stock,
-      images
+      images,
+      status
     } = body;
 
     // Generate new slug if name changed
@@ -136,7 +137,8 @@ export async function PUT(req: NextRequest, context: Context) {
               : null
             : existingProduct.salePrice,
         stock: stock !== undefined ? parseInt(stock) : existingProduct.stock,
-        images: images !== undefined ? images : existingProduct.images
+        images: images !== undefined ? images : existingProduct.images,
+        status: status !== undefined ? status : existingProduct.status
       }
     });
 

@@ -34,6 +34,14 @@ model Product {
   keyIngredients String[]    @default([])
   suitableFor    String[]    @default([])
   orderItems     OrderItem[]
+  status         ProductStatus @default(IN_STOCK)
+}
+
+enum ProductStatus {
+  IN_STOCK
+  OUT_OF_STOCK
+  DISCONTINUED
+  COMING_SOON
 }
 
 model Order {
