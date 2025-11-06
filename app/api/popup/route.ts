@@ -20,11 +20,11 @@ export async function GET() {
         // Retry on connection issues/timeouts
         const message =
           typeof err === 'object' && err !== null && 'message' in err
-            ? String((err as any).message || '')
+            ? String(err.message || '')
             : '';
         const code =
           typeof err === 'object' && err !== null && 'code' in err
-            ? String((err as any).code || '')
+            ? String(err.code || '')
             : '';
 
         if (

@@ -8,14 +8,14 @@ export function Hero() {
       <div className='mx-auto flex flex-col-reverse items-center justify-between gap-10 px-4 sm:px-6 md:flex-row lg:px-8'>
         <div className='mb-10 w-full space-y-6 lg:mb-0 lg:w-1/2'>
           <h1 className='text-foreground text-center text-4xl leading-tight font-extrabold sm:text-5xl md:text-left lg:text-6xl'>
-            Natural Beauty
+            CARE FROM NATURE,
             <br />
-            <span className='text-primary'>From the Himalayas</span>
+            <span className='text-primary'>CLEAN BY CHOICE</span>
           </h1>
 
           <p className='text-muted-foreground mx-auto max-w-md text-center text-lg md:mx-0 md:text-left'>
-            Discover the power of nature with our premium organic skincare
-            products, crafted with love in Nepal.
+            Embrace nature’s care with Care and Clean, Nepal’s trusted natural
+            skincare brand for all skin types.
           </p>
 
           <div className='flex justify-center space-x-4 pt-4 md:justify-start'>
@@ -34,7 +34,7 @@ export function Hero() {
         </div>
 
         <div className='flex w-full justify-center lg:w-1/2 lg:justify-end'>
-          <div className='relative h-[360px] w-full overflow-hidden rounded-[1.8rem] lg:h-[480px] lg:w-[800px]'>
+          <div className='relative h-[360px] w-full overflow-hidden rounded-[1.8rem] lg:h-[480px] lg:w-[780px]'>
             <Image
               src='/images/products/facepack.jpg'
               alt='Skincare products'

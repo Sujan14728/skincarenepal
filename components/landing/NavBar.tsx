@@ -33,7 +33,7 @@ export function NavBar() {
             width={20}
             alt='Care And Clean Nepal'
             src={'/images/logo1.png'}
-            className='h-15 w-18 md:h-28 md:w-25'
+            className='h-25 w-23 md:h-28 md:w-25'
             unoptimized
           />
           <div className='border-muted-foreground flex flex-col items-center'>
