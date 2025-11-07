@@ -30,8 +30,14 @@ build:
     - echo "Node version:" && node --version
     - echo "NPM version:" && npm --version
 
-    - echo "Installing dependencies..."
-    - npm ci --legacy-peer-deps
+    - echo "Cleaning npm cache..."
+    - rm -rf node_modules package-lock.json .next
+    
+    - echo "Installing dependencies (including devDependencies)..."
+    - npm install
+    
+    - echo "Verifying PostCSS installation..."
+    - npm list postcss tailwindcss autoprefixer || echo "Some packages missing"
 
     - echo "Generating Prisma Client..."
     - npx prisma generate
