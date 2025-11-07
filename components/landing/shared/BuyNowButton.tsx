@@ -13,7 +13,7 @@ const BuyNowButton = ({
     image: string;
     name: string;
     price: number;
-    salePrice: number | null;
+    salePrice: number | null | undefined;
     status?: string;
   };
   className?: string;

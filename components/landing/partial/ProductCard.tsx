@@ -11,7 +11,7 @@ interface ProductCardProps {
   image: string;
   name: string;
   excerpt: string;
-  salePrice: number | null;
+  salePrice: number | null | undefined;
   price: number;
   keyBenefits?: string[];
   status?: ProductStatus;
@@ -87,7 +87,9 @@ export function ProductCard({
             )}
           </div>
           {/* <AddToCartButton product={{ id, image, name, price, salePrice }} /> */}
-          <BuyNowButton product={{ id, image, name, price, salePrice,status }} />
+          <BuyNowButton
+            product={{ id, image, name, price, salePrice, status }}
+          />
         </div>
       </div>
     </Link>
