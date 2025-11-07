@@ -18,6 +18,7 @@ build:
   stage: build
   image: node:20-bullseye # Use Debian-based image with all dependencies
   variables:
+    NODE_ENV: development  # ensure devDependencies installed
     DATABASE_URL: $DATABASE_URL
     IMAGEKIT_PUBLIC_KEY: $IMAGEKIT_PUBLIC_KEY
     IMAGEKIT_PRIVATE_KEY: $IMAGEKIT_PRIVATE_KEY
@@ -30,14 +31,14 @@ build:
     - echo "Node version:" && node --version
     - echo "NPM version:" && npm --version
 
-    - echo "Cleaning npm cache..."
+    - echo "Cleaning previous install & caches..."
     - rm -rf node_modules package-lock.json .next
-    
-    - echo "Installing dependencies (including devDependencies)..."
-    - npm install
-    
-    - echo "Verifying PostCSS installation..."
-    - npm list postcss tailwindcss autoprefixer || echo "Some packages missing"
+
+    - echo "Installing ALL dependencies (dev + prod)..."
+    - npm install --include=dev
+
+    - echo "PostCSS/Tailwind versions:"
+    - npm list tailwindcss postcss autoprefixer || true
 
     - echo "Generating Prisma Client..."
     - npx prisma generate
