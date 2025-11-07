@@ -11,6 +11,7 @@ cache:
 
 variables:
   NODE_ENV: 'production'
+  CI: 'true'
 
 # Build stage - Install dependencies and build the Next.js app
 build:
