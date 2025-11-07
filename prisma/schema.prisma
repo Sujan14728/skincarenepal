@@ -34,6 +34,14 @@ model Product {
   keyIngredients String[]    @default([])
   suitableFor    String[]    @default([])
   orderItems     OrderItem[]
+  status         ProductStatus @default(IN_STOCK)
+}
+
+enum ProductStatus {
+  IN_STOCK
+  OUT_OF_STOCK
+  DISCONTINUED
+  COMING_SOON
 }
 
 model Order {
@@ -74,10 +82,10 @@ model OrderItem {
 
 model SiteSetting {
   id                    Int      @id @default(1)
-  globalDiscountPercent Int      @default(25)
   freeShippingThreshold Int      @default(3000)
   qrImageUrl            String?
   updatedAt             DateTime @updatedAt
+  deliveryCost          Int?     @default(0)
 }
 
 model TeamMember {
@@ -98,6 +106,51 @@ model Value {
   updatedAt   DateTime @updatedAt
 }
 
+model CompanyInfo {
+  id              Int      @id @default(autoincrement())
+  companyLocation String?
+  updatedAt       DateTime
+  createdAt       DateTime @default(now())
+  companyEmails   String[]
+  companyPhones   String[]
+}
+
+model Contact {
+  id        Int           @id @default(autoincrement())
+  name      String
+  phone     String?
+  email     String
+  subject   String
+  message   String
+  status    ContactStatus @default(UNREAD)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime
+}
+
+model Marquee {
+  id        Int      @id @default(autoincrement())
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model PopupContent {
+  id           Int            @id @default(autoincrement())
+  title        String
+  description  String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime
+  PopupDetails PopupDetails[]
+}
+
+model PopupDetails {
+  id             Int          @id @default(autoincrement())
+  name           String
+  image          String
+  popupContentId Int
+  PopupContent   PopupContent @relation(fields: [popupContentId], references: [id])
+}
+
 enum OrderStatus {
   PENDING_CONFIRMATION
   PENDING_VERIFICATION
@@ -107,4 +160,10 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+}
+enum ContactStatus {
+  UNREAD
+  READ
+  REPLIED
+  ARCHIVED
 }

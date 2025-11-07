@@ -12,6 +12,7 @@ import OrderActions from './OrderActions';
 import OrderStatusBadge from './OrderStatusBadge';
 import { Order, OrderStatus, User } from '@prisma/client';
 import Image from 'next/image';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -37,6 +38,8 @@ export type OrderWithRelations = Order & {
 
 type Props = {
   orders: OrderWithRelations[];
+  loading?: boolean;
+  skeletonRows?: number;
   onDelete?: (orderId: number) => void;
   onView?: (orderId: number) => void;
   onStatusChange?: (orderId: number, status: OrderStatus) => void;
@@ -45,11 +48,15 @@ type Props = {
 
 const OrdersTable = ({
   orders,
+  loading = false,
+  skeletonRows = 5,
   onDelete,
   onView,
   onStatusChange,
   onEmail
 }: Props) => {
+  const rowsToRender = loading ? Array.from({ length: skeletonRows }) : orders;
+
   return (
     <div className='border-border bg-background rounded-md border'>
       <Table>
@@ -66,59 +73,95 @@ const OrdersTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {orders.map(order => (
-            <TableRow key={order.id} className='hover:bg-muted/50'>
-              <TableCell className='text-foreground font-medium'>
-                {order.orderNumber}
-              </TableCell>
-              <TableCell>{order.name ?? order.user?.name ?? '-'}</TableCell>
-              <TableCell>{order.phone ?? '-'}</TableCell>
-              <TableCell>Rs. {order.total}</TableCell>
-              <TableCell>
-                {order.placedAt
-                  ? new Date(order.placedAt).toLocaleDateString()
-                  : '-'}
-              </TableCell>
-              <TableCell>
-                {order.paymentSlipUrl ? (
-                  <a
-                    href={order.paymentSlipUrl}
-                    target='_blank'
-                    rel='noreferrer'
-                  >
-                    <Image
-                      src={order.paymentSlipUrl}
-                      alt='Payment slip'
-                      width={40}
-                      height={40}
-                      className='h-10 w-10 rounded object-cover'
-                    />
-                  </a>
-                ) : (
-                  '-'
-                )}
-              </TableCell>
-              <TableCell>
-                <div className='flex items-center gap-2'>
-                  <OrderStatusBadge status={order.status} />
-                  {onStatusChange && (
-                    <RowStatusSelect
-                      orderId={order.id}
-                      current={order.status}
-                      onConfirm={onStatusChange}
-                    />
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {rowsToRender.map((order: any, idx: number) => {
+            if (loading) {
+              return (
+                <TableRow key={`skeleton-${idx}`} className='bg-transparent'>
+                  <TableCell>
+                    <Skeleton className='h-4 w-24' />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className='h-4 w-32' />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className='h-4 w-20' />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className='h-4 w-20' />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className='h-4 w-24' />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className='h-10 w-10 rounded' />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className='h-4 w-24' />
+                  </TableCell>
+                  <TableCell className='text-right'>
+                    <div className='flex justify-end'>
+                      <Skeleton className='h-8 w-24' />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            }
+
+            return (
+              <TableRow key={order.id} className='hover:bg-muted/50'>
+                <TableCell className='text-foreground font-medium'>
+                  {order.orderNumber}
+                </TableCell>
+                <TableCell>{order.name ?? order.user?.name ?? '-'}</TableCell>
+                <TableCell>{order.phone ?? '-'}</TableCell>
+                <TableCell>Rs. {order.total}</TableCell>
+                <TableCell>
+                  {order.placedAt
+                    ? new Date(order.placedAt).toLocaleDateString()
+                    : '-'}
+                </TableCell>
+                <TableCell>
+                  {order.paymentSlipUrl ? (
+                    <a
+                      href={order.paymentSlipUrl}
+                      target='_blank'
+                      rel='noreferrer'
+                    >
+                      <Image
+                        src={order.paymentSlipUrl}
+                        alt='Payment slip'
+                        width={40}
+                        height={40}
+                        className='h-10 w-10 rounded object-cover'
+                      />
+                    </a>
+                  ) : (
+                    '-'
                   )}
-                </div>
-              </TableCell>
-              <TableCell className='text-right'>
-                <OrderActions
-                  onView={onView ? () => onView(order.id) : undefined}
-                  onDelete={onDelete ? () => onDelete(order.id) : undefined}
-                  onEmail={onEmail ? () => onEmail(order.id) : undefined}
-                />
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+                <TableCell>
+                  <div className='flex items-center gap-2'>
+                    <OrderStatusBadge status={order.status} />
+                    {onStatusChange && (
+                      <RowStatusSelect
+                        orderId={order.id}
+                        current={order.status}
+                        onConfirm={onStatusChange}
+                      />
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className='text-right'>
+                  <OrderActions
+                    onView={onView ? () => onView(order.id) : undefined}
+                    onDelete={onDelete ? () => onDelete(order.id) : undefined}
+                    onEmail={onEmail ? () => onEmail(order.id) : undefined}
+                  />
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

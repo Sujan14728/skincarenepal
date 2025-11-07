@@ -1,8 +1,12 @@
 // components/NavBar.tsx
+'use client';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { LuMenu } from 'react-icons/lu';
+import Image from 'next/image';
 // import CartBadge from './cart/CartBadge';
 
 // Define your navigation links
@@ -14,21 +18,31 @@ const navLinks = [
 ];
 
 export function NavBar() {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
   return (
     <nav className='border-border bg-background text-muted-foreground flex h-20 items-center justify-between border-b px-4'>
       <div className='flex items-center space-x-2'>
-        <div className='text-primary flex items-center justify-center gap-2'>
-          {/* <Image
+        <div className='text-primary flex items-center justify-center'>
+          <Image
             height={24}
-            width={24}
+            width={20}
             alt='Care And Clean Nepal'
-            src={'/images/logo.jpg'}
-            className='h-full w-full'
+            src={'/images/logo1.png'}
+            className='h-15 w-18 md:h-28 md:w-25'
             unoptimized
-          /> */}
+          />
           <div className='border-muted-foreground flex flex-col items-center'>
-            <span className='text-md font-semibold'>Care and Clean</span>
-            <span className='text-xs'>Nepal</span>
+            <span className='text-lg font-extrabold md:text-xl'>
+              Care and Clean Pvt Ltd
+            </span>
+            <span className='text-xs font-semibold text-gray-500'>
+              Care from Nature, Clean by Choice.
+            </span>
           </div>
         </div>
       </div>
@@ -49,7 +63,7 @@ export function NavBar() {
         {/* <CartBadge /> */}
 
         <div className='md:hidden'>
-          <Sheet>
+          <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant='ghost' size='icon'>
                 <LuMenu className='h-6 w-6' />

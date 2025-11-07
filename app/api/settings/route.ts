@@ -10,13 +10,13 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { globalDiscountPercent, freeShippingThreshold, qrImageUrl } =
+    const { deliveryCost, freeShippingThreshold, qrImageUrl } =
       await req.json();
 
     const updated = await prisma.siteSetting.upsert({
       where: { id: 1 },
-      update: { globalDiscountPercent, freeShippingThreshold, qrImageUrl },
-      create: { globalDiscountPercent, freeShippingThreshold, qrImageUrl },
+      update: { deliveryCost, freeShippingThreshold, qrImageUrl },
+      create: { deliveryCost, freeShippingThreshold, qrImageUrl },
     });
 
     return NextResponse.json(updated);

@@ -1,8 +1,9 @@
 // components/ProductCard.tsx
 import Image from 'next/image';
 import Link from 'next/link';
-import AddToCartButton from '../shared/AddToCartButton';
+// import AddToCartButton from '../shared/AddToCartButton';
 import BuyNowButton from '../shared/BuyNowButton';
+import { ProductStatus } from '@/lib/enum/product';
 
 interface ProductCardProps {
   id: number;
@@ -10,9 +11,10 @@ interface ProductCardProps {
   image: string;
   name: string;
   excerpt: string;
-  salePrice: number | null;
+  salePrice: number | null | undefined;
   price: number;
   keyBenefits?: string[];
+  status?: ProductStatus;
 }
 
 export function ProductCard({
@@ -23,6 +25,7 @@ export function ProductCard({
   excerpt,
   salePrice,
   price,
+  status
 }: ProductCardProps) {
   const isOnSale = salePrice && price > salePrice;
   const priceFormatter = new Intl.NumberFormat('en-IN', {
@@ -51,6 +54,11 @@ export function ProductCard({
             Sale
           </span>
         )}
+        {status === 'COMING_SOON' && (
+          <span className='bg-muted text-muted-foreground absolute bottom-2 left-2 z-10 rounded-full px-3 py-1 text-xs font-semibold uppercase'>
+            Coming Soon
+          </span>
+        )}
         <Image
           src={image}
           alt={name ?? 'Product Image'}
@@ -67,26 +75,6 @@ export function ProductCard({
           {excerpt}
         </p>
 
-        {/* {keyBenefits && keyBenefits.length > 0 && (
-          <div className='mb-4 flex flex-col gap-2'>
-            <div className='text-muted-foreground text-sm'>Key Benefits:</div>
-            <div className='flex gap-2 flex-wrap'>
-              {keyBenefits.map(benefit => {
-                if (!benefit || benefit.trim() === '') return null;
-                return (
-                  <Badge
-                    key={benefit}
-                    variant='default'
-                    className='px-2 py-1 text-xs'
-                  >
-                    {benefit}
-                  </Badge>
-                );
-              })}
-            </div>
-          </div>
-        )} */}
-
         <div className='mt-auto flex items-center justify-between pt-2'>
           <div className='flex flex-col'>
             <span className='text-foreground text-xl font-bold'>
@@ -99,7 +87,9 @@ export function ProductCard({
             )}
           </div>
           {/* <AddToCartButton product={{ id, image, name, price, salePrice }} /> */}
-          <BuyNowButton product={{ id, image, name, price, salePrice }} />
+          <BuyNowButton
+            product={{ id, image, name, price, salePrice, status }}
+          />
         </div>
       </div>
     </Link>
