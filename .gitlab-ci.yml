@@ -17,10 +17,12 @@ variables:
 build:
   stage: build
   image: node:20
+  variables:
+    DATABASE_URL: $DATABASE_URL
   script:
     - echo "Installing dependencies..."
     - npm install
-    
+
     - echo "Generating Prisma Client..."
     - npx prisma generate
 
