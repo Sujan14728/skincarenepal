@@ -1,0 +1,142 @@
+stages:
+  - build
+  - deploy
+
+# Cache dependencies between jobs
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+    - .next/cache/
+
+variables:
+  NODE_ENV: "production"
+
+# Build stage - Install dependencies and build the Next.js app
+build:
+  stage: build
+  image: node:20-alpine
+  script:
+    - echo "Installing dependencies..."
+    - npm ci --prefer-offline --no-audit
+    
+    - echo "Generating Prisma Client..."
+    - npx prisma generate
+    
+    - echo "Building Next.js application..."
+    - npm run build
+    
+    - echo "Build completed successfully!"
+  artifacts:
+    paths:
+      - .next/
+      - node_modules/
+      - prisma/
+    expire_in: 1 hour
+  only:
+    - main
+    - develop
+
+# Deploy stage - Deploy to VPS
+deploy:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    
+    # Setup SSH
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
+    
+    # Add VPS to known hosts to avoid SSH prompt
+    - ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    
+  script:
+    - echo "Deploying to VPS at $VPS_HOST..."
+    
+    # Create .env file with environment variables
+    - |
+      cat > .env.production << EOF
+      NODE_ENV=production
+      DATABASE_URL=$DATABASE_URL
+      IMAGEKIT_PUBLIC_KEY=$IMAGEKIT_PUBLIC_KEY
+      IMAGEKIT_PRIVATE_KEY=$IMAGEKIT_PRIVATE_KEY
+      IMAGEKIT_URL_ENDPOINT=$IMAGEKIT_URL_ENDPOINT
+      EMAIL_USER=$EMAIL_USER
+      EMAIL_PASS=$EMAIL_PASS
+      PORT=3002
+      EOF
+    
+    # Sync files to VPS (excluding node_modules, .git, etc.)
+    - |
+      rsync -avz --delete \
+        --exclude 'node_modules' \
+        --exclude '.git' \
+        --exclude '.env*' \
+        --exclude 'public/uploads' \
+        ./ $VPS_USER@$VPS_HOST:$VPS_DEPLOY_PATH/
+    
+    # Upload .env.production separately
+    - scp .env.production $VPS_USER@$VPS_HOST:$VPS_DEPLOY_PATH/.env
+    
+    # Execute deployment commands on VPS
+    - |
+      ssh $VPS_USER@$VPS_HOST << 'ENDSSH'
+        cd $VPS_DEPLOY_PATH
+        
+        echo "Installing production dependencies..."
+        npm ci --only=production --prefer-offline --no-audit
+        
+        echo "Running database migrations..."
+        npx prisma migrate deploy
+        
+        echo "Generating Prisma Client..."
+        npx prisma generate
+        
+        echo "Creating uploads directory if not exists..."
+        mkdir -p public/uploads
+        chmod 755 public/uploads
+        
+        echo "Restarting PM2 process..."
+        pm2 restart skincarenepal || pm2 start npm --name "skincarenepal" -- start
+        pm2 save
+        
+        echo "Deployment completed successfully!"
+      ENDSSH
+    
+    - echo "✅ Application deployed to https://careandcleannp.com"
+    
+  environment:
+    name: production
+    url: https://careandcleannp.com
+  only:
+    - main
+  when: manual  # Require manual trigger for production deployments
+
+# Optional: Deploy to staging on develop branch
+deploy_staging:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
+    - ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    
+  script:
+    - echo "Deploying to staging environment..."
+    # Similar deployment steps but to a different directory/port
+    - echo "Staging deployment not configured yet"
+    
+  environment:
+    name: staging
+    url: https://staging.careandcleannp.com
+  only:
+    - develop
+  when: manual
