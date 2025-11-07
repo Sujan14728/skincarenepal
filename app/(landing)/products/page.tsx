@@ -3,24 +3,24 @@
 
 import { ProductCard } from '@/components/landing/partial/ProductCard';
 import { prisma } from '@/lib/prisma';
+import { ProductStatus } from '@/lib/enum/product';
 
 // Force dynamic rendering to avoid failing static prerender in CI when DB is unreachable
 export const dynamic = 'force-dynamic';
-// Optionally still allow background ISR if Next chooses (remove revalidate for full dynamic)
 
 const ProductPage = async () => {
   let products: Array<{
-    id: string;
+    id: number;
     slug: string;
     name: string;
     excerpt: string;
-    description: string;
+    description: string | null;
     keyBenefits: string[];
     price: number;
     salePrice: number | null;
     stock: number;
     images: string[];
-    status: string;
+    status: ProductStatus;
   }> = [];
   try {
     products = await prisma.product.findMany({
