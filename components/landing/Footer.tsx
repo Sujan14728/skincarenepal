@@ -119,7 +119,7 @@ const Footer = () => {
                 {/* Use theme primary for the icon color */}
                 <LuMapPin className='text-primary mt-0.5 h-5 w-5 flex-shrink-0' />
                 <span className='text-muted-foreground text-sm'>
-                  Dhangadhi, Kailali, Nepal
+                  Dhangadhi-3, Kailali, Nepal
                 </span>
               </li>
               <li className='flex items-start space-x-2'>
@@ -129,7 +129,7 @@ const Footer = () => {
                   // Use theme primary for the hover color
                   className='hover:text-primary text-muted-foreground text-sm transition-colors'
                 >
-                  +977 01-4567890
+                  +977 9801753033
                 </a>
               </li>
               <li className='flex items-start space-x-2'>
@@ -147,8 +147,6 @@ const Footer = () => {
 
         <div className='text-muted-foreground pt-8 text-center text-sm'>
           &copy; {currentYear} **Care and Clean Nepal**. All rights reserved.
-          Made with <span className='text-destructive-foreground'>❤️</span> in
-          Nepal
         </div>
       </div>
     </footer>
