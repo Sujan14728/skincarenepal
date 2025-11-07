@@ -18,7 +18,6 @@ build:
   stage: build
   image: node:20-bullseye # Use Debian-based image with all dependencies
   variables:
-    NODE_ENV: development  # ensure devDependencies installed
     DATABASE_URL: $DATABASE_URL
     IMAGEKIT_PUBLIC_KEY: $IMAGEKIT_PUBLIC_KEY
     IMAGEKIT_PRIVATE_KEY: $IMAGEKIT_PRIVATE_KEY
@@ -34,7 +33,7 @@ build:
     - echo "Cleaning previous install & caches..."
     - rm -rf node_modules package-lock.json .next
 
-    - echo "Installing ALL dependencies (dev + prod)..."
+    - echo "Install dependencies with dev (temporary dev mode)..."
     - npm install --include=dev
 
     - echo "PostCSS/Tailwind versions:"
@@ -43,7 +42,10 @@ build:
     - echo "Generating Prisma Client..."
     - npx prisma generate
 
-    - echo "Building Next.js application..."
+    - echo "Set production env for build"
+    - export NODE_ENV=production
+
+    - echo "Building Next.js application (production)..."
     - npm run build
 
     - echo "Build completed successfully!"
