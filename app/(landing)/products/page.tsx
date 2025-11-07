@@ -4,27 +4,44 @@
 import { ProductCard } from '@/components/landing/partial/ProductCard';
 import { prisma } from '@/lib/prisma';
 
-export const revalidate = 60;
+// Force dynamic rendering to avoid failing static prerender in CI when DB is unreachable
+export const dynamic = 'force-dynamic';
+// Optionally still allow background ISR if Next chooses (remove revalidate for full dynamic)
 
 const ProductPage = async () => {
-  const products = await prisma.product.findMany({
-    orderBy: {
-      createdAt: 'desc'
-    },
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      excerpt: true,
-      description: true,
-      keyBenefits: true,
-      price: true,
-      salePrice: true,
-      stock: true,
-      images: true,
-      status: true
-    }
-  });
+  let products: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    excerpt: string;
+    description: string;
+    keyBenefits: string[];
+    price: number;
+    salePrice: number | null;
+    stock: number;
+    images: string[];
+    status: string;
+  }> = [];
+  try {
+    products = await prisma.product.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        excerpt: true,
+        description: true,
+        keyBenefits: true,
+        price: true,
+        salePrice: true,
+        stock: true,
+        images: true,
+        status: true
+      }
+    });
+  } catch (err) {
+    console.error('Failed to load products (dynamic fallback):', err);
+  }
 
   return (
     <div className='flex min-h-screen flex-col'>
