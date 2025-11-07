@@ -1,3 +1,5 @@
+import { ProductStatus } from '../enum/product';
+
 export interface Product {
   id: number;
   name: string;
@@ -13,4 +15,5 @@ export interface Product {
   images: string[];
   createdAt: Date | string;
   updatedAt: Date | string;
+  status: ProductStatus;
 }

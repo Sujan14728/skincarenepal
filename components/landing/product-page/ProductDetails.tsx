@@ -34,7 +34,12 @@ const ProductDetails = ({ product }: ProductDetailsProps) => {
   return (
     <div className='flex flex-col space-y-6'>
       {/* Title and Rating */}
-      <h1 className='text-3xl font-bold text-gray-900'>{product.name}</h1>
+      <h1 className='text-3xl font-bold text-gray-900'>
+        {product.name}
+        {product.status === 'COMING_SOON' || product.status === 'DISCONTINUED'
+          ? ` (${product.status})`
+          : ''}
+      </h1>
 
       {/* Description Excerpt */}
       <p className='font-medium text-gray-600'>{product.excerpt}</p>
@@ -92,7 +97,8 @@ const ProductDetails = ({ product }: ProductDetailsProps) => {
             image: product.images[0] || '',
             name: product.name,
             price: product.price,
-            salePrice: product.salePrice ?? null
+            salePrice: product.salePrice ?? null,
+            status: product.status
           }}
           className='flex-1 rounded-lg bg-green-600 py-6 text-lg font-semibold hover:bg-green-700'
         />

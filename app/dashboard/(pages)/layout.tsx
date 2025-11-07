@@ -9,7 +9,9 @@ import {
   ShoppingBag,
   Settings,
   LogOut,
-  Menu
+  Menu,
+  Phone,
+  Info
 } from 'lucide-react';
 import {
   Sheet,
@@ -65,7 +67,10 @@ function SidebarContent() {
             label='Orders'
             icon={ShoppingBag}
           />
-          <SidebarLink href='/dashboard/about' label='About Us' icon={Home} />
+          <SidebarLink href='/dashboard/about' label='About Us' icon={Phone} />
+          <SidebarLink href='/dashboard/contact' label='Contact' icon={Info} />
+          <SidebarLink href='/dashboard/popup' label='Popup' icon={Home} />
+          <SidebarLink href='/dashboard/marquee' label='Marquee' icon={Info} />
           <SidebarLink
             href='/dashboard/settings'
             label='Settings'

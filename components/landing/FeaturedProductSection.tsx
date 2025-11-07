@@ -1,45 +1,42 @@
 // components/FeaturedProductsSection.tsx
+'use client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ProductCard } from './partial/ProductCard';
-
-const mockProducts = [
-  {
-    id: 1,
-    slug: 'himalayan-rose-face-cream',
-    excerpt:" Luxurious face cream enriched with Himalayan rose extracts and natural botanicals for deep hydration and a glowing complexion.",
-    image: '/images/products/facepack.jpg',
-    name: 'Himalayan Rose Face Cream',
-    description:
-      'Luxurious face cream enriched with Himalayan rose extracts and natural botanicals for deep hydration and a glowing complexion.',
-    salePrice: 1250,
-    price: 1650
-  },
-  {
-    id: 2,
-    slug: 'himalayan-rose-face-cream',
-    excerpt:" Luxurious face cream enriched with Himalayan rose extracts and natural botanicals for deep hydration and a glowing complexion.",
-    image: '/images/products/facepack.jpg',
-    name: 'Himalayan Rose Face Cream',
-    description:
-      'Luxurious face cream enriched with Himalayan rose extracts and natural botanicals for deep hydration and a glowing complexion.',
-    salePrice: 1250,
-    price: 1650
-  },
-  {
-    id: 3,
-    slug: 'himalayan-rose-face-cream',
-    excerpt:" Luxurious face cream enriched with Himalayan rose extracts and natural botanicals for deep hydration and a glowing complexion.",
-    image: '/images/products/facepack.jpg',
-    name: 'Himalayan Rose Face Cream',
-    description:
-      'Luxurious face cream enriched with Himalayan rose extracts and natural botanicals for deep hydration and a glowing complexion.',
-    salePrice: 1250,
-    price: 1650
-  }
-];
+import { useEffect, useState } from 'react';
+import { ProductCardSkeleton } from './partial/ProductCardSkeleton';
+import { Product } from '@prisma/client';
 
 export function FeaturedProductsSection() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetch('/api/products/top?limit=3')
+      .then(res => res.json())
+      .then(data => {
+        if (!mounted) return;
+        console.log(data);
+        const productsWithOrders: { product: Product; totalOrdered: number }[] =
+          data.data;
+        const items = Array.isArray(productsWithOrders)
+          ? productsWithOrders.map((d: { product: Product }) => d.product)
+          : [];
+        setProducts(items);
+      })
+      .catch(() => {
+        setProducts([]);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
   return (
     <section className='bg-secondary/10 py-16 md:py-24'>
       <div className='mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8'>
@@ -53,9 +50,18 @@ export function FeaturedProductsSection() {
         </div>
 
         <div className='mb-12 grid grid-cols-1 gap-8 md:grid-cols-3'>
-          {mockProducts.map((product, index) => (
-            <ProductCard key={index} {...product} slug={product.slug} />
-          ))}
+          {loading
+            ? [...Array(3)].map((_, i) => <ProductCardSkeleton key={i} />)
+            : products.map((product, index) => (
+                <ProductCard
+                  key={index}
+                  {...product}
+                  slug={product.slug}
+                  image={
+                    product.images[0] || '/images/products/placeholder.jpg'
+                  }
+                />
+              ))}
         </div>
 
         <Button size='lg' asChild className='shadow-lg hover:shadow-xl'>

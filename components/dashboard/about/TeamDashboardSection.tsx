@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Pencil, Trash2, Plus } from 'lucide-react';
@@ -13,30 +14,38 @@ type TeamMember = {
 export default function TeamDashboardSection() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [form, setForm] = useState({ name: '', title: '', image: '' });
-  const [_, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   // Fetch members
   const fetchMembers = async () => {
     try {
       const res = await fetch('/api/team-member');
-      if (res.ok) setMembers(await res.json());
-    } catch {
+      if (!res.ok) throw new Error('Failed to fetch members');
+      const data = await res.json();
+      setMembers(data);
+    } catch (err) {
+      console.error(err);
       alert('Failed to fetch members');
     }
   };
+
   useEffect(() => {
     fetchMembers();
   }, []);
 
-  // Handle image upload
+  // Handle image selection & upload
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    setFile(selectedFile);
+    setUploading(true);
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', selectedFile);
     formData.append('folder', 'members/images');
     formData.append('useUniqueFileName', 'true');
 
@@ -44,56 +53,73 @@ export default function TeamDashboardSection() {
       const res = await fetch('/api/media/upload', {
         method: 'POST',
         body: formData,
-        credentials: 'include' // ensures JWT cookie is sent
+        credentials: 'include'
       });
 
       const data = await res.json();
 
       if (!res.ok) {
         console.error('Upload failed:', data.error);
+        setUploading(false);
         return;
       }
 
-      // set uploaded image URL in form state
       setForm(prev => ({ ...prev, image: data.url }));
     } catch (err) {
       console.error('Upload error:', err);
+    } finally {
+      setUploading(false);
     }
   };
 
-  // Add or update
+  // Add or update member
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const method = editingId ? 'PUT' : 'POST';
     const body = editingId ? { id: editingId, ...form } : form;
 
-    const res = await fetch('/api/team-member', {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
+    try {
+      const res = await fetch('/api/team-member', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
 
-    if (res.ok) {
-      fetchMembers();
+      if (!res.ok) throw new Error('Save failed');
+
+      await fetchMembers();
       resetForm();
-    } else alert('Save failed');
+    } catch (err) {
+      console.error(err);
+      alert('Save failed');
+    }
   };
 
-  // Delete
+  // Delete member
   const handleDelete = async (id: number) => {
     if (!confirm('Delete this member?')) return;
-    await fetch('/api/team-member', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
-    });
-    fetchMembers();
+
+    try {
+      const res = await fetch('/api/team-member', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+
+      if (!res.ok) throw new Error('Delete failed');
+
+      await fetchMembers();
+    } catch (err) {
+      console.error(err);
+      alert('Delete failed');
+    }
   };
 
-  // Edit
-  const handleEdit = (m: TeamMember) => {
-    setForm({ name: m.name, title: m.title, image: m.image });
-    setEditingId(m.id);
+  // Edit member
+  const handleEdit = (member: TeamMember) => {
+    setForm({ name: member.name, title: member.title, image: member.image });
+    setFile(null);
+    setEditingId(member.id);
     setShowForm(true);
   };
 
@@ -107,6 +133,7 @@ export default function TeamDashboardSection() {
 
   return (
     <section className='mx-auto max-w-3xl py-8'>
+      {/* Header */}
       <div className='mb-4 flex items-center justify-between'>
         <h2 className='text-2xl font-bold text-gray-700'>Team Members</h2>
         {!showForm && (
@@ -119,6 +146,7 @@ export default function TeamDashboardSection() {
         )}
       </div>
 
+      {/* Form */}
       {showForm && (
         <form
           onSubmit={handleSubmit}
@@ -144,10 +172,13 @@ export default function TeamDashboardSection() {
             onChange={handleFileChange}
             className='w-full border p-2'
           />
-          {form.image && (
+          {uploading && (
+            <div className='text-sm text-gray-500'>Uploading image...</div>
+          )}
+          {(file || form.image) && (
             <div className='flex justify-center'>
               <Image
-                src={form.image}
+                src={form.image || URL.createObjectURL(file!)}
                 alt='Preview'
                 width={64}
                 height={64}
@@ -159,6 +190,7 @@ export default function TeamDashboardSection() {
             <button
               type='submit'
               className='rounded bg-green-700 px-4 py-2 text-white'
+              disabled={uploading}
             >
               {editingId ? 'Update' : 'Add'}
             </button>
@@ -173,37 +205,38 @@ export default function TeamDashboardSection() {
         </form>
       )}
 
+      {/* Members List */}
       <ul className='space-y-3'>
-        {members.map(m => (
+        {members.map(member => (
           <li
-            key={m.id}
+            key={member.id}
             className='flex items-center gap-4 rounded-lg border p-3 shadow-sm'
           >
-            {m.image ? (
+            {member.image ? (
               <Image
-                src={m.image}
-                alt={m.name}
+                src={member.image}
+                alt={member.name}
                 width={60}
                 height={60}
                 className='rounded-full object-cover'
               />
             ) : (
               <div className='flex h-[60px] w-[60px] items-center justify-center rounded-full bg-gray-200'>
-                {m.name[0].toUpperCase()}
+                {member.name[0].toUpperCase()}
               </div>
             )}
             <div className='flex-1'>
-              <div className='font-bold'>{m.name}</div>
-              <div className='text-sm text-gray-600'>{m.title}</div>
+              <div className='font-bold'>{member.name}</div>
+              <div className='text-sm text-gray-600'>{member.title}</div>
             </div>
             <button
-              onClick={() => handleEdit(m)}
+              onClick={() => handleEdit(member)}
               className='rounded bg-blue-600 p-2 text-white hover:bg-blue-700'
             >
               <Pencil size={18} />
             </button>
             <button
-              onClick={() => handleDelete(m.id)}
+              onClick={() => handleDelete(member.id)}
               className='rounded bg-red-600 p-2 text-white hover:bg-red-700'
             >
               <Trash2 size={18} />

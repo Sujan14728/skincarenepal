@@ -1,3 +1,4 @@
+// ...existing code...
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -10,14 +11,14 @@ import { Upload, X } from 'lucide-react';
 import Image from 'next/image';
 
 interface SettingsData {
-  globalDiscountPercent: number;
+  deliveryCost: number;
   freeShippingThreshold: number;
   qrImageUrl?: string;
 }
 
 const SettingsPage = () => {
   const [settings, setSettings] = useState<SettingsData>({
-    globalDiscountPercent: 25,
+    deliveryCost: 0,
     freeShippingThreshold: 3000,
     qrImageUrl: ''
   });
@@ -32,9 +33,23 @@ const SettingsPage = () => {
       .then(res => res.json())
       .then(data => {
         if (data) {
-          setSettings(data);
+          // backward-compatible mapping:
+          // if backend still returns globalDiscountPercent, map it to deliveryCost fallback
+          setSettings({
+            deliveryCost:
+              typeof data.deliveryCost === 'number'
+                ? data.deliveryCost
+                : typeof data.globalDiscountPercent === 'number'
+                ? data.globalDiscountPercent
+                : 0,
+            freeShippingThreshold: data.freeShippingThreshold ?? 3000,
+            qrImageUrl: data.qrImageUrl || ''
+          });
           setPreviewUrl(data.qrImageUrl || '');
         }
+      })
+      .catch(err => {
+        console.error('Failed to load settings', err);
       });
   }, []);
 
@@ -154,15 +169,15 @@ const SettingsPage = () => {
       </CardHeader>
       <CardContent className='space-y-4'>
         <div>
-          <Label htmlFor='discount'>Global Discount (%)</Label>
+          <Label htmlFor='deliveryCost'>Delivery Cost (Rs)</Label>
           <Input
-            id='discount'
+            id='deliveryCost'
             type='number'
-            value={settings.globalDiscountPercent}
+            value={settings.deliveryCost}
             onChange={e =>
               setSettings({
                 ...settings,
-                globalDiscountPercent: parseInt(e.target.value, 10)
+                deliveryCost: parseInt(e.target.value || '0', 10)
               })
             }
           />

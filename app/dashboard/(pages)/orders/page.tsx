@@ -22,41 +22,172 @@ import { Product } from '@/lib/types/product';
 const OrdersPage = () => {
   const [orders, setOrders] = useState<OrderWithRelations[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [initialLoad, setInitialLoad] = useState<boolean>(true);
+  const [page, setPage] = useState<number>(1);
+  const [perPage, setPerPage] = useState<number>(20);
+  const [total, setTotal] = useState<number>(0);
+  // totalFiltered is used for pagination/meta; globalTotal is used for the dashboard stat
+  const [globalTotal, setGlobalTotal] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [deliveredCount, setDeliveredCount] = useState<number>(0);
+  const [pendingCount, setPendingCount] = useState<number>(0);
 
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = useCallback(
+    async (
+      p: number,
+      pp: number,
+      filters?: {
+        orderId?: string;
+        name?: string;
+        phone?: string;
+        date?: string;
+        status?: string;
+      }
+    ) => {
+      try {
+        setLoading(true);
+        const qs = new URLSearchParams();
+        qs.set('page', String(p));
+        qs.set('perPage', String(pp));
+        if (filters) {
+          if (filters.orderId) qs.set('orderId', filters.orderId);
+          if (filters.name) qs.set('name', filters.name);
+          if (filters.phone) qs.set('phone', filters.phone);
+          if (filters.date) qs.set('date', filters.date);
+          if (filters.status) qs.set('status', filters.status);
+        }
+        const res = await fetch(`/api/orders?${qs.toString()}`);
+        if (!res.ok) throw new Error('Failed to fetch orders');
+        const payload: {
+          data: OrderWithRelations[];
+          meta: {
+            page: number;
+            perPage: number;
+            total: number;
+            totalPages: number;
+          };
+        } = await res.json();
+        setOrders(payload.data);
+        setTotal(payload.meta.total);
+        setTotalPages(payload.meta.totalPages);
+        setPage(payload.meta.page);
+        setPerPage(payload.meta.perPage);
+        setInitialLoad(false);
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to load orders');
+        setInitialLoad(false);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  // Filters state (controlled inputs)
+  const [filterOrderId, setFilterOrderId] = useState<string>('');
+  const [filterName, setFilterName] = useState<string>('');
+  const [filterPhone, setFilterPhone] = useState<string>('');
+  const [filterDate, setFilterDate] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<string>('');
+
+  // debouncedFilters to avoid firing on every keystroke
+  const [debouncedFilters, setDebouncedFilters] = useState({
+    orderId: '',
+    name: '',
+    phone: '',
+    date: '',
+    status: ''
+  });
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedFilters({
+        orderId: filterOrderId.trim(),
+        name: filterName.trim(),
+        phone: filterPhone.trim(),
+        date: filterDate.trim(),
+        status: filterStatus.trim()
+      });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [filterOrderId, filterName, filterPhone, filterDate, filterStatus]);
+
+  // When page/perPage or filters change, fetch orders
+  useEffect(() => {
+    fetchOrders(page, perPage, debouncedFilters);
+  }, [fetchOrders, page, perPage, debouncedFilters]);
+
+  // When filters change, reset to first page (so useEffect above will fetch)
+  useEffect(() => {
+    setPage(1);
+  }, [
+    debouncedFilters.orderId,
+    debouncedFilters.name,
+    debouncedFilters.phone,
+    debouncedFilters.date,
+    debouncedFilters.status
+  ]);
+
+  // helper to fetch counts by status using the paginated endpoint's meta.total
+  const fetchCountByStatus = useCallback(async (status: string) => {
     try {
-      setLoading(true);
-      const res = await fetch('/api/orders');
-      if (!res.ok) throw new Error('Failed to fetch orders');
-      const data: OrderWithRelations[] = await res.json();
-      setOrders(data);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to load orders');
-    } finally {
-      setLoading(false);
+      const res = await fetch(
+        `/api/orders?status=${encodeURIComponent(status)}&page=1&perPage=1`
+      );
+      if (!res.ok) return 0;
+      const payload = await res.json();
+      return payload.meta?.total ?? 0;
+    } catch {
+      return 0;
     }
   }, []);
 
+  const fetchGlobalTotal = useCallback(async () => {
+    try {
+      const res = await fetch('/api/orders?page=1&perPage=1');
+      if (!res.ok) return;
+      const payload = await res.json();
+      setGlobalTotal(payload.meta?.total ?? 0);
+    } catch (err) {
+      console.error('Failed to fetch global total', err);
+    }
+  }, []);
+
+  // update delivered and pending counts whenever page/perPage changes (or on mount)
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    let mounted = true;
+    (async () => {
+      const [delivered, pendingA] = await Promise.all([
+        fetchCountByStatus('DELIVERED'),
+        fetchCountByStatus('PENDING_CONFIRMATION')
+      ]);
+      const pendingB = await fetchCountByStatus('PROCESSING');
+      if (!mounted) return;
+      setDeliveredCount(delivered);
+      setPendingCount((pendingA ?? 0) + (pendingB ?? 0));
+    })();
+    // also fetch the overall total (unfiltered) for the dashboard stat
+    fetchGlobalTotal();
+    return () => {
+      mounted = false;
+    };
+  }, [fetchCountByStatus, page, perPage]);
 
   const stats = useMemo(() => {
-    const total = orders.length;
-    const delivered = orders.filter(o => o.status === 'DELIVERED').length;
-    const pending = orders.filter(
-      o => o.status === 'PENDING_CONFIRMATION' || o.status === 'PROCESSING'
-    ).length;
-    return { total, delivered, pending };
-  }, [orders]);
+    return {
+      total: globalTotal,
+      delivered: deliveredCount,
+      pending: pendingCount
+    };
+  }, [globalTotal, deliveredCount, pendingCount]);
 
   const handleDelete = async (orderId: number) => {
     try {
       const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete failed');
       toast.success('Order deleted');
-      fetchOrders();
+      fetchOrders(page, perPage, debouncedFilters);
     } catch {
       toast.error('Failed to delete order');
     }
@@ -106,7 +237,7 @@ const OrdersPage = () => {
     } catch {
       toast.error('Failed to update status');
       // revert by refetching
-      fetchOrders();
+      fetchOrders(page, perPage, debouncedFilters);
     }
   };
 
@@ -185,18 +316,111 @@ const OrdersPage = () => {
           <CardTitle>Orders</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {initialLoad ? (
             <div className='flex justify-center py-8'>
               <div className='h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900'></div>
             </div>
           ) : (
-            <OrdersTable
-              orders={orders}
-              onDelete={handleDelete}
-              onView={handleView}
-              onStatusChange={handleStatusChange}
-              onEmail={id => openEmailDialog(id)}
-            />
+            <div>
+              <div className='mb-4 grid grid-cols-1 gap-2 md:grid-cols-5'>
+                <Input
+                  placeholder='Order #'
+                  value={filterOrderId}
+                  onChange={e => setFilterOrderId(e.target.value)}
+                />
+                <Input
+                  placeholder='Customer name'
+                  value={filterName}
+                  onChange={e => setFilterName(e.target.value)}
+                />
+                <Input
+                  placeholder='Phone'
+                  value={filterPhone}
+                  onChange={e => setFilterPhone(e.target.value)}
+                />
+                <Input
+                  type='date'
+                  value={filterDate}
+                  onChange={e => setFilterDate(e.target.value)}
+                />
+                <div className='flex items-center gap-2'>
+                  <select
+                    className='w-full rounded border px-2 py-1 text-sm'
+                    value={filterStatus}
+                    onChange={e => setFilterStatus(e.target.value)}
+                  >
+                    <option value=''>All statuses</option>
+                    <option value='PENDING_CONFIRMATION'>
+                      Pending Confirmation
+                    </option>
+                    <option value='PENDING_VERIFICATION'>
+                      Pending Verification
+                    </option>
+                    <option value='VERIFIED'>Verified</option>
+                    <option value='REJECTED'>Rejected</option>
+                    <option value='PROCESSING'>Processing</option>
+                    <option value='SHIPPED'>Shipped</option>
+                    <option value='DELIVERED'>Delivered</option>
+                    <option value='CANCELLED'>Cancelled</option>
+                  </select>
+                  <button
+                    className='rounded border px-3 py-1 text-sm'
+                    onClick={() => {
+                      setFilterOrderId('');
+                      setFilterName('');
+                      setFilterPhone('');
+                      setFilterDate('');
+                      setFilterStatus('');
+                    }}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+              <OrdersTable
+                orders={orders}
+                loading={loading}
+                skeletonRows={perPage}
+                onDelete={handleDelete}
+                onView={handleView}
+                onStatusChange={handleStatusChange}
+                onEmail={id => openEmailDialog(id)}
+              />
+
+              <div className='mt-4 flex items-center justify-between'>
+                <div className='text-muted-foreground text-sm'>
+                  Showing page {page} of {totalPages} — {total} orders
+                </div>
+                <div className='flex items-center gap-2'>
+                  <select
+                    className='rounded border px-2 py-1 text-sm'
+                    value={perPage}
+                    onChange={e => setPerPage(parseInt(e.target.value, 10))}
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                  <div className='flex items-center gap-2'>
+                    <button
+                      className='rounded border px-3 py-1 text-sm'
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page <= 1}
+                    >
+                      Prev
+                    </button>
+                    <button
+                      className='rounded border px-3 py-1 text-sm'
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      disabled={page >= totalPages}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

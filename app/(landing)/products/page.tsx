@@ -6,7 +6,6 @@ import { prisma } from '@/lib/prisma';
 
 export const revalidate = 60;
 
-
 const ProductPage = async () => {
   const products = await prisma.product.findMany({
     orderBy: {
@@ -22,7 +21,8 @@ const ProductPage = async () => {
       price: true,
       salePrice: true,
       stock: true,
-      images: true
+      images: true,
+      status: true
     }
   });
 
@@ -37,9 +37,34 @@ const ProductPage = async () => {
 
           {/* Product Grid */}
           <div className='grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
-            {products?.map((product, index) => (
-              <ProductCard key={index} {...product} image={product.images[0]} />
-            ))}
+            {products
+              ?.filter(
+                product =>
+                  product.status !== 'COMING_SOON' &&
+                  product.status !== 'DISCONTINUED'
+              )
+              ?.map((product, index) => (
+                <ProductCard
+                  key={index}
+                  {...product}
+                  image={product.images[0]}
+                />
+              ))}
+          </div>
+
+          <div className='mt-10 flex flex-col gap-5'>
+            <h1 className='text-2xl font-semibold'>Coming Soon:</h1>
+            <div className='grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
+              {products
+                ?.filter(product => product.status === 'COMING_SOON')
+                ?.map((product, index) => (
+                  <ProductCard
+                    key={index}
+                    {...product}
+                    image={product.images[0]}
+                  />
+                ))}
+            </div>
           </div>
         </div>
       </main>

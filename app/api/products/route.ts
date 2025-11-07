@@ -66,7 +66,8 @@ export async function POST(req: NextRequest) {
       price,
       salePrice,
       stock,
-      images
+      images,
+      status
     } = body;
 
     // Validate required fields
@@ -110,7 +111,8 @@ export async function POST(req: NextRequest) {
         price: parseInt(price),
         salePrice: salePrice ? parseInt(salePrice) : null,
         stock: parseInt(stock) || 0,
-        images: images || []
+        images: images || [],
+        status: status || 'IN_STOCK'
       }
     });
 
