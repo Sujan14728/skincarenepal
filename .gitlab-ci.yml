@@ -15,10 +15,7 @@ variables:
 # Build stage - Install dependencies and build the Next.js app
 build:
   stage: build
-  image: node:20-alpine
-  before_script:
-    # Install OpenSSL and other dependencies required by Prisma
-    - apk add --no-cache openssl libc6-compat
+  image: node:20
   script:
     - echo "Installing dependencies..."
     - npm ci --prefer-offline --no-audit
