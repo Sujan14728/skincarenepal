@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 // import AddToCartButton from '../shared/AddToCartButton';
 import BuyNowButton from '../shared/BuyNowButton';
+import { ProductStatus } from '@/lib/enum/product';
 
 interface ProductCardProps {
   id: number;
@@ -13,6 +14,7 @@ interface ProductCardProps {
   salePrice: number | null;
   price: number;
   keyBenefits?: string[];
+  status?: ProductStatus;
 }
 
 export function ProductCard({
@@ -22,7 +24,8 @@ export function ProductCard({
   name,
   excerpt,
   salePrice,
-  price
+  price,
+  status
 }: ProductCardProps) {
   const isOnSale = salePrice && price > salePrice;
   const priceFormatter = new Intl.NumberFormat('en-IN', {
@@ -49,6 +52,11 @@ export function ProductCard({
         {isOnSale && (
           <span className='bg-destructive text-destructive-foreground absolute top-2 right-2 z-10 rounded-full px-3 py-1 text-xs font-semibold uppercase'>
             Sale
+          </span>
+        )}
+        {status === 'COMING_SOON' && (
+          <span className='bg-muted text-muted-foreground absolute bottom-2 left-2 z-10 rounded-full px-3 py-1 text-xs font-semibold uppercase'>
+            Coming Soon
           </span>
         )}
         <Image
@@ -79,7 +87,7 @@ export function ProductCard({
             )}
           </div>
           {/* <AddToCartButton product={{ id, image, name, price, salePrice }} /> */}
-          <BuyNowButton product={{ id, image, name, price, salePrice }} />
+          <BuyNowButton product={{ id, image, name, price, salePrice,status }} />
         </div>
       </div>
     </Link>

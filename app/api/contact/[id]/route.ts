@@ -6,9 +6,9 @@ import { ContactStatus, Prisma } from '@prisma/client';
 // GET /api/contact/[id]
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = Number(params.id);
+  const id = Number((await params).id);
 
   try {
     const token = req.cookies.get('token')?.value ?? '';
@@ -44,9 +44,9 @@ export async function GET(
 // PATCH /api/contact/[id]
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = Number(params.id);
+  const id = Number((await params).id);
 
   try {
     const token = req.cookies.get('token')?.value ?? '';
@@ -89,9 +89,9 @@ export async function PATCH(
 // DELETE /api/contact/[id]
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = Number(params.id);
+  const id = Number((await params).id);
 
   try {
     const token = req.cookies.get('token')?.value ?? '';

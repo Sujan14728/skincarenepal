@@ -61,7 +61,8 @@ export async function PATCH(req: NextRequest) {
           companyPhones: Array.isArray(companyPhones)
             ? companyPhones.map(p => p.trim())
             : [],
-          companyLocation: companyLocation?.trim() || null
+          companyLocation: companyLocation?.trim() || null,
+          updatedAt: new Date()
         }
       });
       return NextResponse.json({ success: true, companyInfo });

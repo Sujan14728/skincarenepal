@@ -1,23 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// GET /api/popup/[id]
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const contact = await prisma.contact.findUnique({
-      where: { id: Number(id) }
+    const id = Number((await params).id);
+
+    const popup = await prisma.popupContent.findUnique({
+      where: { id },
+      include: { PopupDetails: true }
     });
 
-    if (!contact) {
-      return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
+    if (!popup) {
+      return NextResponse.json({ error: 'Popup not found' }, { status: 404 });
     }
 
-    return NextResponse.json(contact);
+    return NextResponse.json(popup);
   } catch (error) {
-    console.error('Error fetching contact:', error);
+    console.error('Error fetching popup:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -25,28 +28,45 @@ export async function GET(
   }
 }
 
+// PUT /api/popup/[id]
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const body = await req.json();
-    const { name, email, message, status } = body;
+    const { title, description, popupdetails } = await req.json();
+    const id = Number((await params).id);
 
-    const contact = await prisma.contact.update({
-      where: { id: Number(id) },
-      data: {
-        ...(name !== undefined && { name }),
-        ...(email !== undefined && { email }),
-        ...(message !== undefined && { message }),
-        ...(status !== undefined && { status })
-      }
+    if (!title) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+    }
+
+    // Delete old popup details first
+    await prisma.popupDetails.deleteMany({
+      where: { popupContentId: id }
     });
 
-    return NextResponse.json(contact);
+    // Update popup content and recreate its details
+    const popup = await prisma.popupContent.update({
+      where: { id },
+      data: {
+        title,
+        description: description || '',
+        PopupDetails: {
+          create: (popupdetails || []).map(
+            (d: { name: string; image: string }) => ({
+              name: d.name,
+              image: d.image
+            })
+          )
+        }
+      },
+      include: { PopupDetails: true }
+    });
+
+    return NextResponse.json(popup);
   } catch (error) {
-    console.error('Error updating contact:', error);
+    console.error('Error updating popup:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -54,20 +74,25 @@ export async function PUT(
   }
 }
 
+// DELETE /api/popup/[id]
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const id = Number((await params).id);
 
-    await prisma.contact.delete({
-      where: { id: Number(id) }
+    // Delete all related popup details first
+    await prisma.popupDetails.deleteMany({
+      where: { popupContentId: id }
     });
 
-    return NextResponse.json({ message: 'Contact deleted successfully' });
+    // Then delete the popup itself
+    await prisma.popupContent.delete({ where: { id } });
+
+    return NextResponse.json({ message: 'Popup deleted successfully' });
   } catch (error) {
-    console.error('Error deleting contact:', error);
+    console.error('Error deleting popup:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

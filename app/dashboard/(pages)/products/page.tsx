@@ -54,8 +54,7 @@ const ProductsPage = () => {
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
-    outOfStock: 0,
-    featured: 0
+    outOfStock: 0
   });
 
   // Fetch products
@@ -82,9 +81,10 @@ const ProductsPage = () => {
   const calculateStats = (productList: Product[]) => {
     const stats = {
       total: productList.length,
-      active: productList.length, // All products are considered active in your schema
-      outOfStock: productList.filter(p => p.stock === 0).length,
-      featured: 0 // No featured field in your schema
+      active: productList.filter(p => p.status === 'IN_STOCK').length,
+      outOfStock: productList.filter(
+        p => p.stock === 0 || p.status === 'OUT_OF_STOCK'
+      ).length
     };
     setStats(stats);
   };
@@ -240,6 +240,7 @@ const ProductsPage = () => {
                   <TableHead>Product</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>Stock</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className='text-right'>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -289,6 +290,19 @@ const ProductsPage = () => {
                         }`}
                       >
                         {product.stock}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`rounded-full px-2 py-1 text-sm font-medium ${
+                          product.status === 'IN_STOCK'
+                            ? 'bg-green-100 text-green-800'
+                            : product.status === 'DISCONTINUED'
+                              ? 'bg-red-100 text-red-800'
+                              : ''
+                        }`}
+                      >
+                        {product.status}
                       </span>
                     </TableCell>
                     <TableCell className='text-right'>

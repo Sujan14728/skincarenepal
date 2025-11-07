@@ -22,7 +22,7 @@ interface Popup {
   id: number;
   title: string;
   description: string;
-  popupdetails?: PopupDetail[];
+  PopupDetails?: PopupDetail[];
 }
 
 interface PopupResponse {
@@ -60,7 +60,7 @@ export default function GlobalPopupDialog() {
             title: firstPopup.title,
             description: firstPopup.description,
             products:
-              firstPopup.popupdetails?.map((d: PopupDetail) => ({
+              firstPopup.PopupDetails?.map((d: PopupDetail) => ({
                 id: d.id,
                 name: d.name,
                 image: d.image
