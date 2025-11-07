@@ -16,7 +16,7 @@ variables:
 # Build stage - Install dependencies and build the Next.js app
 build:
   stage: build
-  image: node:20-bullseye  # Use Debian-based image with all dependencies
+  image: node:20-bullseye # Use Debian-based image with all dependencies
   variables:
     DATABASE_URL: $DATABASE_URL
     IMAGEKIT_PUBLIC_KEY: $IMAGEKIT_PUBLIC_KEY
@@ -29,10 +29,10 @@ build:
   script:
     - echo "Node version:" && node --version
     - echo "NPM version:" && npm --version
-    
+
     - echo "Installing dependencies..."
     - npm ci --legacy-peer-deps
-    
+
     - echo "Generating Prisma Client..."
     - npx prisma generate
 
