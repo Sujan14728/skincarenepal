@@ -19,8 +19,8 @@ build:
   image: node:20
   script:
     - echo "Installing dependencies..."
-    - npm ci --prefer-offline --no-audit
-
+    - npm install
+    
     - echo "Generating Prisma Client..."
     - npx prisma generate
 
