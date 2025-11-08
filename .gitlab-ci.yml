@@ -170,7 +170,7 @@ deploy:
     url: https://careandcleannp.com
   only:
     - main
-  when: manual # Require manual trigger for production deployments
+  when: on_success # Automatically deploy after successful build
 
 # Optional: Deploy to staging on develop branch
 deploy_staging:
