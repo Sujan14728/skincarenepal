@@ -69,7 +69,16 @@ deploy:
     # Setup SSH - properly handle multi-line private key
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+    # If SSH_PRIVATE_KEY is a file variable, it contains a path to the temp file.
+    # If it's a normal variable, it contains the key content. Handle both.
+    - |
+      if [ -f "$SSH_PRIVATE_KEY" ]; then
+        echo "Detected file-type variable for SSH key; copying file contents..."
+        cp "$SSH_PRIVATE_KEY" ~/.ssh/id_ed25519
+      else
+        echo "Detected inline SSH key variable; writing contents..."
+        printf "%s\n" "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+      fi
     - chmod 600 ~/.ssh/id_ed25519
 
     # Add VPS to known hosts to avoid SSH prompt
@@ -146,7 +155,14 @@ deploy_staging:
     - apk add --no-cache openssh-client rsync
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+    - |
+      if [ -f "$SSH_PRIVATE_KEY" ]; then
+        echo "Detected file-type variable for SSH key; copying file contents (staging)..."
+        cp "$SSH_PRIVATE_KEY" ~/.ssh/id_ed25519
+      else
+        echo "Detected inline SSH key variable; writing contents (staging)..."
+        printf "%s\n" "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+      fi
     - chmod 600 ~/.ssh/id_ed25519
     - ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
