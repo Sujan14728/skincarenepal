@@ -72,15 +72,40 @@ deploy:
     # If SSH_PRIVATE_KEY is a file variable, it contains a path to the temp file.
     # If it's a normal variable, it contains the key content. Handle both.
     - |
+      set -e
+      KEY_PATH="/root/.ssh/id_ed25519"
+      RAW_PATH="/root/.ssh/id_ed25519.raw"
       if [ -f "$SSH_PRIVATE_KEY" ]; then
-        echo "Detected file-type variable for SSH key; copying file contents..."
-        cp "$SSH_PRIVATE_KEY" ~/.ssh/id_ed25519
+        echo "Detected file-type variable for SSH key; copying file contents...";
+        cp "$SSH_PRIVATE_KEY" "$RAW_PATH";
       else
-        echo "Detected inline SSH key variable; writing contents..."
-        printf "%s\n" "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+        echo "Detected inline SSH key variable; writing contents...";
+        printf '%s\n' "$SSH_PRIVATE_KEY" > "$RAW_PATH";
       fi
-    - chmod 600 ~/.ssh/id_ed25519
-
+      # Normalize line endings & remove CR characters
+      tr -d '\r' < "$RAW_PATH" > "$KEY_PATH"
+      # Ensure file ends with newline (some parsers expect it)
+      tail -c1 "$KEY_PATH" | read -r _ || echo >> "$KEY_PATH"
+      chmod 600 "$KEY_PATH"
+      # Basic format validation
+      if ! grep -q "BEGIN OPENSSH PRIVATE KEY" "$KEY_PATH"; then
+        echo "ERROR: Private key not in OpenSSH format (expected BEGIN OPENSSH PRIVATE KEY)." >&2
+        echo "If this is a PuTTY key, convert it or regenerate with: ssh-keygen -t ed25519 -C ci-deploy -N '' -f id_ed25519" >&2
+        exit 1
+      fi
+      # Structural validation using ssh-keygen
+      if ! ssh-keygen -y -f "$KEY_PATH" > /dev/null 2>&1; then
+        echo "ERROR: ssh-keygen unable to parse private key (possibly corrupted)." >&2
+        echo "Recreate key and update GitLab variable." >&2
+        exit 1
+      fi
+      echo "SSH key validated successfully."
+      # Pre-flight connectivity test (no command execution beyond echo)
+      if ! ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o IdentitiesOnly=yes $VPS_USER@$VPS_HOST 'echo SSH_PRECHECK_OK' 2>/dev/null; then
+        echo "WARNING: Pre-flight SSH connection failed; deployment may fail at rsync." >&2
+      else
+        echo "Pre-flight SSH connectivity OK."
+      fi
     # Add VPS to known hosts to avoid SSH prompt
     - ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
@@ -156,14 +181,33 @@ deploy_staging:
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
     - |
+      set -e
+      KEY_PATH="/root/.ssh/id_ed25519"
+      RAW_PATH="/root/.ssh/id_ed25519.raw"
       if [ -f "$SSH_PRIVATE_KEY" ]; then
-        echo "Detected file-type variable for SSH key; copying file contents (staging)..."
-        cp "$SSH_PRIVATE_KEY" ~/.ssh/id_ed25519
+        echo "Detected file-type variable for SSH key; copying file contents (staging)...";
+        cp "$SSH_PRIVATE_KEY" "$RAW_PATH";
       else
-        echo "Detected inline SSH key variable; writing contents (staging)..."
-        printf "%s\n" "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+        echo "Detected inline SSH key variable; writing contents (staging)...";
+        printf '%s\n' "$SSH_PRIVATE_KEY" > "$RAW_PATH";
       fi
-    - chmod 600 ~/.ssh/id_ed25519
+      tr -d '\r' < "$RAW_PATH" > "$KEY_PATH"
+      tail -c1 "$KEY_PATH" | read -r _ || echo >> "$KEY_PATH"
+      chmod 600 "$KEY_PATH"
+      if ! grep -q "BEGIN OPENSSH PRIVATE KEY" "$KEY_PATH"; then
+        echo "ERROR: Private key not in OpenSSH format (staging)." >&2
+        exit 1
+      fi
+      if ! ssh-keygen -y -f "$KEY_PATH" > /dev/null 2>&1; then
+        echo "ERROR: ssh-keygen unable to parse private key (staging)." >&2
+        exit 1
+      fi
+      echo "SSH key validated successfully (staging)."
+      if ! ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o IdentitiesOnly=yes $VPS_USER@$VPS_HOST 'echo SSH_PRECHECK_OK' 2>/dev/null; then
+        echo "WARNING: Pre-flight SSH connection failed (staging)." >&2
+      else
+        echo "Pre-flight SSH connectivity OK (staging)."
+      fi
     - ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
 
