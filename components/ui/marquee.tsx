@@ -19,7 +19,7 @@ export default function MarqueeFeature() {
   if (!marquees.length) {
     return (
       <div className='bg-emerald-700 py-2'>
-        <div className='mx-auto h-5 max-w-screen flex-1 animate-pulse rounded bg-emerald-600/60' />
+        <div className='max-w-screen mx-auto h-5 flex-1 animate-pulse rounded bg-emerald-600/60' />
       </div>
     );
   }

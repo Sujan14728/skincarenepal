@@ -45,12 +45,9 @@ export default function GlobalPopupDialog() {
   const [open, setOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [popupData, setPopupData] = useState<PopupData | null>(null);
+  const [hasShownOnce, setHasShownOnce] = useState(false);
 
   const pathname = usePathname();
-
-  useEffect(() => {
-    setOpen(true);
-  }, []);
 
   useEffect(() => {
     async function fetchPopup() {
@@ -71,7 +68,11 @@ export default function GlobalPopupDialog() {
               })) || []
           });
 
-          setOpen(true);
+          // Only open automatically if not shown before
+          if (!hasShownOnce) {
+            setOpen(true);
+            setHasShownOnce(true);
+          }
         } else {
           console.warn('No popup data found');
         }
@@ -81,12 +82,7 @@ export default function GlobalPopupDialog() {
     }
 
     fetchPopup();
-  }, [pathname]);
-
-  // If popupData already exists (from initial prop in future), ensure open
-  useEffect(() => {
-    if (popupData && !open) setOpen(true);
-  }, [popupData, open]);
+  }, [pathname, hasShownOnce]);
 
   // Auto-slide
   useEffect(() => {
@@ -100,22 +96,30 @@ export default function GlobalPopupDialog() {
   }, [popupData]);
 
   if (!popupData) {
-    return (
-      <AnimatePresence>
-        {open && (
-          <Dialog open={open} onOpenChange={setOpen}>
+    // Show skeleton only if we're still loading and should show popup
+    if (!hasShownOnce) {
+      return (
+        <AnimatePresence>
+          <Dialog open={true} onOpenChange={() => {}}>
             <DialogContent className='overflow-hidden rounded-2xl bg-white p-6 shadow-xl sm:max-w-[450px]'>
+              <DialogHeader>
+                <DialogTitle className='text-center text-2xl font-bold'>
+                  <span className='inline-block h-6 w-3/4 animate-pulse rounded bg-gray-200' />
+                </DialogTitle>
+                <DialogDescription className='px-8 text-center'>
+                  <span className='inline-block h-4 w-5/6 animate-pulse rounded bg-gray-200' />
+                </DialogDescription>
+              </DialogHeader>
               <div className='animate-pulse space-y-4'>
-                <div className='mx-auto h-6 w-3/4 rounded bg-gray-200' />
-                <div className='mx-auto h-4 w-5/6 rounded bg-gray-200' />
                 <div className='mx-auto mt-6 h-64 w-64 rounded-xl bg-gray-200' />
                 <div className='mx-auto h-4 w-1/2 rounded bg-gray-200' />
               </div>
             </DialogContent>
           </Dialog>
-        )}
-      </AnimatePresence>
-    );
+        </AnimatePresence>
+      );
+    }
+    return null;
   }
 
   return (
