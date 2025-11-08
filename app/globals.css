@@ -1,8 +1,8 @@
+/* Removed failing @import 'tw-animate-css'; use tailwindcss-animate plugin instead if needed */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import 'tw-animate-css';
 
 :root {
   --background: oklch(1 0 0);
