@@ -26,7 +26,15 @@ export async function GET(req: Request) {
 
   const allIds = groups.map(g => g.productId).filter(Boolean) as number[];
   if (allIds.length === 0) {
-    return NextResponse.json({ data: [] });
+    // Fallback: no orders yet — return latest available products
+    const latest = await prisma.product.findMany({
+      where: { status: { in: ['IN_STOCK', 'COMING_SOON'] } },
+      orderBy: { createdAt: 'desc' },
+      take: limit
+    });
+    return NextResponse.json({
+      data: latest.map(p => ({ product: p, totalOrdered: 0 }))
+    });
   }
 
   // ✅ Fetch both IN_STOCK and COMING_SOON products
