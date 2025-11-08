@@ -49,6 +49,10 @@ export default function GlobalPopupDialog() {
   const pathname = usePathname();
 
   useEffect(() => {
+    setOpen(true);
+  }, []);
+
+  useEffect(() => {
     async function fetchPopup() {
       try {
         const res = await fetch('/api/popup');
@@ -79,6 +83,11 @@ export default function GlobalPopupDialog() {
     fetchPopup();
   }, [pathname]);
 
+  // If popupData already exists (from initial prop in future), ensure open
+  useEffect(() => {
+    if (popupData && !open) setOpen(true);
+  }, [popupData, open]);
+
   // Auto-slide
   useEffect(() => {
     if (!popupData?.products?.length) return;
@@ -90,7 +99,24 @@ export default function GlobalPopupDialog() {
     return () => clearInterval(interval);
   }, [popupData]);
 
-  if (!popupData) return null;
+  if (!popupData) {
+    return (
+      <AnimatePresence>
+        {open && (
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogContent className='overflow-hidden rounded-2xl bg-white p-6 shadow-xl sm:max-w-[450px]'>
+              <div className='animate-pulse space-y-4'>
+                <div className='mx-auto h-6 w-3/4 rounded bg-gray-200' />
+                <div className='mx-auto h-4 w-5/6 rounded bg-gray-200' />
+                <div className='mx-auto mt-6 h-64 w-64 rounded-xl bg-gray-200' />
+                <div className='mx-auto h-4 w-1/2 rounded bg-gray-200' />
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
+    );
+  }
 
   return (
     <AnimatePresence>
