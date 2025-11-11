@@ -29,11 +29,10 @@ export function NavBar() {
       <div className='flex items-center space-x-2'>
         <div className='text-primary flex items-center justify-center'>
           <Image
-            height={24}
-            width={20}
+            height={45}
+            width={75}
             alt='Care And Clean Nepal'
             src={'/images/logo1.png'}
-            className='h-15 w-18 md:h-28 md:w-25'
             unoptimized
           />
           <div className='border-muted-foreground flex flex-col items-center'>

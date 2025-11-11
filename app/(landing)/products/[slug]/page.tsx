@@ -10,13 +10,14 @@ interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
 export const dynamic = 'force-dynamic';
-export const revalidate = 60;
 
 export async function generateStaticParams() {
   return [];
 }
 
-export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params
+}: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
 
   try {
@@ -29,14 +30,18 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       openGraph: {
         title: product.name,
         description: product.excerpt || product.description || '',
-        images: product.images.map((src) => ({ url: src, width: 800, height: 800 })),
+        images: product.images.map(src => ({
+          url: src,
+          width: 800,
+          height: 800
+        }))
       },
       twitter: {
         card: 'summary_large_image',
         title: product.name,
         description: product.excerpt || product.description || '',
-        images: product.images[0] ? [product.images[0]] : [],
-      },
+        images: product.images[0] ? [product.images[0]] : []
+      }
     };
   } catch (e) {
     console.error('Failed to generate metadata for', slug, e);
@@ -47,7 +52,13 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 const ProductPage = async ({ params }: ProductPageProps) => {
   const { slug } = await params;
 
-  const product = await prisma.product.findUnique({ where: { slug } });
+  let product;
+  try {
+    product = await prisma.product.findUnique({ where: { slug } });
+  } catch (err) {
+    console.error('Failed to fetch product:', err);
+    return notFound();
+  }
 
   if (!product) return notFound();
 

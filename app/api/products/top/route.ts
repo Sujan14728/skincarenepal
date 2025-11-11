@@ -5,6 +5,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const limit = Math.max(1, Number(url.searchParams.get('limit')) || 3);
   const period = url.searchParams.get('period'); // e.g. "30d"
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = {};
 
@@ -15,7 +16,7 @@ export async function GET(req: Request) {
     where.order = { placedAt: { gte: since } };
   }
 
-  // Group order items by productId and sum quantity (no 'take' here so we can filter out out-of-stock products afterwards)
+  // Group order items by productId and sum quantity
   const groups = await prisma.orderItem.groupBy({
     by: ['productId'],
     where,
@@ -25,23 +26,30 @@ export async function GET(req: Request) {
 
   const allIds = groups.map(g => g.productId).filter(Boolean) as number[];
   if (allIds.length === 0) {
-    return NextResponse.json({ data: [] });
+    // Fallback: no orders yet — return latest available products
+    const latest = await prisma.product.findMany({
+      where: { status: { in: ['IN_STOCK', 'COMING_SOON'] } },
+      orderBy: { createdAt: 'desc' },
+      take: limit
+    });
+    return NextResponse.json({
+      data: latest.map(p => ({ product: p, totalOrdered: 0 }))
+    });
   }
 
-  // Fetch only in-stock products among the grouped ids
-  const inStockProducts = await prisma.product.findMany({
+  // ✅ Fetch both IN_STOCK and COMING_SOON products
+  const validProducts = await prisma.product.findMany({
     where: {
       id: { in: allIds },
-      status: 'IN_STOCK'
+      status: { in: ['IN_STOCK', 'COMING_SOON'] }
     }
   });
 
-  const productsMap = new Map(inStockProducts.map(p => [p.id, p]));
-  const inStockIdSet = new Set(inStockProducts.map(p => p.id));
+  const productsMap = new Map(validProducts.map(p => [p.id, p]));
+  const validIdSet = new Set(validProducts.map(p => p.id));
 
-  // Keep only groups whose productId maps to an in-stock product, preserve ordering, then take the requested limit
   const filteredGroups = groups
-    .filter(g => g.productId != null && inStockIdSet.has(g.productId as number))
+    .filter(g => g.productId != null && validIdSet.has(g.productId as number))
     .slice(0, limit);
 
   const result = filteredGroups.map(g => {
