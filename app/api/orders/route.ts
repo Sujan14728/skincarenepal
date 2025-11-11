@@ -177,22 +177,34 @@ export async function POST(req: NextRequest) {
         items: true
       }
     });
+
+    // Try to send email, but don't fail order creation if email fails
     if (order.email && order.orderNumber) {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_BASE_URL ||
-        process.env.VERCEL_URL ||
-        'http://localhost:3000';
-      const origin = baseUrl.startsWith('http')
-        ? baseUrl
-        : `https://${baseUrl}`;
-      const confirmLink = `${origin}/api/orders/confirm?token=${token}&order=${order.orderNumber}`;
-      await sendOrderPlacementEmail(
-        order.email,
-        order.orderNumber,
-        confirmLink,
-        order
-      );
+      try {
+        const baseUrl =
+          process.env.NEXT_PUBLIC_BASE_URL ||
+          process.env.VERCEL_URL ||
+          'http://localhost:3000';
+        const origin = baseUrl.startsWith('http')
+          ? baseUrl
+          : `https://${baseUrl}`;
+        const confirmLink = `${origin}/api/orders/confirm?token=${token}&order=${order.orderNumber}`;
+        await sendOrderPlacementEmail(
+          order.email,
+          order.orderNumber,
+          confirmLink,
+          order
+        );
+        console.log(`Order confirmation email sent to ${order.email}`);
+      } catch (emailError) {
+        // Log email error but don't fail the order
+        console.error(
+          'Failed to send order email, but order was created:',
+          emailError
+        );
+      }
     }
+
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
     console.error('Error creating order:', error);

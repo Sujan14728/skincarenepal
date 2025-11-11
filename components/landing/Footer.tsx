@@ -3,7 +3,6 @@ import Link from 'next/link';
 import {
   LuFacebook,
   LuInstagram,
-  LuLinkedin,
   LuMail,
   LuMapPin,
   LuPhone
@@ -126,7 +125,7 @@ const Footer = () => {
               <li className='flex items-start space-x-2'>
                 <LuPhone className='mt-0.5 h-5 w-5 flex-shrink-0 text-primary' />
                 <a
-                  href='tel:+977014567890'
+                  href='tel:+9779801753033'
                   // Use theme primary for the hover color
                   className='text-sm text-muted-foreground transition-colors hover:text-primary'
                 >

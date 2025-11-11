@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    let retries = 3;
+    let retries = 2; // Reduced from 3 to 2
     let lastError: unknown = null;
 
     while (retries > 0) {
@@ -34,7 +34,7 @@ export async function GET() {
           message.toLowerCase().includes('connection') ||
           message.toLowerCase().includes('timeout')
         ) {
-          await new Promise(r => setTimeout(r, 1000));
+          await new Promise(r => setTimeout(r, 500)); // Reduced from 1000ms to 500ms
           continue;
         }
         break;
