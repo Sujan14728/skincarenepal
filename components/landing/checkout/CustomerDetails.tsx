@@ -23,7 +23,6 @@ interface CustomerDetailsProps {
   setNote: (note: string) => void;
   paymentMethod: PaymentMethod;
   setPaymentMethod: (method: PaymentMethod) => void;
-  paymentImage: File | null;
   setPaymentImage: (file: File | null) => void;
 }
 
@@ -40,7 +39,6 @@ export default function CustomerDetails({
   setNote,
   paymentMethod,
   setPaymentMethod,
-  paymentImage,
   setPaymentImage
 }: CustomerDetailsProps) {
   return (
@@ -112,7 +110,7 @@ export default function CustomerDetails({
       {paymentMethod === 'ONLINE' && (
         <div className='flex flex-col gap-0'>
           <label>Payment Slip Image</label>
-          <p className='text-muted-foreground text-xs'>
+          <p className='text-xs text-muted-foreground'>
             (Scan the QR code above and upload the payment slip here)
           </p>
           <Input

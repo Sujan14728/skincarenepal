@@ -25,9 +25,9 @@ export function NavBar() {
     setOpen(false);
   }, [pathname]);
   return (
-    <nav className='border-border bg-background text-muted-foreground flex h-20 items-center justify-between border-b px-4'>
+    <nav className='flex h-20 items-center justify-between border-b border-border bg-background px-4 text-muted-foreground'>
       <div className='flex items-center space-x-2'>
-        <div className='text-primary flex items-center justify-center'>
+        <div className='flex items-center justify-center text-primary'>
           <Image
             height={45}
             width={75}
@@ -35,9 +35,9 @@ export function NavBar() {
             src={'/images/logo1.png'}
             unoptimized
           />
-          <div className='border-muted-foreground flex flex-col items-center'>
+          <div className='flex flex-col items-center border-muted-foreground'>
             <span className='text-lg font-extrabold md:text-xl'>
-              Care and Clean Pvt Ltd
+              Care And Clean Pvt Ltd
             </span>
             <span className='text-xs font-semibold text-gray-500'>
               Care from Nature, Clean by Choice.
@@ -51,7 +51,7 @@ export function NavBar() {
           <Link
             key={link.href}
             href={link.href}
-            className='hover:text-primary transition-colors'
+            className='transition-colors hover:text-primary'
           >
             {link.label}
           </Link>
@@ -74,7 +74,7 @@ export function NavBar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className='hover:text-primary text-lg transition-colors'
+                    className='text-lg transition-colors hover:text-primary'
                   >
                     {link.label}
                   </Link>

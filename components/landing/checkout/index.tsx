@@ -208,7 +208,6 @@ export default function CheckoutClient() {
             setNote={setNote}
             paymentMethod={paymentMethod}
             setPaymentMethod={setPaymentMethod}
-            paymentImage={paymentImage}
             setPaymentImage={setPaymentImage}
           />
 

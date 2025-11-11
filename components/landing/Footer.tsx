@@ -13,15 +13,15 @@ const quickLinks = [
   { href: '/', label: 'Home' },
   { href: '/products', label: 'Products' },
   { href: '/about', label: 'About Us' },
-  { href: '/careers', label: 'Careers' }
+  { href: '/', label: 'Careers' }
 ];
 
 const customerServiceLinks = [
-  { href: '/shipping', label: 'Shipping & Delivery' },
-  { href: '/returns', label: 'Returns & Exchanges' },
-  { href: '/faqs', label: 'FAQs' },
-  { href: '/privacy', label: 'Privacy Policy' },
-  { href: '/terms', label: 'Terms & Conditions' }
+  { href: '/', label: 'Shipping & Delivery' },
+  { href: '/', label: 'Returns & Exchanges' },
+  { href: '/', label: 'FAQs' },
+  { href: '/', label: 'Privacy Policy' },
+  { href: '/', label: 'Terms & Conditions' }
 ];
 
 const Footer = () => {

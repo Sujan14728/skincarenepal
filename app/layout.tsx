@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Care and Clean Nepal',
+  title: 'Care And Clean Nepal',
   description:
     'Shop 100% natural organic face packs in Nepal. Free delivery and best prices.',
   icons: {
@@ -32,25 +32,25 @@ export const metadata: Metadata = {
     'organic skincare',
     'face pack nepal',
     'natural beauty products',
-    'Care and Clean Nepal'
+    'Care And Clean Nepal'
   ],
   authors: [
-    { name: 'Care and Clean Nepal', url: 'https://careandcleannp.com' }
+    { name: 'Care And Clean Nepal', url: 'https://careandcleannp.com' }
   ],
-  applicationName: 'Care and Clean Nepal',
+  applicationName: 'Care And Clean Nepal',
   metadataBase: new URL('https://careandcleannp.com'),
   alternates: {
     canonical: 'https://careandcleannp.com'
   },
   openGraph: {
-    title: 'Care and Clean Nepal',
+    title: 'Care And Clean Nepal',
     description:
       'Shop 100% natural organic face packs in Nepal. Free delivery and best prices.',
     images: [{ url: '/logo.jpg', width: 800, height: 600 }]
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Care and Clean Nepal',
+    title: 'Care And Clean Nepal',
     description:
       'Shop 100% natural organic face packs in Nepal. Free delivery and best prices.',
     images: ['/logo.jpg']

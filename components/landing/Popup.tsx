@@ -9,7 +9,6 @@ import {
   DialogDescription
 } from '@/components/ui/dialog';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface PopupDetail {
@@ -46,82 +45,107 @@ export default function GlobalPopupDialog() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [popupData, setPopupData] = useState<PopupData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hasShownOnce, setHasShownOnce] = useState(false);
-
-  const pathname = usePathname();
 
   useEffect(() => {
-    async function fetchPopup() {
+    const STORAGE_KEY_DATA = 'ccnp_popup_data_v1';
+    const STORAGE_KEY_SHOWN = 'ccnp_popup_shown_v1';
+
+    // Always show on each reload/navigation: remove suppression logic by ignoring STORAGE_KEY_SHOWN
+    // Clear any previous flag so legacy sessions don't block display
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.removeItem(STORAGE_KEY_SHOWN);
+      } catch {}
+    }
+
+    // Try cached data for instant display
+    let cached: PopupData | null = null;
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = sessionStorage.getItem(STORAGE_KEY_DATA);
+        cached = raw ? (JSON.parse(raw) as PopupData) : null;
+      } catch {
+        cached = null;
+      }
+    }
+    if (cached) {
+      setPopupData(cached);
+      setOpen(true);
+      setLoading(false);
+      // Do not set a 'shown' flag; allow re-show every navigation
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1500);
+
+    (async () => {
       setLoading(true);
       try {
-        const res = await fetch('/api/popup');
+        const res = await fetch('/api/popup', { signal: controller.signal });
+        if (!res.ok) throw new Error('Popup API failed');
         const data: PopupResponse = await res.json();
-
         if (Array.isArray(data.popups) && data.popups.length > 0) {
-          const firstPopup = data.popups[0];
-          setPopupData({
-            title: firstPopup.title,
-            description: firstPopup.description,
+          const first = data.popups[0];
+          const normalized: PopupData = {
+            title: first.title,
+            description: first.description,
             products:
-              firstPopup.PopupDetails?.map((d: PopupDetail) => ({
+              first.PopupDetails?.map(d => ({
                 id: d.id,
                 name: d.name,
                 image: d.image
               })) || []
-          });
-
-          // Only open automatically if not shown before
-          if (!hasShownOnce) {
-            setOpen(true);
-            setHasShownOnce(true);
+          };
+          setPopupData(normalized);
+          // cache
+          try {
+            sessionStorage.setItem(
+              STORAGE_KEY_DATA,
+              JSON.stringify(normalized)
+            );
+          } catch {}
+          // preload first image
+          if (normalized.products[0]?.image) {
+            const img = document?.createElement('img');
+            if (img) img.src = normalized.products[0].image;
           }
+          setOpen(true);
+          // Do not set a 'shown' flag; allow re-show every navigation
         } else {
-          console.warn('No popup data found');
+          setOpen(false);
         }
       } catch (err) {
-        console.error('Error fetching popup data', err);
+        if (!(err instanceof DOMException && err.name === 'AbortError')) {
+          console.error('Error fetching popup data', err);
+        }
       } finally {
+        clearTimeout(timeoutId);
         setLoading(false);
       }
-    }
+    })();
 
-    fetchPopup();
-  }, [pathname, hasShownOnce]);
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, []);
 
   // Auto-slide
   useEffect(() => {
     if (!popupData?.products?.length) return;
     const interval = setInterval(() => {
       setCurrentIndex(prev =>
-        prev === popupData.products.length - 1 ? 0 : prev + 1
+        popupData.products && prev === popupData.products.length - 1
+          ? 0
+          : prev + 1
       );
-    }, 3500); // Increased from 2000ms to 3500ms for better viewing
+    }, 3500);
     return () => clearInterval(interval);
   }, [popupData]);
 
-  // Show skeleton while loading
-  if (loading) {
-    return (
-      <AnimatePresence>
-        <Dialog open={true} onOpenChange={() => {}}>
-          <DialogContent className='overflow-hidden rounded-2xl bg-white p-6 shadow-xl sm:max-w-[450px]'>
-            <DialogHeader>
-              <DialogTitle className='text-center text-2xl font-bold'>
-                <span className='inline-block h-6 w-3/4 animate-pulse rounded bg-gray-200' />
-              </DialogTitle>
-              <DialogDescription className='px-8 text-center'>
-                <span className='inline-block h-4 w-5/6 animate-pulse rounded bg-gray-200' />
-              </DialogDescription>
-            </DialogHeader>
-            <div className='animate-pulse space-y-4'>
-              <div className='mx-auto mt-6 h-64 w-64 rounded-xl bg-gray-200' />
-              <div className='mx-auto h-4 w-1/2 rounded bg-gray-200' />
-            </div>
-          </DialogContent>
-        </Dialog>
-      </AnimatePresence>
-    );
-  }
+  // While loading, render nothing to avoid a blocking skeleton overlay
+  if (loading) return null;
 
   // Don't show popup if no data after loading
   if (!popupData) {
@@ -137,7 +161,7 @@ export default function GlobalPopupDialog() {
               initial={{ scale: 0.7, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.7, opacity: 0 }}
-              transition={{ duration: 0.8, ease: 'easeInOut' }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
             >
               <DialogHeader>
                 <DialogTitle className='text-center text-2xl font-bold text-primary'>
@@ -153,7 +177,7 @@ export default function GlobalPopupDialog() {
                 <div className='mt-6 flex flex-col items-center justify-center'>
                   <div className='relative h-64 w-64 overflow-hidden rounded-xl shadow-md'>
                     {/* Previous Button */}
-                    {popupData.products.length > 1 && (
+                    {/* {popupData.products.length > 1 && (
                       <button
                         onClick={() =>
                           setCurrentIndex(prev =>
@@ -167,17 +191,19 @@ export default function GlobalPopupDialog() {
                       >
                         ←
                       </button>
-                    )}
+                    )} */}
 
                     <Image
                       src={popupData.products[currentIndex].image}
                       alt={popupData.products[currentIndex].name}
+                      priority={currentIndex === 0}
+                      sizes='256px'
                       fill
                       className='rounded-xl object-contain transition-all duration-700 ease-in-out'
                     />
 
                     {/* Next Button */}
-                    {popupData.products.length > 1 && (
+                    {/* {popupData.products.length > 1 && (
                       <button
                         onClick={() =>
                           setCurrentIndex(prev =>
@@ -191,7 +217,7 @@ export default function GlobalPopupDialog() {
                       >
                         →
                       </button>
-                    )}
+                    )} */}
                   </div>
 
                   <p className='mt-3 text-center text-lg font-semibold text-gray-600'>
@@ -207,7 +233,7 @@ export default function GlobalPopupDialog() {
                           onClick={() => setCurrentIndex(i)}
                           className={`h-2 rounded-full transition-all duration-300 ${
                             i === currentIndex
-                              ? 'w-6 bg-[var(--primary)]'
+                              ? 'w-2 bg-[var(--primary)]'
                               : 'w-2 bg-gray-300 hover:bg-gray-400'
                           }`}
                           aria-label={`Go to image ${i + 1}`}
