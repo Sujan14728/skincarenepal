@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
         phone: phone || null,
         shippingAddress,
         note: note || null,
-        paymentMethod: paymentMethod || 'COD',
+        paymentMethod: (paymentMethod || 'COD') as 'COD' | 'ONLINE',
         subtotal,
         discount,
         shipping,
