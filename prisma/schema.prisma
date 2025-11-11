@@ -59,6 +59,7 @@ model Order {
   shipping                Int
   total                   Int
   status                  OrderStatus @default(PENDING_CONFIRMATION)
+  paymentMethod           PaymentMethod @default(COD)
   placementTokenHash      String?
   placementTokenExpiresAt DateTime?
   placedAt                DateTime?
@@ -166,4 +167,9 @@ enum ContactStatus {
   READ
   REPLIED
   ARCHIVED
+}
+
+enum PaymentMethod {
+  COD
+  ONLINE
 }

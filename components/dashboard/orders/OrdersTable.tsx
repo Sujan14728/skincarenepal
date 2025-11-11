@@ -67,6 +67,7 @@ const OrdersTable = ({
             <TableHead>Phone</TableHead>
             <TableHead>Total</TableHead>
             <TableHead>Date</TableHead>
+            <TableHead>Payment Method</TableHead>
             <TableHead>Payment Slip</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className='text-right'>Actions</TableHead>
@@ -120,6 +121,13 @@ const OrdersTable = ({
                   {order.placedAt
                     ? new Date(order.placedAt).toLocaleDateString()
                     : '-'}
+                </TableCell>
+                <TableCell>
+                  {order.paymentMethod ? (
+                    <span>{order.paymentMethod}</span>
+                  ) : (
+                    '-'
+                  )}
                 </TableCell>
                 <TableCell>
                   {order.paymentSlipUrl ? (

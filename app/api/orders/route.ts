@@ -40,6 +40,7 @@ export async function GET(req: NextRequest) {
     const phone = qp.get('phone')?.trim() || null;
     const status = qp.get('status')?.trim() || null;
     const date = qp.get('date')?.trim() || null;
+    const paymentMethod = qp.get('paymentMethod')?.trim() || null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
 
@@ -64,6 +65,12 @@ export async function GET(req: NextRequest) {
 
     if (status) {
       and.push({ status });
+    }
+
+    if (paymentMethod) {
+      if (['COD', 'ONLINE'].includes(paymentMethod)) {
+        and.push({ paymentMethod });
+      }
     }
 
     if (date) {
@@ -119,6 +126,8 @@ export async function POST(req: NextRequest) {
       phone,
       shippingAddress,
       note,
+      paymentSlipUrl,
+      paymentMethod,
       items,
       subtotal,
       discount,
@@ -145,11 +154,12 @@ export async function POST(req: NextRequest) {
         phone: phone || null,
         shippingAddress,
         note: note || null,
+        paymentMethod: paymentMethod || 'COD',
         subtotal,
         discount,
         shipping,
         total,
-        paymentSlipUrl: body.paymentSlipUrl || null,
+        paymentSlipUrl: paymentSlipUrl || null,
         placementTokenHash: tokenHash,
         placementTokenExpiresAt: tokenExpiry,
         items: {
