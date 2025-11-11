@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
 import { OrderStatus } from '@prisma/client';
 import { sendOrderStatusEmail } from '@/lib/email';
+import { PaymentMethod } from '@/lib/enum/product';
 
 async function requireAdmin(req: NextRequest) {
   const token = req.cookies.get('token')?.value;
@@ -58,6 +59,7 @@ type UpdatePayload = {
   status?: OrderStatus;
   note?: string | null;
   paymentSlipUrl?: string | null;
+  paymentMethod?: PaymentMethod | null;
   verifiedAt?: string | null;
 };
 
@@ -82,6 +84,7 @@ export async function PUT(
         status: body.status,
         note: body.note,
         paymentSlipUrl: body.paymentSlipUrl,
+        paymentMethod: body.paymentMethod || 'COD',
         verifiedAt: body.verifiedAt ? new Date(body.verifiedAt) : undefined
       }
     });

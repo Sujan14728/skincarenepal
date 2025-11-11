@@ -172,6 +172,7 @@ const OrdersPage = () => {
     return () => {
       mounted = false;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchCountByStatus, page, perPage]);
 
   const stats = useMemo(() => {
