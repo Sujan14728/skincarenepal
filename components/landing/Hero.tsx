@@ -7,7 +7,7 @@ export function Hero() {
     <section className='bg-accent py-16 md:py-24'>
       <div className='mx-auto flex flex-col-reverse items-center justify-between gap-10 px-4 sm:px-6 md:flex-row lg:px-8'>
         <div className='mb-10 w-full space-y-6 lg:mb-0 lg:w-1/2'>
-          <h1 className='text-center text-3xl font-extrabold leading-tight text-foreground sm:text-3xl md:text-left lg:text-5xl'>
+          <h1 className='text-center text-3xl font-extrabold leading-tight text-foreground md:text-left md:text-4xl lg:text-5xl'>
             CARE FROM NATURE,
             <br />
             <span className='text-primary'>CLEAN BY CHOICE</span>

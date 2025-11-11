@@ -9,19 +9,38 @@ type MarqueeType = {
 
 export default function MarqueeFeature() {
   const [marquees, setMarquees] = useState<MarqueeType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
     fetch('/api/marquee')
-      .then(res => res.json())
-      .then(data => setMarquees(data.marquees || []));
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch marquees');
+        return res.json();
+      })
+      .then(data => {
+        setMarquees(data.marquees || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Marquee fetch error:', err);
+        setError(true);
+        setLoading(false);
+      });
   }, []);
 
-  if (!marquees.length) {
+  if (loading) {
     return (
       <div className='bg-emerald-700 py-2'>
-        <div className='max-w-screen mx-auto h-5 flex-1 animate-pulse rounded bg-emerald-600/60' />
+        <div className='mx-auto h-5 w-full animate-pulse rounded bg-emerald-600/60' />
       </div>
     );
+  }
+
+  if (error || !marquees.length) {
+    // Return nothing or a minimal bar when no marquees exist
+    return null;
   }
 
   return (

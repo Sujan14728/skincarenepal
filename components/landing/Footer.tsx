@@ -8,6 +8,7 @@ import {
   LuMapPin,
   LuPhone
 } from 'react-icons/lu';
+import { FaWhatsapp } from 'react-icons/fa';
 
 const quickLinks = [
   { href: '/', label: 'Home' },
@@ -30,12 +31,12 @@ const Footer = () => {
   return (
     <footer className='bg-foreground text-foreground'>
       <div className='mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8'>
-        <div className='border-border grid grid-cols-1 gap-12 border-b pb-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-8'>
+        <div className='grid grid-cols-1 gap-12 border-b border-border pb-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-8'>
           <div className='space-y-4'>
-            <h3 className='text-primary-foreground text-xl font-bold'>
-              Care and Clean Nepal
+            <h3 className='text-xl font-bold text-primary-foreground'>
+              CARE AND CLEAN NEPAL
             </h3>
-            <p className='text-muted-foreground text-sm'>
+            <p className='text-sm text-muted-foreground'>
               Your trusted partner for natural and organic skincare solutions.
               Made with love in Nepal.
             </p>
@@ -44,35 +45,35 @@ const Footer = () => {
                 href='https://www.facebook.com/careandcleannepal'
                 target='_blank'
                 rel='noopener noreferrer'
-                className='bg-primary hover:bg-primary/90 rounded-full p-2 transition-colors'
+                className='hover:bg-primary/90 rounded-full bg-primary p-2 transition-colors'
                 aria-label='Facebook'
               >
-                <LuFacebook className='text-primary-foreground h-5 w-5' />
+                <LuFacebook className='h-5 w-5 text-primary-foreground' />
               </a>
               <a
-                href='https://linkedin.com'
+                href='https://wa.me/9779801753033'
                 target='_blank'
                 rel='noopener noreferrer'
-                className='bg-primary hover:bg-primary/90 rounded-full p-2 transition-colors'
-                aria-label='LinkedIn'
+                className='hover:bg-primary/90 rounded-full bg-primary p-2 transition-colors'
+                aria-label='WhatsApp'
               >
-                <LuLinkedin className='text-primary-foreground h-5 w-5' />
+                <FaWhatsapp className='h-5 w-5 text-primary-foreground' />
               </a>
               <a
                 href='https://www.instagram.com/careandclean_nepal/'
                 target='_blank'
                 rel='noopener noreferrer'
-                className='bg-primary hover:bg-primary/90 rounded-full p-2 transition-colors'
+                className='hover:bg-primary/90 rounded-full bg-primary p-2 transition-colors'
                 aria-label='Instagram'
               >
-                <LuInstagram className='text-primary-foreground h-5 w-5' />
+                <LuInstagram className='h-5 w-5 text-primary-foreground' />
               </a>
             </div>
           </div>
 
           {/* Column 2: Quick Links */}
           <div className='space-y-4'>
-            <h4 className='text-primary-foreground text-lg font-semibold'>
+            <h4 className='text-lg font-semibold text-primary-foreground'>
               Quick Links
             </h4>
             <ul className='space-y-2'>
@@ -81,7 +82,7 @@ const Footer = () => {
                   <Link
                     href={link.href}
                     // Use theme primary for the hover color
-                    className='hover:text-primary text-muted-foreground text-sm transition-colors'
+                    className='text-sm text-muted-foreground transition-colors hover:text-primary'
                   >
                     {link.label}
                   </Link>
@@ -92,7 +93,7 @@ const Footer = () => {
 
           {/* Column 3: Customer Service */}
           <div className='space-y-4'>
-            <h4 className='text-primary-foreground text-lg font-semibold'>
+            <h4 className='text-lg font-semibold text-primary-foreground'>
               Customer Service
             </h4>
             <ul className='space-y-2'>
@@ -100,7 +101,7 @@ const Footer = () => {
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className='hover:text-primary text-muted-foreground text-sm transition-colors'
+                    className='text-sm text-muted-foreground transition-colors hover:text-primary'
                   >
                     {link.label}
                   </Link>
@@ -111,32 +112,32 @@ const Footer = () => {
 
           {/* Column 4: Contact Info */}
           <div className='space-y-4'>
-            <h4 className='text-primary-foreground text-lg font-semibold'>
+            <h4 className='text-lg font-semibold text-primary-foreground'>
               Contact Info
             </h4>
             <ul className='space-y-3'>
               <li className='flex items-start space-x-2'>
                 {/* Use theme primary for the icon color */}
-                <LuMapPin className='text-primary mt-0.5 h-5 w-5 flex-shrink-0' />
-                <span className='text-muted-foreground text-sm'>
+                <LuMapPin className='mt-0.5 h-5 w-5 flex-shrink-0 text-primary' />
+                <span className='text-sm text-muted-foreground'>
                   Dhangadhi-3, Kailali, Nepal
                 </span>
               </li>
               <li className='flex items-start space-x-2'>
-                <LuPhone className='text-primary mt-0.5 h-5 w-5 flex-shrink-0' />
+                <LuPhone className='mt-0.5 h-5 w-5 flex-shrink-0 text-primary' />
                 <a
                   href='tel:+977014567890'
                   // Use theme primary for the hover color
-                  className='hover:text-primary text-muted-foreground text-sm transition-colors'
+                  className='text-sm text-muted-foreground transition-colors hover:text-primary'
                 >
                   +977 9801753033
                 </a>
               </li>
               <li className='flex items-start space-x-2'>
-                <LuMail className='text-primary mt-0.5 h-5 w-5 flex-shrink-0' />
+                <LuMail className='mt-0.5 h-5 w-5 flex-shrink-0 text-primary' />
                 <a
                   href='mailto:info@skincareneapl.com'
-                  className='hover:text-primary text-muted-foreground text-sm transition-colors'
+                  className='text-sm text-muted-foreground transition-colors hover:text-primary'
                 >
                   info@careandcleannp.com
                 </a>
@@ -145,7 +146,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className='text-muted-foreground pt-8 text-center text-sm'>
+        <div className='pt-8 text-center text-sm text-muted-foreground'>
           &copy; {currentYear} **Care and Clean Nepal**. All rights reserved.
         </div>
       </div>

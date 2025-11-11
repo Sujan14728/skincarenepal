@@ -260,7 +260,6 @@ export default function CheckoutClient() {
           <div className='mb-1 flex flex-col text-gray-700'>
             <label htmlFor='name'>Name</label>
             <Input
-              placeholder='eg. Ram Joshi'
               value={name}
               onChange={e => setName(e.target.value)}
               className='text-xs'
@@ -269,7 +268,6 @@ export default function CheckoutClient() {
           <div className='mb-2 flex flex-col text-gray-700'>
             <label htmlFor='email'>Email</label>
             <Input
-              placeholder='eg. ram12@gmial.com'
               type='email'
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -280,7 +278,6 @@ export default function CheckoutClient() {
           <div className='mb-2 flex flex-col text-gray-700'>
             <label htmlFor='phone'>Phone</label>
             <Input
-              placeholder='eg. 9808800808'
               type='tel'
               value={phone}
               onChange={e => setPhone(e.target.value)}
@@ -293,7 +290,6 @@ export default function CheckoutClient() {
               Shipping Address
             </label>
             <Textarea
-              placeholder='eg. Near KKFC, Maitidevi, Kathmandu'
               value={shippingAddress}
               onChange={e => setShippingAddress(e.target.value)}
               className='pt-4'
@@ -303,7 +299,6 @@ export default function CheckoutClient() {
           <div className='mb-2 flex flex-col space-y-1 text-gray-700'>
             <label htmlFor='note'>Note</label>
             <Textarea
-              placeholder='eg. Deliver within 4 days if possible !'
               value={note}
               onChange={e => setNote(e.target.value)}
               className='text-x pt-5'
@@ -318,21 +313,23 @@ export default function CheckoutClient() {
               ) : singleProduct ? (
                 <div className='flex items-center gap-3'>
                   {singleProduct.images && singleProduct.images[0] && (
-                    <img
+                    <Image
                       src={singleProduct.images[0]}
                       alt={singleProduct.name}
+                      width={64}
+                      height={64}
                       className='h-16 w-16 rounded object-cover'
                     />
                   )}
                   <div className='flex-1'>
                     <div className='font-medium'>{singleProduct.name}</div>
-                    <div className='text-muted-foreground text-sm'>
+                    <div className='text-sm text-muted-foreground'>
                       {singleProduct.salePrice ? (
                         <div>
                           <span className='font-semibold'>
                             Rs. {singleProduct.salePrice}
                           </span>{' '}
-                          <span className='text-muted-foreground text-sm line-through'>
+                          <span className='text-sm text-muted-foreground line-through'>
                             Rs. {singleProduct.price}
                           </span>
                         </div>
