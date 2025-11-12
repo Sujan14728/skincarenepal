@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Toaster } from 'sonner';
 import Script from 'next/script';
@@ -63,6 +63,13 @@ export const metadata: Metadata = {
       'Shop 100% natural organic face packs in Nepal. Free delivery and best prices.',
     images: ['/logo.jpg']
   }
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#ffffff'
 };
 
 export default function RootLayout({
