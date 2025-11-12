@@ -3,10 +3,17 @@ import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
 import { sendOrderStatusEmail } from '@/lib/email';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://localhost:3002';
-
 export async function GET(req: NextRequest) {
   try {
+    // Detect the origin from request headers
+    const protocol = req.headers.get('x-forwarded-proto') || 'https';
+    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+    const BASE_URL = host
+      ? `${protocol}://${host}`
+      : process.env.NEXT_PUBLIC_BASE_URL || 'https://localhost:3002';
+
+    console.log('Confirmation redirect BASE_URL:', BASE_URL);
+
     const { searchParams } = new URL(req.url);
     const token = searchParams.get('token');
     const orderNumber = searchParams.get('order');
