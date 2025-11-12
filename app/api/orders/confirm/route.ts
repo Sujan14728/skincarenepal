@@ -3,39 +3,69 @@ import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
 import { sendOrderStatusEmail } from '@/lib/email';
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://localhost:3002';
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const token = searchParams.get('token');
     const orderNumber = searchParams.get('order');
+
     if (!token || !orderNumber) {
-      return NextResponse.redirect(
-        new URL('/order-confirmed?order=invalid', req.url)
-      );
+      return NextResponse.redirect(`${BASE_URL}/order-confirmed?order=invalid`);
     }
+
     const hash = crypto.createHash('sha256').update(token).digest('hex');
     const order = await prisma.order.findUnique({ where: { orderNumber } });
+
     if (!order || order.placementTokenHash !== hash) {
-      return NextResponse.redirect(
-        new URL('/order-confirmed?order=invalid', req.url)
-      );
+      return NextResponse.redirect(`${BASE_URL}/order-confirmed?order=invalid`);
     }
+
     if (
       order.placementTokenExpiresAt &&
       order.placementTokenExpiresAt < new Date()
     ) {
-      return NextResponse.redirect(
-        new URL('/order-confirmed?order=expired', req.url)
-      );
+      return NextResponse.redirect(`${BASE_URL}/order-confirmed?order=expired`);
     }
-    const updated = await prisma.order.update({
+
+    // Fetch order items to decrease stock
+    const orderWithItems = await prisma.order.findUnique({
       where: { id: order.id },
-      data: {
-        status: 'PENDING_VERIFICATION',
-        placementTokenHash: null,
-        placementTokenExpiresAt: null
-      }
+      include: { items: true }
     });
+
+    // Update order status and decrease product stock in a transaction
+    const updated = await prisma.$transaction(async tx => {
+      // Update order status
+      const updatedOrder = await tx.order.update({
+        where: { id: order.id },
+        data: {
+          status: 'PENDING_VERIFICATION',
+          placementTokenHash: null,
+          placementTokenExpiresAt: null
+        }
+      });
+
+      // Decrease stock for each product in the order
+      if (orderWithItems?.items) {
+        for (const item of orderWithItems.items) {
+          if (item.productId) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: {
+                stock: {
+                  decrement: item.quantity
+                }
+              }
+            });
+          }
+        }
+      }
+
+      return updatedOrder;
+    });
+
     if (updated.email) {
       const full = await prisma.order.findUnique({
         where: { id: updated.id },
@@ -48,12 +78,10 @@ export async function GET(req: NextRequest) {
         full || undefined
       );
     }
-    return NextResponse.redirect(
-      new URL('/order-confirmed?order=confirmed', req.url)
-    );
-  } catch {
-    return NextResponse.redirect(
-      new URL('/order-confirmed?order=error', req.url)
-    );
+
+    return NextResponse.redirect(`${BASE_URL}/order-confirmed?order=confirmed`);
+  } catch (error) {
+    console.error('Order confirmation error:', error);
+    return NextResponse.redirect(`${BASE_URL}/order-confirmed?order=error`);
   }
 }
