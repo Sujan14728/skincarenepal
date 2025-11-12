@@ -30,6 +30,7 @@ export const QuantitySelector = ({
         onClick={decreaseQuantity}
         disabled={quantity <= 1}
         className='h-8 w-8 text-gray-700 hover:bg-gray-100'
+        aria-label='Decrease quantity'
       >
         <Minus className='h-4 w-4' />
       </Button>
@@ -41,6 +42,7 @@ export const QuantitySelector = ({
         size='icon'
         onClick={increaseQuantity}
         className='h-8 w-8 text-gray-700 hover:bg-gray-100'
+        aria-label='Increase quantity'
       >
         <Plus className='h-4 w-4' />
       </Button>
