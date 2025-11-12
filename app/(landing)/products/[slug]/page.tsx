@@ -5,6 +5,7 @@ import ProductImageGallery from '@/components/landing/product-page/ProductImageG
 import ProductTabs from '@/components/landing/product-page/ProductTabs';
 import Link from 'next/link';
 import { Metadata } from 'next';
+import Script from 'next/script';
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -27,8 +28,10 @@ export async function generateMetadata({
     return {
       title: product.name,
       description: product.excerpt || product.description || '',
+      alternates: { canonical: `/products/${slug}` },
       openGraph: {
         title: product.name,
+        url: `https://careandcleannp.com/products/${slug}`,
         description: product.excerpt || product.description || '',
         images: product.images.map(src => ({
           url: src,
@@ -73,6 +76,68 @@ const ProductPage = async ({ params }: ProductPageProps) => {
 
   return (
     <div className='container mx-auto mb-10 px-4 py-12'>
+      {/* Breadcrumb JSON-LD */}
+      <Script
+        id='ld-breadcrumb'
+        type='application/ld+json'
+        strategy='afterInteractive'
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: 'https://careandcleannp.com/'
+              },
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Products',
+                item: 'https://careandcleannp.com/products'
+              },
+              {
+                '@type': 'ListItem',
+                position: 3,
+                name: product.name,
+                item: `https://careandcleannp.com/products/${product.slug}`
+              }
+            ]
+          })
+        }}
+      />
+
+      {/* Product JSON-LD */}
+      <Script
+        id='ld-product'
+        type='application/ld+json'
+        strategy='afterInteractive'
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: product.name,
+            image: product.images,
+            description: product.excerpt || product.description || '',
+            brand: {
+              '@type': 'Brand',
+              name: 'Care And Clean Nepal'
+            },
+            offers: {
+              '@type': 'Offer',
+              priceCurrency: 'NPR',
+              price: (product.salePrice ?? product.price) || product.price,
+              availability:
+                product.stock > 0 && product.status !== 'DISCONTINUED'
+                  ? 'https://schema.org/InStock'
+                  : 'https://schema.org/OutOfStock',
+              url: `https://careandcleannp.com/products/${product.slug}`
+            }
+          })
+        }}
+      />
       <nav className='mb-6 text-sm text-gray-500'>
         <Link href='/' className='hover:text-green-600'>
           Home
