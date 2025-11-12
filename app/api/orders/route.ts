@@ -181,13 +181,22 @@ export async function POST(req: NextRequest) {
     // Try to send email, but don't fail order creation if email fails
     if (order.email && order.orderNumber) {
       try {
-        const baseUrl =
-          process.env.NEXT_PUBLIC_BASE_URL ||
-          process.env.VERCEL_URL ||
-          'http://localhost:3000';
-        const origin = baseUrl.startsWith('http')
-          ? baseUrl
-          : `https://${baseUrl}`;
+        // Get the actual domain from the request or environment
+        const protocol = req.headers.get('x-forwarded-proto') || 'https';
+        const host =
+          req.headers.get('host') || req.headers.get('x-forwarded-host');
+
+        let origin: string;
+        if (host && !host.includes('localhost')) {
+          // Use the actual request host in production
+          origin = `${protocol}://${host}`;
+        } else {
+          // Fallback to environment variable
+          const baseUrl =
+            process.env.NEXT_PUBLIC_BASE_URL || 'https://careandcleannp.com';
+          origin = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        }
+
         const confirmLink = `${origin}/api/orders/confirm?token=${token}&order=${order.orderNumber}`;
         await sendOrderPlacementEmail(
           order.email,
@@ -195,7 +204,9 @@ export async function POST(req: NextRequest) {
           confirmLink,
           order
         );
-        console.log(`Order confirmation email sent to ${order.email}`);
+        console.log(
+          `Order confirmation email sent to ${order.email} with link: ${confirmLink}`
+        );
       } catch (emailError) {
         // Log email error but don't fail the order
         console.error(

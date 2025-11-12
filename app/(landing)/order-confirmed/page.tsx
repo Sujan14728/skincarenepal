@@ -1,11 +1,15 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 export default function OrderConfirmedPage() {
   const [status, setStatus] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(5);
+  const router = useRouter();
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const s = params.get('order');
@@ -20,6 +24,23 @@ export default function OrderConfirmedPage() {
     if (s === 'error')
       toast.error('Something went wrong while confirming your order.');
   }, []);
+
+  // Auto-redirect after 5 seconds for confirmed orders
+  useEffect(() => {
+    if (status === 'confirmed') {
+      const timer = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            router.push('/products');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [status, router]);
   const title = useMemo(() => {
     if (status === 'confirmed') return 'Order Confirmed';
     if (status === 'expired') return 'Link Expired';
@@ -29,18 +50,18 @@ export default function OrderConfirmedPage() {
   }, [status]);
   const message = useMemo(() => {
     if (status === 'confirmed')
-      return 'Thank you. We will verify your payment shortly and keep you updated by email.';
+      return `Thank you. We will verify your payment shortly and keep you updated by email. Redirecting in ${countdown} seconds...`;
     if (status === 'expired')
       return 'The confirmation link has expired. Please place a new order.';
     if (status === 'invalid') return 'The confirmation link is not valid.';
     if (status === 'error')
       return 'Something went wrong while confirming your order.';
     return '';
-  }, [status]);
+  }, [status, countdown]);
   return (
     <div className='mx-auto max-w-xl p-6 text-center'>
       <h1 className='mb-2 text-2xl font-semibold'>{title}</h1>
-      {message && <p className='text-muted-foreground mb-6'>{message}</p>}
+      {message && <p className='mb-6 text-muted-foreground'>{message}</p>}
       <div className='flex items-center justify-center gap-3'>
         <Link href='/products'>
           <Button>Continue Shopping</Button>
