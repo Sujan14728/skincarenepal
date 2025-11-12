@@ -76,26 +76,30 @@ export async function sendOrderPlacementEmail(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   order?: any
 ) {
-  if (!EMAIL_CONFIGURED) return;
+  if (!EMAIL_CONFIGURED) {
+    console.warn('Email not configured. Skipping order placement email.');
+    return;
+  }
 
-  const items = order?.items || [];
-  const itemsHtml = items
-    .map(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (i: any) =>
-        `<tr><td style="padding:6px 8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:center">${i.quantity}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price * i.quantity}</td></tr>`
-    )
-    .join('');
+  try {
+    const items = order?.items || [];
+    const itemsHtml = items
+      .map(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (i: any) =>
+          `<tr><td style="padding:6px 8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:center">${i.quantity}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price * i.quantity}</td></tr>`
+      )
+      .join('');
 
-  const totalsHtml = order
-    ? `<div style="margin-top:12px; font-size:14px;"><div>Subtotal: Rs. ${order.subtotal || 0}</div><div>Shipping: Rs. ${order.shipping || 0}</div><div style="font-weight:600; margin-top:6px">Total: Rs. ${order.total || 0}</div></div>`
-    : '';
+    const totalsHtml = order
+      ? `<div style="margin-top:12px; font-size:14px;"><div>Subtotal: Rs. ${order.subtotal || 0}</div><div>Shipping: Rs. ${order.shipping || 0}</div><div style="font-weight:600; margin-top:6px">Total: Rs. ${order.total || 0}</div></div>`
+      : '';
 
-  const addressHtml = order?.shippingAddress
-    ? `<div style="margin-top:12px;"><div style="font-weight:600">Shipping address</div><div style="white-space:pre-wrap">${order.shippingAddress}</div></div>`
-    : '';
+    const addressHtml = order?.shippingAddress
+      ? `<div style="margin-top:12px;"><div style="font-weight:600">Shipping address</div><div style="white-space:pre-wrap">${order.shippingAddress}</div></div>`
+      : '';
 
-  const html = `
+    const html = `
     <div style="font-family: Arial, Helvetica, sans-serif; line-height: 1.5; color: #111827;">
       ${brandedHeaderHtml()}
       <h2 style="margin: 0 0 12px;">Thanks for your order</h2>
@@ -112,13 +116,17 @@ export async function sendOrderPlacementEmail(
     </div>
   `;
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to,
-    subject: `[${STORE_NAME}] Action required: confirm order ${orderNumber}`,
-    text: `Thanks for your order!\n\nStore: ${STORE_NAME}\nOrder number: ${orderNumber}\n\nTo continue processing, please confirm your order by opening this link:\n${confirmLink}\n\nIf you did not place this order, you can ignore this email.`,
-    html
-  });
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to,
+      subject: `[${STORE_NAME}] Action required: confirm order ${orderNumber}`,
+      text: `Thanks for your order!\n\nStore: ${STORE_NAME}\nOrder number: ${orderNumber}\n\nTo continue processing, please confirm your order by opening this link:\n${confirmLink}\n\nIf you did not place this order, you can ignore this email.`,
+      html
+    });
+  } catch (error) {
+    console.error('Error sending order placement email:', error);
+    throw error; // Re-throw so caller can handle
+  }
 }
 
 export async function sendOrderStatusEmail(

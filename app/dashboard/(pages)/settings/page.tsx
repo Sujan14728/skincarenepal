@@ -40,8 +40,8 @@ const SettingsPage = () => {
               typeof data.deliveryCost === 'number'
                 ? data.deliveryCost
                 : typeof data.globalDiscountPercent === 'number'
-                ? data.globalDiscountPercent
-                : 0,
+                  ? data.globalDiscountPercent
+                  : 0,
             freeShippingThreshold: data.freeShippingThreshold ?? 3000,
             qrImageUrl: data.qrImageUrl || ''
           });
@@ -108,10 +108,22 @@ const SettingsPage = () => {
       const uploadData = await uploadRes.json();
 
       // Update settings with new QR image URL
-      setSettings({
+      const updatedSettings = {
         ...settings,
         qrImageUrl: uploadData.url
+      };
+      setSettings(updatedSettings);
+
+      // Auto-save to database immediately after upload
+      const saveRes = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSettings)
       });
+
+      if (!saveRes.ok) {
+        throw new Error('Failed to save QR image URL to database');
+      }
 
       setPreviewUrl(uploadData.url);
       setSelectedFile(null);
@@ -121,7 +133,7 @@ const SettingsPage = () => {
         fileInputRef.current.value = '';
       }
 
-      toast.success('QR image uploaded successfully');
+      toast.success('QR image uploaded and saved successfully');
     } catch (error) {
       console.error('Upload error:', error);
       toast.error(error instanceof Error ? error.message : 'Upload failed');
@@ -130,12 +142,31 @@ const SettingsPage = () => {
     }
   };
 
-  const handleRemoveImage = () => {
-    setSettings({ ...settings, qrImageUrl: '' });
+  const handleRemoveImage = async () => {
+    const updatedSettings = { ...settings, qrImageUrl: '' };
+    setSettings(updatedSettings);
     setPreviewUrl('');
     setSelectedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+
+    // Auto-save to database after removing QR
+    try {
+      const saveRes = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSettings)
+      });
+
+      if (saveRes.ok) {
+        toast.success('QR image removed successfully');
+      } else {
+        toast.error('Failed to remove QR image from database');
+      }
+    } catch (err) {
+      console.error('Error removing QR:', err);
+      toast.error('Failed to remove QR image');
     }
   };
 
@@ -253,7 +284,7 @@ const SettingsPage = () => {
                   onClick={handleRemoveImage}
                   size='sm'
                   variant='destructive'
-                  className='absolute -top-2 -right-2 h-6 w-6 rounded-full p-0'
+                  className='absolute -right-2 -top-2 h-6 w-6 rounded-full p-0'
                 >
                   <X className='h-3 w-3' />
                 </Button>

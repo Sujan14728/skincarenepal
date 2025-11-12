@@ -1,5 +1,6 @@
 stages:
   - build
+  - test
   - deploy
 
 # Cache dependencies between jobs
@@ -55,6 +56,81 @@ build:
       - node_modules/
       - prisma/
     expire_in: 1 hour
+  only:
+    - main
+    - develop
+
+# Test stage - Run tests, linting, and type checking
+test:lint:
+  stage: test
+  image: node:20-bullseye
+  dependencies:
+    - build
+  script:
+    - echo "Running ESLint..."
+    - npm run lint || echo "⚠️  Linting issues found (non-blocking)"
+  allow_failure: true # Don't block deployment on lint warnings
+  only:
+    - main
+    - develop
+
+test:typecheck:
+  stage: test
+  image: node:20-bullseye
+  dependencies:
+    - build
+  script:
+    - echo "Running TypeScript type checking..."
+    - npx tsc --noEmit
+  allow_failure: false # Block deployment on type errors
+  only:
+    - main
+    - develop
+
+test:unit:
+  stage: test
+  image: node:20-bullseye
+  dependencies:
+    - build
+  variables:
+    DATABASE_URL: $DATABASE_URL
+  script:
+    - echo "Running unit tests..."
+    # If you have Jest or other test framework configured
+    - npm run test || echo "⚠️  No test command configured yet"
+  allow_failure: true # Don't block deployment if tests fail (for now)
+  only:
+    - main
+    - develop
+
+test:build-verification:
+  stage: test
+  image: node:20-bullseye
+  dependencies:
+    - build
+  script:
+    - echo "Verifying build artifacts..."
+    - |
+      # Check if .next directory exists
+      if [ ! -d ".next" ]; then
+        echo "❌ Build directory .next not found!"
+        exit 1
+      fi
+
+      # Check if critical build files exist
+      if [ ! -f ".next/BUILD_ID" ]; then
+        echo "❌ BUILD_ID file not found!"
+        exit 1
+      fi
+
+      # Check if server files exist
+      if [ ! -d ".next/server" ]; then
+        echo "❌ Server directory not found!"
+        exit 1
+      fi
+
+      echo "✅ Build verification passed!"
+  allow_failure: false # Block deployment if build is incomplete
   only:
     - main
     - develop

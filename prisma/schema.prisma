@@ -18,35 +18,28 @@ model User {
 }
 
 model Product {
-  id             Int         @id @default(autoincrement())
+  id             Int           @id @default(autoincrement())
   name           String
-  slug           String      @unique
+  slug           String        @unique
   description    String?
   price          Int
   salePrice      Int?
-  stock          Int         @default(0)
-  images         String[]    @default([])
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  excerpt        String      @default("")
-  keyBenefits    String[]    @default([])
-  howToUse       String[]    @default([])
-  keyIngredients String[]    @default([])
-  suitableFor    String[]    @default([])
-  orderItems     OrderItem[]
+  stock          Int           @default(0)
+  images         String[]      @default([])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  excerpt        String        @default("")
+  keyBenefits    String[]      @default([])
+  howToUse       String[]      @default([])
+  keyIngredients String[]      @default([])
+  suitableFor    String[]      @default([])
   status         ProductStatus @default(IN_STOCK)
-}
-
-enum ProductStatus {
-  IN_STOCK
-  OUT_OF_STOCK
-  DISCONTINUED
-  COMING_SOON
+  orderItems     OrderItem[]
 }
 
 model Order {
-  id                      Int         @id @default(autoincrement())
-  orderNumber             String      @unique @default(uuid())
+  id                      Int           @id @default(autoincrement())
+  orderNumber             String        @unique @default(uuid())
   userId                  Int?
   email                   String?
   name                    String?
@@ -58,15 +51,15 @@ model Order {
   discount                Int
   shipping                Int
   total                   Int
-  status                  OrderStatus @default(PENDING_CONFIRMATION)
-  paymentMethod           PaymentMethod @default(COD)
+  status                  OrderStatus   @default(PENDING_CONFIRMATION)
   placementTokenHash      String?
   placementTokenExpiresAt DateTime?
   placedAt                DateTime?
   verifiedAt              DateTime?
-  createdAt               DateTime    @default(now())
-  updatedAt               DateTime    @updatedAt
-  user                    User?       @relation(fields: [userId], references: [id])
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  paymentMethod           PaymentMethod @default(COD)
+  user                    User?         @relation(fields: [userId], references: [id])
   items                   OrderItem[]
 }
 
@@ -152,6 +145,13 @@ model PopupDetails {
   PopupContent   PopupContent @relation(fields: [popupContentId], references: [id])
 }
 
+enum ProductStatus {
+  IN_STOCK
+  OUT_OF_STOCK
+  DISCONTINUED
+  COMING_SOON
+}
+
 enum OrderStatus {
   PENDING_CONFIRMATION
   PENDING_VERIFICATION
@@ -162,6 +162,7 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
 }
+
 enum ContactStatus {
   UNREAD
   READ
