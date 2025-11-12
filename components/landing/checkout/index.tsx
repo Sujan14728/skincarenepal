@@ -3,7 +3,11 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { getCartFromLocal } from '@/lib/utils/local-storage';
+import {
+  getCartFromLocal,
+  clearCart,
+  saveCartToLocal
+} from '@/lib/utils/local-storage';
 import { ICartItem } from '@/lib/types/cart';
 import { toast } from 'sonner';
 import { Product } from '@/lib/types/product';
@@ -168,6 +172,22 @@ export default function CheckoutClient() {
       toast.success(
         'Order placed successfully. Please confirm order details sent to your email.'
       );
+
+      // Reset form and cart after successful order placement
+      try {
+        setName('');
+        setEmail('');
+        setPhone('');
+        setShippingAddress('');
+        setNote('');
+        setPaymentMethod('COD');
+        setPaymentImage(null);
+        setCartItems([]);
+        saveCartToLocal([]);
+        clearCart();
+      } catch (e) {
+        console.warn('Failed to fully reset checkout form/cart:', e);
+      }
 
       if (singleProductMode) window.history.replaceState({}, '', '/checkout');
     } catch {

@@ -22,7 +22,8 @@ export const metadata: Metadata = {
   description:
     'Shop 100% natural organic face packs in Nepal. Free delivery and best prices.',
   icons: {
-    icon: '/favicon.ico',
+    // Fallback to logo if dedicated favicons are not present in /public
+    icon: ['/favicon.ico', '/images/logo1.png'],
     shortcut: '/favicon-32x32.png',
     apple: '/apple-touch-icon.png',
     other: [
@@ -83,6 +84,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        {/* Fallback icon links to ensure browsers show brand logo */}
+        <link rel='icon' href='/images/logo.jpg' />
+        <link rel='apple-touch-icon' href='/images/logo.jpg' />
         {/* Organization & Website JSON-LD */}
         <Script
           id='ld-org'
