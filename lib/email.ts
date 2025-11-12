@@ -4,10 +4,16 @@ import { OrderStatus } from '@prisma/client';
 dotenv.config();
 
 export const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.SMTP_HOST || 'agni.secureshieldserver.com',
+  port: parseInt(process.env.SMTP_PORT || '465', 10),
+  secure: process.env.SMTP_SECURE === 'true', // true for port 465, false for 587
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
+  },
+  tls: {
+    // Do not fail on invalid certs (only for dev/staging if needed)
+    rejectUnauthorized: process.env.NODE_ENV === 'production'
   }
 });
 
