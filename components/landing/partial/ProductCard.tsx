@@ -64,7 +64,7 @@ export function ProductCard({
           alt={name ?? 'Product Image'}
           width={400}
           height={300}
-          sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 100vw"
+          sizes='(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 100vw'
           className='h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.1]'
         />
       </div>

@@ -18,20 +18,20 @@ async function generateOrderNumber(productName: string): Promise<string> {
 
   // Generate a random 4-5 digit number
   const randomNum = Math.floor(10000 + Math.random() * 90000);
-  
+
   let orderNumber = `${slug}-${randomNum}`;
-  
+
   // Ensure uniqueness by checking database and incrementing if needed
   let exists = await prisma.order.findUnique({ where: { orderNumber } });
   let attempts = 0;
-  
+
   while (exists && attempts < 10) {
     const newNum = Math.floor(10000 + Math.random() * 90000);
     orderNumber = `${slug}-${newNum}`;
     exists = await prisma.order.findUnique({ where: { orderNumber } });
     attempts++;
   }
-  
+
   return orderNumber;
 }
 

@@ -21,11 +21,11 @@ const EMAIL_CONFIGURED = Boolean(
   process.env.EMAIL_USER && process.env.EMAIL_PASS
 );
 
-const STORE_NAME = process.env.STORE_NAME || 'Skincare Nepal';
+const STORE_NAME = process.env.STORE_NAME || 'Care And Clean Nepal';
 const SUPPORT_EMAIL =
   process.env.SUPPORT_EMAIL ||
   process.env.EMAIL_USER ||
-  'support@skincarenepal.com';
+  'support@careandcleannp.com';
 
 function getOrigin() {
   const base =
