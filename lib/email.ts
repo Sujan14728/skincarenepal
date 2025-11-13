@@ -36,7 +36,7 @@ function getOrigin() {
 }
 
 function brandedHeaderHtml() {
-  const logoUrl = `${getOrigin()}/images/logo.jpg`;
+  const logoUrl = `${getOrigin()}/logo.jpg`;
   return `
     <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
       <img src="${logoUrl}" alt="${STORE_NAME} logo" width="36" height="36" style="border-radius:6px; object-fit:cover;" />
@@ -98,7 +98,7 @@ export async function sendOrderPlacementEmail(
       .join('');
 
     const totalsHtml = order
-      ? `<div style="margin-top:12px; font-size:14px;"><div>Subtotal: Rs. ${order.subtotal || 0}</div><div>Shipping: Rs. ${order.shipping || 0}</div><div style="font-weight:600; margin-top:6px">Total: Rs. ${order.total || 0}</div></div>`
+      ? `<div style="margin-top:12px; font-size:14px;"><div>Subtotal: Rs. ${order.subtotal || 0}</div><div>Shipping: ${order.shipping === 0 ? 'FREE' : `Rs. ${order.shipping || 0}`}</div><div style="font-weight:600; margin-top:6px">Total: Rs. ${order.total || 0}</div></div>`
       : '';
 
     const addressHtml = order?.shippingAddress
@@ -159,7 +159,7 @@ export async function sendOrderStatusEmail(
     .join('');
 
   const totalsHtml = order
-    ? `<div style="margin-top:12px; font-size:14px;"><div>Subtotal: Rs. ${order.subtotal || 0}</div><div>Shipping: Rs. ${order.shipping || 0}</div><div style="font-weight:600; margin-top:6px">Total: Rs. ${order.total || 0}</div></div>`
+    ? `<div style="margin-top:12px; font-size:14px;"><div>Subtotal: Rs. ${order.subtotal || 0}</div><div>Shipping: ${order.shipping === 0 ? 'FREE' : `Rs. ${order.shipping || 0}`}</div><div style="font-weight:600; margin-top:6px">Total: Rs. ${order.total || 0}</div></div>`
     : '';
 
   const addressHtml = order?.shippingAddress
@@ -214,7 +214,7 @@ export async function sendCustomOrderEmail(
     )
     .join('');
 
-  const totalsText = `\nSubtotal: Rs. ${order?.subtotal || 0}\nShipping: Rs. ${order?.shipping || 0}\nTotal: Rs. ${order?.total || 0}`;
+  const totalsText = `\nSubtotal: Rs. ${order?.subtotal || 0}\nShipping: ${order?.shipping === 0 ? 'FREE' : `Rs. ${order?.shipping || 0}`}\nTotal: Rs. ${order?.total || 0}`;
 
   const html = `
     <div style="font-family: Arial, Helvetica, sans-serif; color:#111827; line-height:1.4;">
@@ -222,7 +222,7 @@ export async function sendCustomOrderEmail(
       <p>${message}</p>
       ${order?.orderNumber ? `<h4 style="margin-top:12px">Order ${order.orderNumber} items</h4>` : ''}
       ${itemsHtml ? `<table style="width:100%; border-collapse:collapse; margin-top:8px"><thead><tr><th style="text-align:left; padding:6px 8px; border-bottom:1px solid #ddd">Item</th><th style="text-align:center; padding:6px 8px; border-bottom:1px solid #ddd">Qty</th><th style="text-align:right; padding:6px 8px; border-bottom:1px solid #ddd">Price</th><th style="text-align:right; padding:6px 8px; border-bottom:1px solid #ddd">Line</th></tr></thead><tbody>${itemsHtml}</tbody></table>` : ''}
-      ${order ? `<div style="margin-top:12px; font-size:14px;"><div>Subtotal: Rs. ${order.subtotal || 0}</div><div>Shipping: Rs. ${order.shipping || 0}</div><div style="font-weight:600; margin-top:6px">Total: Rs. ${order.total || 0}</div></div>` : ''}
+      ${order ? `<div style="margin-top:12px; font-size:14px;"><div>Subtotal: Rs. ${order.subtotal || 0}</div><div>Shipping: ${order.shipping === 0 ? 'FREE' : `Rs. ${order.shipping || 0}`}</div><div style="font-weight:600; margin-top:6px">Total: Rs. ${order.total || 0}</div></div>` : ''}
       ${brandedFooterHtml()}
     </div>
   `;

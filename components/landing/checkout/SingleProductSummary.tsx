@@ -14,6 +14,7 @@ interface SingleProductSummaryProps {
   setSingleQty: Dispatch<SetStateAction<number>>;
   setCartItems: Dispatch<SetStateAction<ICartItem[]>>;
   loadingProduct: boolean;
+  deliveryCost?: number;
 }
 
 export default function SingleProductSummary({
@@ -21,10 +22,10 @@ export default function SingleProductSummary({
   singleQty,
   setSingleQty,
   setCartItems,
-  loadingProduct
+  loadingProduct,
+  deliveryCost = 100
 }: SingleProductSummaryProps) {
   // Compute subtotal and delivery
-  const deliveryCost = useMemo(() => 100, []); // You can make this dynamic via props later
   const subtotal = useMemo(() => {
     if (!singleProduct) return 0;
     const price = singleProduct.salePrice ?? singleProduct.price;
