@@ -4,6 +4,37 @@ import { verifyToken } from '@/lib/auth';
 import { sendOrderPlacementEmail } from '@/lib/email';
 import crypto from 'crypto';
 
+/**
+ * Generate a human-friendly order number from the first product name
+ * Format: productSlug-randomNumber (e.g., facepack-12345)
+ */
+async function generateOrderNumber(productName: string): Promise<string> {
+  // Sanitize product name to slug-like format
+  const slug = productName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .substring(0, 20); // Limit length
+
+  // Generate a random 4-5 digit number
+  const randomNum = Math.floor(10000 + Math.random() * 90000);
+  
+  let orderNumber = `${slug}-${randomNum}`;
+  
+  // Ensure uniqueness by checking database and incrementing if needed
+  let exists = await prisma.order.findUnique({ where: { orderNumber } });
+  let attempts = 0;
+  
+  while (exists && attempts < 10) {
+    const newNum = Math.floor(10000 + Math.random() * 90000);
+    orderNumber = `${slug}-${newNum}`;
+    exists = await prisma.order.findUnique({ where: { orderNumber } });
+    attempts++;
+  }
+  
+  return orderNumber;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get('token')?.value;
@@ -146,8 +177,13 @@ export async function POST(req: NextRequest) {
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const tokenExpiry = new Date(Date.now() + 1000 * 60 * 60 * 24);
 
+    // Generate human-friendly order number from first product name
+    const firstProductName = items[0]?.name || 'order';
+    const orderNumber = await generateOrderNumber(firstProductName);
+
     const order = await prisma.order.create({
       data: {
+        orderNumber,
         userId: userId || null,
         email: email || null,
         name: name || null,
