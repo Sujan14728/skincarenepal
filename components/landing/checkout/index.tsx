@@ -40,6 +40,7 @@ export default function CheckoutClient() {
   const [singleQty, setSingleQty] = useState<number>(1);
   const [singleProduct, setSingleProduct] = useState<Product | null>(null);
   const [loadingProduct, setLoadingProduct] = useState(false);
+  const [isDeliveryFree, setIsDeliveryFree] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -133,7 +134,7 @@ export default function CheckoutClient() {
         settings?.freeShippingThreshold &&
         subtotal >= settings.freeShippingThreshold
           ? 0
-          : 100;
+          : settings?.deliveryCost || 0;
 
       const total = subtotal + shipping;
 
@@ -177,6 +178,33 @@ export default function CheckoutClient() {
     }
   };
 
+  // Apply free shipping logic for both cart and single-product (buy-now) flows
+  useEffect(() => {
+    if (!settings) return;
+
+    // compute subtotal from either single-product mode or cart
+    let subtotal = 0;
+    if (singleProductMode && singleProduct) {
+      subtotal = (singleProduct.salePrice ?? singleProduct.price) * singleQty;
+    } else if (cartItems.length > 0) {
+      subtotal = cartItems.reduce(
+        (sum, i) => sum + (i.salePrice ?? i.price) * i.quantity,
+        0
+      );
+    }
+
+    if (!settings.freeShippingThreshold) {
+      setIsDeliveryFree(false);
+      return;
+    }
+
+    if (subtotal >= settings.freeShippingThreshold) {
+      setIsDeliveryFree(true);
+    } else {
+      setIsDeliveryFree(false);
+    }
+  }, [cartItems, settings, singleProductMode, singleProduct, singleQty]);
+
   return (
     <div className='mx-auto max-w-4xl space-y-6 p-4'>
       <h1 className='text-2xl font-semibold'>Checkout</h1>
@@ -189,6 +217,7 @@ export default function CheckoutClient() {
               setSingleQty={setSingleQty}
               setCartItems={setCartItems}
               loadingProduct={loadingProduct}
+              deliveryCost={isDeliveryFree ? 0 : settings?.deliveryCost}
             />
           )}
           {paymentMethod === 'ONLINE' && <PaymentSection settings={settings} />}
