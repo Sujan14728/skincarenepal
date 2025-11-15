@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
   Loader2,
   Box,

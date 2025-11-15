@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { PaymentMethod } from '@/lib/enum/product';
+import { useEffect, useState } from 'react';
 
 interface CustomerDetailsProps {
   name: string;
@@ -43,6 +44,21 @@ export default function CustomerDetails({
   paymentImage,
   setPaymentImage
 }: CustomerDetailsProps) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (paymentImage) {
+      const url = URL.createObjectURL(paymentImage);
+      setPreviewUrl(url);
+
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [paymentImage]);
+
   return (
     <div>
       <h2 className='mb-2 text-lg font-semibold'>Customer Details</h2>
@@ -112,7 +128,7 @@ export default function CustomerDetails({
       {paymentMethod === 'ONLINE' && (
         <div className='flex flex-col gap-0'>
           <label>Payment Slip Image</label>
-          <p className='text-muted-foreground text-xs'>
+          <p className='text-xs text-muted-foreground'>
             (Scan the QR code above and upload the payment slip here)
           </p>
           <Input
@@ -121,6 +137,13 @@ export default function CustomerDetails({
             accept='image/*'
             onChange={e => setPaymentImage(e.target.files?.[0] || null)}
           />
+          {previewUrl && (
+            <img
+              src={previewUrl}
+              alt='Payment Preview'
+              className='mt-2 max-h-48 max-w-xs rounded border object-contain'
+            />
+          )}
         </div>
       )}
     </div>
