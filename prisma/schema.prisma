@@ -59,6 +59,8 @@ model Order {
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
   paymentMethod           PaymentMethod @default(COD)
+  couponId                Int?          
+  coupon                  Coupon?       @relation(fields: [couponId], references: [id])
   user                    User?         @relation(fields: [userId], references: [id])
   items                   OrderItem[]
 }
@@ -72,6 +74,21 @@ model OrderItem {
   quantity  Int
   order     Order    @relation(fields: [orderId], references: [id])
   product   Product? @relation(fields: [productId], references: [id], onDelete: NoAction)
+}
+
+model Coupon {
+  id                Int       @id @default(autoincrement())
+  code              String    @unique
+  discountAmount    Int       // flat or percent
+  isPercentage      Boolean   @default(false)
+  active            Boolean   @default(true)
+  usageLimit        Int?
+  usedCount         Int       @default(0)
+  validFrom         DateTime?
+  validUntil        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  orders            Order[]
 }
 
 model SiteSetting {
