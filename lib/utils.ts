@@ -56,15 +56,29 @@ export const formatStatus = (status: string) => {
 
 export const productStatusVariant = (status: string) => {
   switch (status) {
-    case "IN_STOCK":
-      return "success";
-    case "OUT_OF_STOCK":
-      return "secondary";
-    case "COMING_SOON":
-      return "outline";
-    case "DISCONTINUED":
-      return "destructive";
+    case 'IN_STOCK':
+      return 'success';
+    case 'OUT_OF_STOCK':
+      return 'secondary';
+    case 'COMING_SOON':
+      return 'outline';
+    case 'DISCONTINUED':
+      return 'destructive';
     default:
-      return "outline";
+      return 'outline';
   }
+};
+
+export function getOrigin(): string {
+  if (typeof window !== 'undefined') {
+    // client-side
+    return window.location.origin;
+  }
+
+  // server-side: prefer env variable, fallback to localhost
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    process.env.VERCEL_URL ||
+    'http://localhost:3000';
+  return baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
 }

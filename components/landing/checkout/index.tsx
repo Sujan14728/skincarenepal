@@ -9,6 +9,7 @@ import CustomerDetails from './CustomerDetails';
 import PaymentSection from './PaymentSection';
 import SingleProductSummary from './SingleProductSummary';
 import { useState } from 'react';
+import EmptyCartMessage from '../partial/EmptyCart';
 
 export interface DraftOrder {
   orderId: number;
@@ -87,8 +88,6 @@ export default function CheckoutClient() {
         paymentSlipUrl = url;
       }
 
-      console.log('Placing order with draft token:', draftOrder);
-
       // 3. Confirm order - send draft token and coupon info (if any)
       const confirmRes = await fetch('/api/orders/place', {
         method: 'POST',
@@ -137,7 +136,7 @@ export default function CheckoutClient() {
       <h1 className='text-2xl font-semibold'>Checkout</h1>
       <div className='grid gap-6 md:grid-cols-2'>
         <div className='flex flex-col gap-4'>
-          {singleProductMode && (
+          {singleProductMode ? (
             <SingleProductSummary
               singleProduct={singleProduct}
               singleQty={singleQty}
@@ -150,6 +149,8 @@ export default function CheckoutClient() {
               draft={draft}
               setDraft={setDraft}
             />
+          ) : (
+            <EmptyCartMessage />
           )}
           {customerForm.paymentMethod === 'ONLINE' && (
             <PaymentSection settings={settings} />

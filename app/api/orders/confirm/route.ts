@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
+import { getOrigin } from '@/lib/utils';
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token');
   const orderNumber = req.nextUrl.searchParams.get('order');
-
+  const origin = getOrigin();
   if (!token || !orderNumber) {
     return NextResponse.json(
       { error: 'Invalid confirmation request' },
@@ -26,9 +27,8 @@ export async function GET(req: NextRequest) {
   });
 
   if (!order) {
-    return NextResponse.json(
-      { error: 'Invalid or expired confirmation link' },
-      { status: 400 }
+    return NextResponse.redirect(
+      `${origin}/order/confirmation?status=error&message=Invalid+or+expired+link`
     );
   }
 
@@ -55,5 +55,7 @@ export async function GET(req: NextRequest) {
     }
   });
 
-  return NextResponse.json({ success: true, message: 'Order confirmed' });
+  return NextResponse.redirect(
+    `${origin}/order/confirmation?status=success&orderNumber=${order.orderNumber}`
+  );
 }

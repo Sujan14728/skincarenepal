@@ -43,6 +43,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Ensure draft has items
+    if (!draft.items || draft.items.length === 0) {
+      return NextResponse.json(
+        { error: 'Draft has no items. Cannot place empty order.' },
+        { status: 400 }
+      );
+    }
+
     // Compute discount again just in case
     let discount = draft.discount || 0;
     if (draft.coupon) {
@@ -56,6 +64,14 @@ export async function POST(req: NextRequest) {
         discount = draft.coupon.discountAmount;
       }
     }
+
+    // Recompute totals server-side from draft items and draft shipping
+    const recalculatedSubtotal = draft.items.reduce(
+      (sum, i) => sum + i.price * i.quantity,
+      0
+    );
+    const shippingCost = draft.shipping ?? 0;
+    const total = Math.max(0, recalculatedSubtotal + shippingCost - discount);
 
     // Finalize the draft
     const order = await prisma.order.update({
@@ -72,6 +88,9 @@ export async function POST(req: NextRequest) {
           | 'ONLINE',
         paymentSlipUrl: paymentSlipUrl || draft.paymentSlipUrl,
         discount,
+        subtotal: recalculatedSubtotal,
+        shipping: shippingCost,
+        total,
         status: 'PENDING_CONFIRMATION',
         placedAt: new Date()
       },
