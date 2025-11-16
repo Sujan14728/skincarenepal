@@ -132,7 +132,8 @@ export async function POST(req: NextRequest) {
       subtotal,
       discount,
       shipping,
-      total
+      total,
+      couponCode
     } = body;
 
     if (!shippingAddress || !items || items.length === 0) {
@@ -140,6 +141,35 @@ export async function POST(req: NextRequest) {
         { error: 'Missing required fields' },
         { status: 400 }
       );
+    }
+
+    let appliedCoupon = null;
+    let finalDiscount = discount; // default to frontend-provided value
+
+    if (couponCode) {
+      const coupon = await prisma.coupon.findFirst({
+        where: {
+          code: couponCode,
+          active: true,
+          validFrom: { lte: new Date() },
+          validUntil: { gte: new Date() },
+          usageLimit: { gte: 1 }
+        }
+      });
+
+      if (!coupon) {
+        return NextResponse.json(
+          { error: 'Invalid or expired coupon' },
+          { status: 400 }
+        );
+      }
+
+      // Recalculate discount on backend for safety
+      finalDiscount = coupon.isPercentage
+        ? Math.floor((subtotal * coupon.discountAmount) / 100)
+        : coupon.discountAmount;
+
+      appliedCoupon = coupon;
     }
 
     const token = crypto.randomBytes(32).toString('hex');
@@ -162,6 +192,7 @@ export async function POST(req: NextRequest) {
         paymentSlipUrl: paymentSlipUrl || null,
         placementTokenHash: tokenHash,
         placementTokenExpiresAt: tokenExpiry,
+        couponCode: appliedCoupon ? appliedCoupon.code : null,
         items: {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           create: items.map((i: any) => ({

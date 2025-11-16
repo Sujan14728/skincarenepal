@@ -1,59 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
-import { sendOrderStatusEmail } from '@/lib/email';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const token = searchParams.get('token');
-    const orderNumber = searchParams.get('order');
-    if (!token || !orderNumber) {
-      return NextResponse.redirect(
-        new URL('/order-confirmed?order=invalid', req.url)
-      );
-    }
-    const hash = crypto.createHash('sha256').update(token).digest('hex');
-    const order = await prisma.order.findUnique({ where: { orderNumber } });
-    if (!order || order.placementTokenHash !== hash) {
-      return NextResponse.redirect(
-        new URL('/order-confirmed?order=invalid', req.url)
-      );
-    }
-    if (
-      order.placementTokenExpiresAt &&
-      order.placementTokenExpiresAt < new Date()
-    ) {
-      return NextResponse.redirect(
-        new URL('/order-confirmed?order=expired', req.url)
-      );
-    }
-    const updated = await prisma.order.update({
-      where: { id: order.id },
-      data: {
-        status: 'PENDING_VERIFICATION',
-        placementTokenHash: null,
-        placementTokenExpiresAt: null
-      }
-    });
-    if (updated.email) {
-      const full = await prisma.order.findUnique({
-        where: { id: updated.id },
-        include: { items: true }
-      });
-      await sendOrderStatusEmail(
-        updated.email,
-        updated.orderNumber,
-        updated.status,
-        full || undefined
-      );
-    }
-    return NextResponse.redirect(
-      new URL('/order-confirmed?order=confirmed', req.url)
-    );
-  } catch {
-    return NextResponse.redirect(
-      new URL('/order-confirmed?order=error', req.url)
+  const token = req.nextUrl.searchParams.get('token');
+  const orderNumber = req.nextUrl.searchParams.get('order');
+
+  if (!token || !orderNumber) {
+    return NextResponse.json(
+      { error: 'Invalid confirmation request' },
+      { status: 400 }
     );
   }
+
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+  const order = await prisma.order.findFirst({
+    where: {
+      orderNumber,
+      placementTokenHash: tokenHash,
+      placementTokenExpiresAt: { gt: new Date() },
+      status: 'PENDING_CONFIRMATION'
+    },
+    include: { coupon: true }
+  });
+
+  if (!order) {
+    return NextResponse.json(
+      { error: 'Invalid or expired confirmation link' },
+      { status: 400 }
+    );
+  }
+
+  // Update coupon usage here
+  if (order.couponId) {
+    await prisma.coupon.update({
+      where: { id: order.couponId },
+      data: {
+        usedCount: { increment: 1 },
+        usageLimit:
+          order.coupon?.usageLimit !== null
+            ? (order.coupon?.usageLimit ?? 0) - 1
+            : null
+      }
+    });
+  }
+
+  // Change order status to confirmed
+  await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      status: 'PENDING_VERIFICATION',
+      verifiedAt: new Date()
+    }
+  });
+
+  return NextResponse.json({ success: true, message: 'Order confirmed' });
 }
