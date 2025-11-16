@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { LuMenu } from 'react-icons/lu';
+import { Menu } from 'lucide-react';
 import Image from 'next/image';
 // import CartBadge from './cart/CartBadge';
 
@@ -26,25 +26,23 @@ export function NavBar() {
   }, [pathname]);
   return (
     <nav className='flex h-20 items-center justify-between border-b border-border bg-background px-4 text-muted-foreground'>
-      <div className='flex items-center space-x-2'>
-        <div className='flex items-center justify-center text-primary'>
-          <Image
-            height={45}
-            width={75}
-            alt='Care And Clean Nepal'
-            src={'/images/logo1.png'}
-            unoptimized
-          />
-          <div className='flex flex-col items-center border-muted-foreground'>
-            <span className='text-lg font-extrabold md:text-xl'>
-              Care And Clean Pvt Ltd
-            </span>
-            <span className='text-xs font-semibold text-gray-500'>
-              Care from Nature, Clean by Choice.
-            </span>
-          </div>
-        </div>
-      </div>
+      <Link href='/' className='flex items-center space-x-2 text-primary'>
+        <Image
+          height={45}
+          width={75}
+          alt='Care And Clean Nepal'
+          src='/images/logo1.png'
+          unoptimized
+        />
+        <span className='flex flex-col items-center border-muted-foreground'>
+          <span className='text-xl font-extrabold md:text-2xl'>
+            Care And Clean Nepal
+          </span>
+          <span className='text-xs font-semibold text-gray-500'>
+            Care from Nature, Clean by Choice.
+          </span>
+        </span>
+      </Link>
 
       <div className='hidden items-center space-x-6 md:flex'>
         {navLinks.map(link => (
@@ -69,7 +67,7 @@ export function NavBar() {
                 size='icon'
                 aria-label='Open navigation menu'
               >
-                <LuMenu className='h-6 w-6' />
+                <Menu className='h-6 w-6' />
               </Button>
             </SheetTrigger>
             <SheetContent side='right'>

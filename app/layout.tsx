@@ -8,12 +8,14 @@ const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin']
 });
-
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin']
 });
 
+/* -------------------------------------------------
+   METADATA – Next.js injects the <link> tags for us
+   ------------------------------------------------- */
 export const metadata: Metadata = {
   title: {
     default: 'Care And Clean Nepal',
@@ -21,9 +23,11 @@ export const metadata: Metadata = {
   },
   description:
     'Shop 100% natural organic face packs in Nepal. Free delivery and best prices.',
+  metadataBase: new URL('https://careandcleannp.com'),
+
+  /* ---------- ICONS (order matters) ---------- */
   icons: {
-    // Fallback to logo if dedicated favicons are not present in /public
-    icon: ['/favicon.ico', '/images/logo1.png'],
+    icon: '/favicon.ico', // primary, .ico → Google loves this
     shortcut: '/favicon-32x32.png',
     apple: '/apple-touch-icon.png',
     other: [
@@ -33,6 +37,7 @@ export const metadata: Metadata = {
       { rel: 'icon', url: '/android-chrome-512x512.png', sizes: '512x512' }
     ]
   },
+
   keywords: [
     'organic skincare',
     'face pack nepal',
@@ -43,10 +48,8 @@ export const metadata: Metadata = {
     { name: 'Care And Clean Nepal', url: 'https://careandcleannp.com' }
   ],
   applicationName: 'Care And Clean Nepal',
-  metadataBase: new URL('https://careandcleannp.com'),
-  alternates: {
-    canonical: 'https://careandcleannp.com'
-  },
+  alternates: { canonical: 'https://careandcleannp.com' },
+
   openGraph: {
     type: 'website',
     url: 'https://careandcleannp.com',
@@ -72,29 +75,34 @@ export const viewport: Viewport = {
   themeColor: '#ffffff'
 };
 
+/* -------------------------------------------------
+   LAYOUT
+   ------------------------------------------------- */
 export default function RootLayout({
   children
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   const imagekitEndpoint =
     process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT ||
     process.env.IMAGEKIT_URL_ENDPOINT ||
     '';
+
   return (
     <html lang='en'>
       <head>
-        {imagekitEndpoint ? (
-          <link rel='preconnect' href={imagekitEndpoint} />
-        ) : null}
+        {/* Pre-connect to ImageKit (if you use it) */}
+        {imagekitEndpoint && <link rel='preconnect' href={imagekitEndpoint} />}
+
+        {/* ---- NO MANUAL <link rel="icon"> NEEDED ----
+             Next.js already adds them from `metadata.icons`.
+             If you really want a bullet-proof fallback, keep ONLY the .ico:
+        */}
+        <link rel='icon' href='/favicon.ico' sizes='any' />
       </head>
+
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* Fallback icon links to ensure browsers show brand logo */}
-        <link rel='icon' href='/images/logo.jpg' />
-        <link rel='apple-touch-icon' href='/images/logo.jpg' />
-        {/* Organization & Website JSON-LD */}
+        {/* JSON-LD scripts */}
         <Script
           id='ld-org'
           type='application/ld+json'
@@ -129,6 +137,7 @@ export default function RootLayout({
             })
           }}
         />
+
         {children}
         <Toaster richColors />
       </body>

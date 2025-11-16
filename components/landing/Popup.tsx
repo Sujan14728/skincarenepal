@@ -58,31 +58,16 @@ export default function GlobalPopupDialog() {
       } catch {}
     }
 
-    // Try cached data for instant display
-    let cached: PopupData | null = null;
-    if (typeof window !== 'undefined') {
-      try {
-        const raw = sessionStorage.getItem(STORAGE_KEY_DATA);
-        cached = raw ? (JSON.parse(raw) as PopupData) : null;
-      } catch {
-        cached = null;
-      }
-    }
-    if (cached) {
-      setPopupData(cached);
-      setOpen(true);
-      setLoading(false);
-      // Do not set a 'shown' flag; allow re-show every navigation
-      return;
-    }
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 1500);
 
     (async () => {
       setLoading(true);
       try {
-        const res = await fetch('/api/popup', { signal: controller.signal });
+        const res = await fetch('/api/popup', {
+          signal: controller.signal,
+          cache: 'no-store'
+        });
         if (!res.ok) throw new Error('Popup API failed');
         const data: PopupResponse = await res.json();
         if (Array.isArray(data.popups) && data.popups.length > 0) {
@@ -111,14 +96,20 @@ export default function GlobalPopupDialog() {
             if (img) img.src = normalized.products[0].image;
           }
           setOpen(true);
-          // Do not set a 'shown' flag; allow re-show every navigation
         } else {
+          // No popups exist - clear cache and don't show
           setOpen(false);
+          setPopupData(null);
+          try {
+            sessionStorage.removeItem(STORAGE_KEY_DATA);
+          } catch {}
         }
       } catch (err) {
         if (!(err instanceof DOMException && err.name === 'AbortError')) {
           console.error('Error fetching popup data', err);
         }
+        setOpen(false);
+        setPopupData(null);
       } finally {
         clearTimeout(timeoutId);
         setLoading(false);

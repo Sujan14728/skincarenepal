@@ -14,7 +14,7 @@ export default function PaymentSection({ settings }: PaymentSectionProps) {
     <Card className='space-y-3 p-4'>
       <div>
         <h2 className='text-lg font-semibold'>Payment</h2>
-        <p className='text-muted-foreground text-sm'>
+        <p className='text-sm text-muted-foreground'>
           Please scan the QR code below to make a payment.
         </p>
       </div>
@@ -26,7 +26,7 @@ export default function PaymentSection({ settings }: PaymentSectionProps) {
           >
             <Image
               src={settings.qrImageUrl}
-              alt='QR'
+              alt='QR of Care And Clean Nepal'
               fill
               className='object-contain'
             />
