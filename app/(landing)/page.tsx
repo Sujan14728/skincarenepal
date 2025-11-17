@@ -2,7 +2,7 @@ import { FeaturedProductsSection } from '@/components/landing/FeaturedProductSec
 import { FeaturesSection } from '@/components/landing/FeaturesSection';
 import { Hero } from '@/components/landing/Hero';
 import { TestimonialsSection } from '@/components/landing/TestimonialSection';
-import Popup from '@/components/landing/Popup';
+import ClientPopup from '@/components/landing/ClientPopup';
 
 export default function Home() {
   return (
@@ -11,7 +11,7 @@ export default function Home() {
       <FeaturesSection />
       <FeaturedProductsSection />
       <TestimonialsSection />
-      <Popup />
+      <ClientPopup />
     </main>
   );
 }

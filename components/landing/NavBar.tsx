@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { LuMenu } from 'react-icons/lu';
+import { Menu } from 'lucide-react';
 import Image from 'next/image';
 // import CartBadge from './cart/CartBadge';
 
@@ -25,33 +25,31 @@ export function NavBar() {
     setOpen(false);
   }, [pathname]);
   return (
-    <nav className='border-border bg-background text-muted-foreground flex h-20 items-center justify-between border-b px-4'>
-      <div className='flex items-center space-x-2'>
-        <div className='text-primary flex items-center justify-center'>
-          <Image
-            height={45}
-            width={75}
-            alt='Care And Clean Nepal'
-            src={'/images/logo1.png'}
-            unoptimized
-          />
-          <div className='border-muted-foreground flex flex-col items-center'>
-            <span className='text-lg font-extrabold md:text-xl'>
-              Care and Clean Pvt Ltd
-            </span>
-            <span className='text-xs font-semibold text-gray-500'>
-              Care from Nature, Clean by Choice.
-            </span>
-          </div>
-        </div>
-      </div>
+    <nav className='flex h-20 items-center justify-between border-b border-border bg-background px-4 text-muted-foreground'>
+      <Link href='/' className='flex items-center space-x-2 text-primary'>
+        <Image
+          height={45}
+          width={75}
+          alt='Care And Clean Nepal'
+          src='/images/logo1.png'
+          unoptimized
+        />
+        <span className='flex flex-col items-center border-muted-foreground'>
+          <span className='text-xl font-extrabold md:text-2xl'>
+            Care And Clean Nepal
+          </span>
+          <span className='text-xs font-semibold text-gray-500'>
+            Care from Nature, Clean by Choice.
+          </span>
+        </span>
+      </Link>
 
       <div className='hidden items-center space-x-6 md:flex'>
         {navLinks.map(link => (
           <Link
             key={link.href}
             href={link.href}
-            className='hover:text-primary transition-colors'
+            className='transition-colors hover:text-primary'
           >
             {link.label}
           </Link>
@@ -64,8 +62,12 @@ export function NavBar() {
         <div className='md:hidden'>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant='ghost' size='icon'>
-                <LuMenu className='h-6 w-6' />
+              <Button
+                variant='ghost'
+                size='icon'
+                aria-label='Open navigation menu'
+              >
+                <Menu className='h-6 w-6' />
               </Button>
             </SheetTrigger>
             <SheetContent side='right'>
@@ -74,7 +76,7 @@ export function NavBar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className='hover:text-primary text-lg transition-colors'
+                    className='text-lg transition-colors hover:text-primary'
                   >
                     {link.label}
                   </Link>

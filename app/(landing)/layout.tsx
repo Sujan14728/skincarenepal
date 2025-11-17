@@ -1,12 +1,12 @@
 import Footer from '@/components/landing/Footer';
 import { NavBar } from '@/components/landing/NavBar';
 import React, { ReactNode } from 'react';
-import Marquee from '@/components/ui/marquee';
+import ClientMarquee from '@/components/ui/ClientMarquee';
 
 const LandingLayout = ({ children }: { children: ReactNode }) => {
   return (
     <div>
-      <Marquee />
+      <ClientMarquee />
       <NavBar />
       {children}
       <Footer />

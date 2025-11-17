@@ -12,8 +12,8 @@ import { FaWhatsapp } from 'react-icons/fa';
 const quickLinks = [
   { href: '/', label: 'Home' },
   { href: '/products', label: 'Products' },
-  { href: '/about', label: 'About Us' },
-  { href: '/careers', label: 'Careers' }
+  { href: '/about', label: 'About' },
+  { href: '/', label: 'Careers' }
 ];
 
 const customerServiceLinks = [
@@ -28,12 +28,12 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className='bg-foreground text-foreground'>
+    <footer className='bg-foreground text-background'>
       <div className='mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8'>
         <div className='grid grid-cols-1 gap-12 border-b border-border pb-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-8'>
           <div className='space-y-4'>
             <h3 className='text-xl font-bold text-primary-foreground'>
-              CARE AND CLEAN NEPAL
+              CARE AND CLEAN PVT LTD
             </h3>
             <p className='text-sm text-muted-foreground'>
               Your trusted partner for natural and organic skincare solutions.
@@ -135,7 +135,7 @@ const Footer = () => {
               <li className='flex items-start space-x-2'>
                 <LuMail className='mt-0.5 h-5 w-5 flex-shrink-0 text-primary' />
                 <a
-                  href='mailto:info@skincareneapl.com'
+                  href='mailto:info@careandcleannp.com'
                   className='text-sm text-muted-foreground transition-colors hover:text-primary'
                 >
                   info@careandcleannp.com

@@ -10,6 +10,10 @@ export const transporter = nodemailer.createTransport({
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
+  },
+  tls: {
+    // Do not fail on invalid certs (only for dev/staging if needed)
+    rejectUnauthorized: process.env.NODE_ENV === 'production'
   }
 });
 
@@ -30,7 +34,7 @@ const STORE_NAME = process.env.STORE_NAME || 'Skincare Nepal';
 const SUPPORT_EMAIL =
   process.env.SUPPORT_EMAIL ||
   process.env.EMAIL_USER ||
-  'support@skincarenepal.com';
+  'support@careandcleannp.com';
 
 function getOrigin() {
   const base =

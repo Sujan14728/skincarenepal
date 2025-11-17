@@ -4,9 +4,24 @@
 import { ProductCard } from '@/components/landing/partial/ProductCard';
 import { prisma } from '@/lib/prisma';
 import { ProductStatus } from '@/lib/enum/product';
+import type { Metadata } from 'next';
 
 // Force dynamic rendering to avoid failing static prerender in CI when DB is unreachable
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Products',
+  description:
+    'Browse our collection of natural and organic skincare products in Nepal.',
+  alternates: { canonical: '/products' },
+  openGraph: {
+    type: 'website',
+    url: 'https://careandcleannp.com/products',
+    title: 'Products | Care And Clean Nepal',
+    description:
+      'Browse our collection of natural and organic skincare products in Nepal.'
+  }
+};
 
 const ProductPage = async () => {
   let products: Array<{
@@ -45,10 +60,10 @@ const ProductPage = async () => {
 
   return (
     <div className='flex min-h-screen flex-col'>
-      <main className='bg-background flex-grow py-12 md:pb-16'>
+      <main className='flex-grow bg-background py-12 md:pb-16'>
         <div className='mx-auto px-4 sm:px-6 lg:px-8'>
           {/* Header */}
-          <h1 className='text-foreground mb-12 text-4xl font-extrabold'>
+          <h1 className='mb-12 text-4xl font-extrabold text-foreground'>
             Our Products
           </h1>
 

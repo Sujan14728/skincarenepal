@@ -1,19 +1,26 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma'; // your prisma client
-// import { errorMonitor } from 'nodemailer/lib/xoauth2';
+import { prisma } from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 60; // Cache for 60 seconds
 
 export async function GET() {
   try {
-    const marquees = await prisma.marquee.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
+    // Add timeout to prevent hanging connections
+    const marquees = await Promise.race([
+      prisma.marquee.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 10 // Limit results
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Query timeout')), 3000)
+      )
+    ]);
     return NextResponse.json({ marquees });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json(
-      { error: 'Failed to fetch marquees' },
-      { status: 500 }
-    );
+    console.error('Marquee fetch error:', err);
+    // Return empty array on error to prevent UI breaking
+    return NextResponse.json({ marquees: [] });
   }
 }
 

@@ -22,8 +22,7 @@ export async function GET(req: NextRequest) {
       placementTokenHash: tokenHash,
       placementTokenExpiresAt: { gt: new Date() },
       status: 'PENDING_CONFIRMATION'
-    },
-    include: { coupon: true }
+    }
   });
 
   if (!order) {
@@ -32,19 +31,9 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Update coupon usage here
-  if (order.couponId) {
-    await prisma.coupon.update({
-      where: { id: order.couponId },
-      data: {
-        usedCount: { increment: 1 },
-        usageLimit:
-          order.coupon?.usageLimit !== null
-            ? (order.coupon?.usageLimit ?? 0) - 1
-            : null
-      }
-    });
-  }
+  // NOTE: Coupon usage increment removed because Order model has no coupon relation.
+  // If tracking usage per order is desired, add `couponId Int?` with relation to Coupon
+  // and set it when applying a coupon.
 
   // Change order status to confirmed
   await prisma.order.update({

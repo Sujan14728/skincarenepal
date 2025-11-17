@@ -45,17 +45,17 @@ export function ProductCard({
   return (
     <Link
       href={`/products/${slug}`}
-      className='bg-card group flex cursor-pointer flex-col overflow-hidden rounded-xl shadow-md transition-all duration-300 hover:shadow-lg'
+      className='group flex cursor-pointer flex-col overflow-hidden rounded-xl bg-card shadow-md transition-all duration-300 hover:shadow-lg'
     >
       <div className='relative aspect-[4/3] w-full overflow-hidden'>
         {/* Sale Tag */}
         {isOnSale && (
-          <span className='bg-destructive text-destructive-foreground absolute top-2 right-2 z-10 rounded-full px-3 py-1 text-xs font-semibold uppercase'>
+          <span className='absolute right-2 top-2 z-10 rounded-full bg-destructive px-3 py-1 text-xs font-semibold uppercase text-destructive-foreground'>
             Sale
           </span>
         )}
         {status === 'COMING_SOON' && (
-          <span className='bg-muted text-muted-foreground absolute bottom-2 left-2 z-10 rounded-full px-3 py-1 text-xs font-semibold uppercase'>
+          <span className='absolute bottom-2 left-2 z-10 rounded-full bg-muted px-3 py-1 text-xs font-semibold uppercase text-muted-foreground'>
             Coming Soon
           </span>
         )}
@@ -64,24 +64,25 @@ export function ProductCard({
           alt={name ?? 'Product Image'}
           width={400}
           height={300}
-          className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.1]'
+          sizes='(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 100vw'
+          className='h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.1]'
         />
       </div>
 
       <div className='flex flex-grow flex-col p-4'>
-        <h4 className='text-foreground mb-2 text-lg font-semibold'>{name}</h4>
+        <h4 className='mb-2 text-lg font-semibold text-foreground'>{name}</h4>
 
-        <p className='text-muted-foreground mb-4 line-clamp-2 flex-grow text-sm'>
+        <p className='mb-4 line-clamp-2 flex-grow text-sm text-muted-foreground'>
           {excerpt}
         </p>
 
         <div className='mt-auto flex items-center justify-between pt-2'>
           <div className='flex flex-col'>
-            <span className='text-foreground text-xl font-bold'>
+            <span className='text-xl font-bold text-foreground'>
               {formattedPrice}
             </span>
             {isOnSale && (
-              <span className='text-muted-foreground text-sm line-through'>
+              <span className='text-sm text-muted-foreground line-through'>
                 {formattedOriginalPrice}
               </span>
             )}

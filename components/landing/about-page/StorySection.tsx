@@ -31,7 +31,7 @@ export default function StorySection() {
       <div className='flex flex-1 justify-center'>
         <Image
           src='/images/about/story.jpg'
-          alt='Our Story'
+          alt='Care And Clean Nepal Story'
           width={390}
           height={370}
           className='h-90 w-100 rounded-2xl object-cover'

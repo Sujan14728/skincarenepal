@@ -81,3 +81,17 @@ export const totalItemsInCart = () => {
   const cart = getCartFromLocal();
   return cart.length;
 };
+
+/**
+ * @function clearCart
+ * Clears the cart from localStorage and notifies listeners.
+ */
+export const clearCart = (): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(CART_STORAGE_KEY);
+    window.dispatchEvent(new Event('cartUpdated'));
+  } catch (error) {
+    console.error('Error clearing cart from local storage:', error);
+  }
+};

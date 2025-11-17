@@ -198,8 +198,15 @@ deploy:
       IMAGEKIT_PUBLIC_KEY=$IMAGEKIT_PUBLIC_KEY
       IMAGEKIT_PRIVATE_KEY=$IMAGEKIT_PRIVATE_KEY
       IMAGEKIT_URL_ENDPOINT=$IMAGEKIT_URL_ENDPOINT
+      SMTP_HOST=$SMTP_HOST
+      SMTP_PORT=$SMTP_PORT
+      SMTP_SECURE=$SMTP_SECURE
       EMAIL_USER=$EMAIL_USER
       EMAIL_PASS=$EMAIL_PASS
+      EMAIL_FROM=$EMAIL_FROM
+      STORE_NAME=$STORE_NAME
+      SUPPORT_EMAIL=$SUPPORT_EMAIL
+      NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
       PORT=3002
       EOF
 
@@ -220,8 +227,8 @@ deploy:
       ssh $VPS_USER@$VPS_HOST << 'ENDSSH'
         cd $VPS_DEPLOY_PATH
         
-        echo "Installing production dependencies..."
-        npm ci --only=production --prefer-offline --no-audit
+        echo "Installing all dependencies (including devDependencies for build)..."
+        npm ci --prefer-offline --no-audit
         
         echo "Running database migrations..."
         npx prisma migrate deploy
@@ -229,12 +236,15 @@ deploy:
         echo "Generating Prisma Client..."
         npx prisma generate
         
+        echo "Building Next.js application..."
+        npm run build
+        
         echo "Creating uploads directory if not exists..."
         mkdir -p public/uploads
         chmod 755 public/uploads
         
         echo "Restarting PM2 process..."
-        pm2 restart skincarenepal || pm2 start npm --name "skincarenepal" -- start
+        pm2 restart skincarenepal --update-env || pm2 start npm --name "skincarenepal" -- start
         pm2 save
         
         echo "Deployment completed successfully!"

@@ -26,9 +26,9 @@ export async function GET(req: Request) {
 
   const allIds = groups.map(g => g.productId).filter(Boolean) as number[];
   if (allIds.length === 0) {
-    // Fallback: no orders yet — return latest available products
+    // Fallback: no orders yet — return latest IN_STOCK products only
     const latest = await prisma.product.findMany({
-      where: { status: { in: ['IN_STOCK', 'COMING_SOON'] } },
+      where: { status: 'IN_STOCK' },
       orderBy: { createdAt: 'desc' },
       take: limit
     });
@@ -37,11 +37,11 @@ export async function GET(req: Request) {
     });
   }
 
-  // ✅ Fetch both IN_STOCK and COMING_SOON products
+  // ✅ Fetch only IN_STOCK products for featured section
   const validProducts = await prisma.product.findMany({
     where: {
       id: { in: allIds },
-      status: { in: ['IN_STOCK', 'COMING_SOON'] }
+      status: 'IN_STOCK'
     }
   });
 
@@ -59,6 +59,33 @@ export async function GET(req: Request) {
       totalOrdered: g._sum.quantity ?? 0
     };
   });
+
+  // If we have fewer than `limit`, backfill with latest IN_STOCK products
+  if (result.length < limit) {
+    const alreadyIds = new Set(
+      result
+        .map(r => (r.product ? r.product.id : undefined))
+        .filter(Boolean) as number[]
+    );
+    const remaining = limit - result.length;
+
+    // Fetch extra IN_STOCK products only
+    const extraInStock = await prisma.product.findMany({
+      where: {
+        status: 'IN_STOCK',
+        id: { notIn: Array.from(alreadyIds) }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: remaining
+    });
+
+    const extras = extraInStock.map(p => ({
+      product: p,
+      totalOrdered: 0
+    }));
+
+    return NextResponse.json({ data: [...result, ...extras] });
+  }
 
   return NextResponse.json({ data: result });
 }

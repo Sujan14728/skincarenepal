@@ -58,7 +58,7 @@ const OrdersTable = ({
   const rowsToRender = loading ? Array.from({ length: skeletonRows }) : orders;
 
   return (
-    <div className='border-border bg-background rounded-md border'>
+    <div className='rounded-md border border-border bg-background'>
       <Table>
         <TableHeader>
           <TableRow className='text-muted-foreground'>
@@ -111,7 +111,7 @@ const OrdersTable = ({
 
             return (
               <TableRow key={order.id} className='hover:bg-muted/50'>
-                <TableCell className='text-foreground font-medium'>
+                <TableCell className='font-medium text-foreground'>
                   {order.orderNumber}
                 </TableCell>
                 <TableCell>{order.name ?? order.user?.name ?? '-'}</TableCell>
@@ -138,7 +138,7 @@ const OrdersTable = ({
                     >
                       <Image
                         src={order.paymentSlipUrl}
-                        alt='Payment slip'
+                        alt='Payment slip of Care And Clean Nepal'
                         width={40}
                         height={40}
                         className='h-10 w-10 rounded object-cover'
