@@ -97,7 +97,7 @@ export default function FAQsPage() {
           Still have questions?
         </h3>
         <p className='mb-4 text-muted-foreground'>
-          We're here to help! Reach out to us anytime.
+          We&apos;re here to help! Reach out to us anytime.
         </p>
         <div className='flex flex-wrap justify-center gap-4'>
           <a
