@@ -1,11 +1,30 @@
-'use client';
-import { useSearchParams } from 'next/navigation';
+// Server component: parse query parameters via searchParams prop.
+type QueryMap = Record<string, string | string[] | undefined>;
 
-export default function OrderConfirmation() {
-  const search = useSearchParams();
-  const status = search?.get('status');
-  const orderNumber = search?.get('orderNumber');
-  const message = search?.get('message');
+export default async function OrderConfirmation({
+  searchParams
+}: {
+  searchParams?: Promise<QueryMap>;
+}) {
+  const resolved: QueryMap = searchParams ? await searchParams : {};
+  const status =
+    typeof resolved.status === 'string'
+      ? resolved.status
+      : Array.isArray(resolved.status)
+        ? resolved.status[0]
+        : undefined;
+  const orderNumber =
+    typeof resolved.orderNumber === 'string'
+      ? resolved.orderNumber
+      : Array.isArray(resolved.orderNumber)
+        ? resolved.orderNumber[0]
+        : undefined;
+  const message =
+    typeof resolved.message === 'string'
+      ? resolved.message
+      : Array.isArray(resolved.message)
+        ? resolved.message[0]
+        : undefined;
 
   return (
     <div className='min-h-screen bg-gray-100 p-4'>
