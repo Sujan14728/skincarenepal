@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       discount: 0,
       shipping,
       total,
-      status: 'DRAFT',
+      status: 'PENDING_CONFIRMATION',
       items: {
         create: itemsToCreate
       }

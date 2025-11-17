@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Coupon } from '@/lib/types/coupon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,13 +24,18 @@ type Props = {
 };
 
 export default function CouponForm({ coupon, onClose, onSubmit }: Props) {
-  const [form, setForm] = useState<Coupon>({
+  const [products, setProducts] = useState<Array<{ id: number; name: string }>>(
+    []
+  );
+  const [form, setForm] = useState({
     ...coupon,
     code: coupon?.code ?? '',
-    discountAmount: coupon?.discountAmount ?? 0,
-    isPercentage: coupon?.isPercentage ?? false,
-    active: coupon?.active ?? true,
-    usageLimit: coupon?.usageLimit ?? null,
+    discountType: coupon?.discountType ?? 'PERCENTAGE',
+    discountValue: coupon?.discountValue ?? 0,
+    minPurchase: coupon?.minPurchase ?? '',
+    usageLimit: coupon?.usageLimit ?? '',
+    productId: coupon?.productId ?? '',
+    isActive: coupon?.isActive ?? true,
     validFrom: coupon?.validFrom
       ? dayjs(coupon.validFrom).format('YYYY-MM-DD')
       : '',
@@ -38,6 +43,20 @@ export default function CouponForm({ coupon, onClose, onSubmit }: Props) {
       ? dayjs(coupon.validUntil).format('YYYY-MM-DD')
       : ''
   });
+
+  useEffect(() => {
+    fetch('/api/products?limit=1000')
+      .then(res => res.json())
+      .then(data => {
+        // API returns products array directly, not wrapped in an object
+        const productsList = Array.isArray(data) ? data : data.products || [];
+        setProducts(productsList);
+      })
+      .catch(err => {
+        console.error('Failed to load products:', err);
+        toast.error('Failed to load products');
+      });
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -49,8 +68,8 @@ export default function CouponForm({ coupon, onClose, onSubmit }: Props) {
           ? checked
           : type === 'number'
             ? value === ''
-              ? null
-              : parseInt(value, 10)
+              ? ''
+              : value
             : type === 'date'
               ? value
               : value
@@ -60,9 +79,16 @@ export default function CouponForm({ coupon, onClose, onSubmit }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = {
-      ...form,
-      validFrom: form.validFrom ? dayjs(form.validFrom).toDate() : null,
-      validUntil: form.validUntil ? dayjs(form.validUntil).toDate() : null
+      ...(coupon?.id && { id: coupon.id }),
+      code: form.code,
+      discountType: form.discountType,
+      discountValue: Number(form.discountValue),
+      minPurchase: form.minPurchase ? Number(form.minPurchase) : undefined,
+      usageLimit: form.usageLimit ? Number(form.usageLimit) : undefined,
+      productId: form.productId ? Number(form.productId) : undefined,
+      isActive: !!form.isActive,
+      validFrom: form.validFrom ? dayjs(form.validFrom).toDate() : undefined,
+      validUntil: form.validUntil ? dayjs(form.validUntil).toDate() : undefined
     };
 
     try {
@@ -102,36 +128,73 @@ export default function CouponForm({ coupon, onClose, onSubmit }: Props) {
             />
           </div>
           <div>
-            <Label>Discount Amount</Label>
+            <Label>Discount Type</Label>
+            <select
+              name='discountType'
+              value={form.discountType}
+              onChange={e =>
+                setForm(prev => ({
+                  ...prev,
+                  discountType: e.target.value as 'PERCENTAGE' | 'FIXED'
+                }))
+              }
+              required
+              className='w-full rounded border px-2 py-1'
+            >
+              <option value='PERCENTAGE'>Percentage</option>
+              <option value='FIXED'>Fixed Amount</option>
+            </select>
+          </div>
+          <div>
+            <Label>Discount Value</Label>
             <Input
               type='number'
-              name='discountAmount'
-              value={form.discountAmount}
+              name='discountValue'
+              value={form.discountValue ?? ''}
               onChange={handleChange}
               required
             />
           </div>
-          <div className='flex items-center space-x-2'>
-            <Checkbox
-              id='isPercentage'
-              name='isPercentage'
-              checked={form.isPercentage}
-              onCheckedChange={(checked: CheckedState) =>
-                setForm(prev => ({ ...prev, isPercentage: !!checked }))
-              }
+          <div>
+            <Label>Minimum Purchase</Label>
+            <Input
+              type='number'
+              name='minPurchase'
+              value={form.minPurchase ?? ''}
+              onChange={handleChange}
             />
-            <Label htmlFor='isPercentage'>Is Percentage</Label>
+          </div>
+          <div>
+            <Label>Product (Optional - leave empty for all products)</Label>
+            <select
+              name='productId'
+              value={form.productId ?? ''}
+              onChange={e =>
+                setForm(prev => ({
+                  ...prev,
+                  productId: e.target.value ? Number(e.target.value) : ''
+                }))
+              }
+              className='w-full rounded border px-2 py-1'
+            >
+              <option value=''>All Products</option>
+              {products.map(product => (
+                <option key={product.id} value={product.id}>
+                  {product.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div className='flex items-center space-x-2'>
             <Checkbox
-              id='active'
-              name='active'
-              checked={form.active}
+              id='isActive'
+              name='isActive'
+              checked={!!form.isActive}
               onCheckedChange={(checked: CheckedState) =>
-                setForm(prev => ({ ...prev, active: !!checked }))
+                setForm(prev => ({ ...prev, isActive: !!checked }))
               }
             />
-            <Label htmlFor='active'>Active</Label>
+            <Label htmlFor='isActive'>Active</Label>
           </div>
           <div>
             <Label>Usage Limit</Label>

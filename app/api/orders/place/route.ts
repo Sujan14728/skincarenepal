@@ -30,10 +30,10 @@ export async function POST(req: NextRequest) {
     const draft = await prisma.order.findFirst({
       where: {
         placementTokenHash: tokenHash,
-        status: 'DRAFT',
+        status: 'PENDING_CONFIRMATION',
         placementTokenExpiresAt: { gt: new Date() }
       },
-      include: { items: true, coupon: true }
+      include: { items: true }
     });
 
     if (!draft) {
@@ -51,19 +51,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Compute discount again just in case
-    let discount = draft.discount || 0;
-    if (draft.coupon) {
-      if (draft.coupon.isPercentage) {
-        const subtotal = draft.items.reduce(
-          (sum, i) => sum + i.price * i.quantity,
-          0
-        );
-        discount = Math.floor((subtotal * draft.coupon.discountAmount) / 100);
-      } else {
-        discount = draft.coupon.discountAmount;
-      }
-    }
+    // Use the discount already stored in the draft order
+    const discount = draft.discount || 0;
 
     // Recompute totals server-side from draft items and draft shipping
     const recalculatedSubtotal = draft.items.reduce(
@@ -94,7 +83,7 @@ export async function POST(req: NextRequest) {
         status: 'PENDING_CONFIRMATION',
         placedAt: new Date()
       },
-      include: { items: true, coupon: true }
+      include: { items: true }
     });
 
     // Send confirmation email
@@ -109,15 +98,30 @@ export async function POST(req: NextRequest) {
           : `https://${baseUrl}`;
         const confirmLink = `${origin}/api/orders/confirm?token=${token}&order=${order.orderNumber}`;
 
+        console.log('Attempting to send email to:', order.email);
+        console.log('Confirmation link:', confirmLink);
+
         await sendOrderPlacementEmail(
           order.email,
           order.orderNumber,
           confirmLink,
           order
         );
+
+        console.log('Email sent successfully to:', order.email);
       } catch (err) {
-        console.error('Email failed but order placed:', err);
+        console.error('❌ Email sending failed:', {
+          error: err,
+          message: err instanceof Error ? err.message : 'Unknown error',
+          email: order.email,
+          orderNumber: order.orderNumber
+        });
       }
+    } else {
+      console.log('Skipping email - no email address or order number', {
+        hasEmail: !!order.email,
+        hasOrderNumber: !!order.orderNumber
+      });
     }
 
     return NextResponse.json(order, { status: 201 });

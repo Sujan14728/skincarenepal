@@ -1,11 +1,13 @@
 export type Coupon = {
   id?: number;
   code: string;
-  discountAmount: number;
-  isPercentage: boolean;
-  active: boolean;
-  usageLimit: number | null;
+  discountType: 'PERCENTAGE' | 'FIXED';
+  discountValue: number;
+  minPurchase?: number | '';
+  usageLimit?: number | '';
   usedCount?: number;
-  validFrom: string | null;
-  validUntil: string | null;
+  isActive: boolean;
+  productId?: number | '';
+  validFrom?: string | null;
+  validUntil?: string | null;
 };

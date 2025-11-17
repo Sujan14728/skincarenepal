@@ -4,7 +4,9 @@ import { OrderStatus } from '@prisma/client';
 dotenv.config();
 
 export const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT || '465'),
+  secure: process.env.SMTP_SECURE === 'true',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
@@ -14,6 +16,15 @@ export const transporter = nodemailer.createTransport({
 const EMAIL_CONFIGURED = Boolean(
   process.env.EMAIL_USER && process.env.EMAIL_PASS
 );
+
+// Log email configuration status on module load
+if (!EMAIL_CONFIGURED) {
+  console.warn(
+    '⚠️  Email is NOT configured - missing EMAIL_USER or EMAIL_PASS environment variables'
+  );
+} else {
+  console.log('✅ Email configured for:', process.env.EMAIL_USER);
+}
 
 const STORE_NAME = process.env.STORE_NAME || 'Skincare Nepal';
 const SUPPORT_EMAIL =
@@ -77,9 +88,19 @@ export async function sendOrderPlacementEmail(
   order?: any
 ) {
   if (!EMAIL_CONFIGURED) {
-    console.warn('Email not configured. Skipping order placement email.');
+    console.warn(
+      '⚠️  Email not configured - cannot send order placement email to:',
+      to
+    );
     return;
   }
+
+  console.log('📧 Preparing order placement email:', {
+    to,
+    orderNumber,
+    hasOrderData: !!order,
+    itemCount: order?.items?.length || 0
+  });
 
   try {
     const items = order?.items || [];

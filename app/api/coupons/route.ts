@@ -6,12 +6,14 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       code,
-      discountAmount,
-      isPercentage,
-      active,
+      discountType,
+      discountValue,
+      minPurchase,
       usageLimit,
+      productId,
       validFrom,
-      validUntil
+      validUntil,
+      isActive
     } = body ?? {};
 
     // Basic validation
@@ -21,9 +23,15 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    if (discountAmount == null || isNaN(discountAmount)) {
+    if (!discountType || !['PERCENTAGE', 'FIXED'].includes(discountType)) {
       return NextResponse.json(
-        { error: 'Discount amount is required.' },
+        { error: 'Discount type must be PERCENTAGE or FIXED.' },
+        { status: 400 }
+      );
+    }
+    if (discountValue == null || isNaN(discountValue)) {
+      return NextResponse.json(
+        { error: 'Discount value is required.' },
         { status: 400 }
       );
     }
@@ -31,17 +39,20 @@ export async function POST(req: NextRequest) {
     const coupon = await prisma.coupon.create({
       data: {
         code: code.trim(),
-        discountAmount,
-        isPercentage: !!isPercentage,
-        active: active !== false, // default true
-        usageLimit: usageLimit ?? null,
-        validFrom: validFrom ? new Date(validFrom) : null,
-        validUntil: validUntil ? new Date(validUntil) : null
+        discountType,
+        discountValue: Number(discountValue),
+        minPurchase: minPurchase ? Number(minPurchase) : null,
+        usageLimit: usageLimit ? Number(usageLimit) : null,
+        productId: productId ? Number(productId) : null,
+        validFrom: validFrom ? new Date(validFrom) : undefined,
+        validUntil: validUntil ? new Date(validUntil) : undefined,
+        isActive: isActive !== false
       }
     });
 
     return NextResponse.json({ success: true, coupon }, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error('Error creating coupon:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
@@ -70,12 +81,14 @@ export async function GET(req: NextRequest) {
         where,
         orderBy: { createdAt: 'desc' },
         skip,
-        take: limit
+        take: limit,
+        include: { product: { select: { id: true, name: true } } }
       })
     ]);
 
     return NextResponse.json({ total, page, limit, coupons });
-  } catch {
+  } catch (error) {
+    console.error('Error fetching coupons:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
@@ -88,11 +101,16 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const { id, ...data } = body ?? {};
 
-    if (!id)
+    console.log('PUT request body:', body);
+    console.log('Coupon ID:', id);
+
+    if (!id) {
+      console.log('coupon id is required while updating the coupon');
       return NextResponse.json(
         { error: 'Coupon ID is required.' },
         { status: 400 }
       );
+    }
 
     const updated = await prisma.coupon.update({
       where: { id: Number(id) },
@@ -104,7 +122,8 @@ export async function PUT(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, coupon: updated });
-  } catch {
+  } catch (error) {
+    console.error('Error updating coupon:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
@@ -128,7 +147,8 @@ export async function DELETE(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, coupon: deleted });
-  } catch {
+  } catch (error) {
+    console.error('Error deleting coupon:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

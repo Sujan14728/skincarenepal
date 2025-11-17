@@ -13,6 +13,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import dayjs from 'dayjs';
+import { toast } from 'sonner';
 
 export default function CouponsAdminPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -20,9 +21,25 @@ export default function CouponsAdminPage() {
   const [showForm, setShowForm] = useState(false);
 
   const fetchCoupons = async () => {
-    const res = await fetch('/api/coupons');
-    const data = await res.json();
-    setCoupons(data.coupons ?? data);
+    try {
+      const res = await fetch('/api/coupons', { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data?.error || 'Failed to load coupons');
+        setCoupons([]);
+        return;
+      }
+      const list = Array.isArray(data?.coupons)
+        ? data.coupons
+        : Array.isArray(data)
+          ? data
+          : [];
+      setCoupons(list);
+    } catch (err) {
+      console.error('Load coupons failed:', err);
+      toast.error('Failed to load coupons');
+      setCoupons([]);
+    }
   };
 
   useEffect(() => {
@@ -45,7 +62,7 @@ export default function CouponsAdminPage() {
     setShowForm(false);
   };
 
-  const handleFormSubmit = (coupon: Coupon) => {
+  const handleFormSubmit = () => {
     fetchCoupons();
     handleFormClose();
   };
@@ -81,19 +98,23 @@ export default function CouponsAdminPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {coupons.map(c => (
+          {coupons?.map(c => (
             <TableRow key={c.id}>
               <TableCell>{c.code}</TableCell>
-              <TableCell>{c.discountAmount}</TableCell>
-              <TableCell>{c.isPercentage ? '%' : 'Fixed'}</TableCell>
-              <TableCell>{c.active ? 'Yes' : 'No'}</TableCell>
+              <TableCell>{c.discountValue}</TableCell>
+              <TableCell>
+                {c.discountType === 'PERCENTAGE' ? '%' : 'Fixed'}
+              </TableCell>
+              <TableCell>{c.isActive ? 'Yes' : 'No'}</TableCell>
               <TableCell>{c.usageLimit ?? 'Unlimited'}</TableCell>
               <TableCell>{c.usedCount ?? 0}</TableCell>
               <TableCell>
-                {dayjs(c.validFrom).format('MMM DD, YYYY') ?? '-'}
+                {c.validFrom ? dayjs(c.validFrom).format('MMM DD, YYYY') : '-'}
               </TableCell>
               <TableCell>
-                {dayjs(c.validUntil).format('MMM DD, YYYY') ?? '-'}
+                {c.validUntil
+                  ? dayjs(c.validUntil).format('MMM DD, YYYY')
+                  : '-'}
               </TableCell>
               <TableCell className='space-x-2'>
                 <Button

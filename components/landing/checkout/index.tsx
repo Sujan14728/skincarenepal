@@ -121,6 +121,10 @@ export default function CheckoutClient() {
       // Clear cart and draft
       setCartItems([]);
       setDraft(null);
+      setAppliedCoupon(null);
+
+      // Reset form fields
+      customerForm.resetForm();
 
       if (singleProductMode) window.history.replaceState({}, '', '/checkout');
     } catch (err) {

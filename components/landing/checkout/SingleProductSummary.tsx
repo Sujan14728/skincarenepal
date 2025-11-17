@@ -57,9 +57,8 @@ export default function SingleProductSummary({
 
   const total = useMemo(() => {
     if (!appliedCoupon) return subtotal + deliveryCost;
-    const discount = appliedCoupon.isPercentage
-      ? Math.floor((subtotal * appliedCoupon.discountAmount) / 100)
-      : appliedCoupon.discountAmount;
+    // discountAmount is already calculated by the API
+    const discount = appliedCoupon.discountAmount || 0;
     return subtotal + deliveryCost - discount;
   }, [subtotal, deliveryCost, appliedCoupon]);
 
@@ -152,7 +151,7 @@ export default function SingleProductSummary({
       // server should return updated totals - you can update draft if returned
       if (data.draft) setDraft(data.draft);
       toast.success(`Coupon "${couponCode}" applied!`);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast.error(err.message || 'Invalid coupon');
     } finally {
