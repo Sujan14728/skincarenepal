@@ -143,17 +143,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let appliedCoupon = null;
     let finalDiscount = discount; // default to frontend-provided value
 
     if (couponCode) {
       const coupon = await prisma.coupon.findFirst({
         where: {
           code: couponCode,
-          active: true,
+          isActive: true,
           validFrom: { lte: new Date() },
-          validUntil: { gte: new Date() },
-          usageLimit: { gte: 1 }
+          OR: [{ validUntil: { gte: new Date() } }, { validUntil: null }]
         }
       });
 
@@ -165,11 +163,12 @@ export async function POST(req: NextRequest) {
       }
 
       // Recalculate discount on backend for safety
-      finalDiscount = coupon.isPercentage
-        ? Math.floor((subtotal * coupon.discountAmount) / 100)
-        : coupon.discountAmount;
+      finalDiscount =
+        coupon.discountType === 'PERCENTAGE'
+          ? Math.floor((subtotal * coupon.discountValue) / 100)
+          : coupon.discountValue;
 
-      appliedCoupon = coupon;
+      // no need to persist coupon entity on order here
     }
 
     const token = crypto.randomBytes(32).toString('hex');
@@ -186,13 +185,13 @@ export async function POST(req: NextRequest) {
         note: note || null,
         paymentMethod: (paymentMethod || 'COD') as 'COD' | 'ONLINE',
         subtotal,
-        discount,
+        discount: finalDiscount,
         shipping,
         total,
         paymentSlipUrl: paymentSlipUrl || null,
         placementTokenHash: tokenHash,
         placementTokenExpiresAt: tokenExpiry,
-        couponCode: appliedCoupon ? appliedCoupon.code : null,
+        // couponCode not stored on Order model; omit persistence
         items: {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           create: items.map((i: any) => ({

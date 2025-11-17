@@ -3,6 +3,30 @@ import { prisma } from '@/lib/prisma';
 import { sendOrderPlacementEmail } from '@/lib/email';
 import crypto from 'crypto';
 
+async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 300) {
+  let lastErr: unknown;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      // Retry on Prisma pool timeout P2024 or transient connection resets
+      const msg = (err as Error).message || '';
+      if (
+        msg.includes('P2024') ||
+        msg.includes('connection') ||
+        msg.includes('ConnectionReset')
+      ) {
+        if (i < retries)
+          await new Promise(r => setTimeout(r, delayMs * (i + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -27,14 +51,16 @@ export async function POST(req: NextRequest) {
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
     // Fetch draft order
-    const draft = await prisma.order.findFirst({
-      where: {
-        placementTokenHash: tokenHash,
-        status: 'PENDING_CONFIRMATION',
-        placementTokenExpiresAt: { gt: new Date() }
-      },
-      include: { items: true }
-    });
+    const draft = await withRetry(() =>
+      prisma.order.findFirst({
+        where: {
+          placementTokenHash: tokenHash,
+          status: 'PENDING_CONFIRMATION',
+          placementTokenExpiresAt: { gt: new Date() }
+        },
+        include: { items: true }
+      })
+    );
 
     if (!draft) {
       return NextResponse.json(
@@ -63,28 +89,30 @@ export async function POST(req: NextRequest) {
     const total = Math.max(0, recalculatedSubtotal + shippingCost - discount);
 
     // Finalize the draft
-    const order = await prisma.order.update({
-      where: { id: draft.id },
-      data: {
-        // save customer contact details if provided (or keep existing)
-        email: email || draft.email || null,
-        name: name || draft.name || null,
-        phone: phone || draft.phone || null,
-        shippingAddress,
-        note: note || draft.note,
-        paymentMethod: (paymentMethod || draft.paymentMethod) as
-          | 'COD'
-          | 'ONLINE',
-        paymentSlipUrl: paymentSlipUrl || draft.paymentSlipUrl,
-        discount,
-        subtotal: recalculatedSubtotal,
-        shipping: shippingCost,
-        total,
-        status: 'PENDING_CONFIRMATION',
-        placedAt: new Date()
-      },
-      include: { items: true }
-    });
+    const order = await withRetry(() =>
+      prisma.order.update({
+        where: { id: draft.id },
+        data: {
+          // save customer contact details if provided (or keep existing)
+          email: email || draft.email || null,
+          name: name || draft.name || null,
+          phone: phone || draft.phone || null,
+          shippingAddress,
+          note: note || draft.note,
+          paymentMethod: (paymentMethod || draft.paymentMethod) as
+            | 'COD'
+            | 'ONLINE',
+          paymentSlipUrl: paymentSlipUrl || draft.paymentSlipUrl,
+          discount,
+          subtotal: recalculatedSubtotal,
+          shipping: shippingCost,
+          total,
+          status: 'PENDING_CONFIRMATION',
+          placedAt: new Date()
+        },
+        include: { items: true }
+      })
+    );
 
     // Send confirmation email
     if (order.email && order.orderNumber) {

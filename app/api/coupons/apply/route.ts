@@ -2,6 +2,29 @@ import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
+async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 300) {
+  let lastErr: unknown;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      const msg = (err as Error).message || '';
+      if (
+        msg.includes('P2024') ||
+        msg.includes('connection') ||
+        msg.includes('ConnectionReset')
+      ) {
+        if (i < retries)
+          await new Promise(r => setTimeout(r, delayMs * (i + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr;
+}
+
 export async function POST(req: NextRequest) {
   const { couponCode } = await req.json();
   const token = req.cookies.get('placementToken')?.value;
@@ -15,14 +38,16 @@ export async function POST(req: NextRequest) {
 
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-  const order = await prisma.order.findFirst({
-    where: {
-      placementTokenHash: tokenHash,
-      status: 'PENDING_CONFIRMATION',
-      placementTokenExpiresAt: { gt: new Date() }
-    },
-    include: { items: true }
-  });
+  const order = await withRetry(() =>
+    prisma.order.findFirst({
+      where: {
+        placementTokenHash: tokenHash,
+        status: 'PENDING_CONFIRMATION',
+        placementTokenExpiresAt: { gt: new Date() }
+      },
+      include: { items: true }
+    })
+  );
 
   if (!order) {
     return NextResponse.json(
@@ -31,14 +56,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const coupon = await prisma.coupon.findFirst({
-    where: {
-      code: couponCode,
-      isActive: true,
-      validFrom: { lte: new Date() },
-      OR: [{ validUntil: { gte: new Date() } }, { validUntil: null }]
-    }
-  });
+  const coupon = await withRetry(() =>
+    prisma.coupon.findFirst({
+      where: {
+        code: couponCode,
+        isActive: true,
+        validFrom: { lte: new Date() },
+        OR: [{ validUntil: { gte: new Date() } }, { validUntil: null }]
+      }
+    })
+  );
 
   if (!coupon) {
     return NextResponse.json(
@@ -128,10 +155,12 @@ export async function POST(req: NextRequest) {
   });
 
   // Update order with discount
-  await prisma.order.update({
-    where: { id: order.id },
-    data: { discount: Math.floor(discount) }
-  });
+  await withRetry(() =>
+    prisma.order.update({
+      where: { id: order.id },
+      data: { discount: Math.floor(discount) }
+    })
+  );
 
   return NextResponse.json({
     discountAmount: discount,
