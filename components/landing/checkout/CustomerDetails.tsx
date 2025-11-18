@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { PaymentMethod } from '@/lib/enum/product';
+import { useEffect, useState } from 'react';
 
 interface CustomerDetailsProps {
   name: string;
@@ -23,6 +24,7 @@ interface CustomerDetailsProps {
   setNote: (note: string) => void;
   paymentMethod: PaymentMethod;
   setPaymentMethod: (method: PaymentMethod) => void;
+  paymentImage: File | null;
   setPaymentImage: (file: File | null) => void;
 }
 
@@ -39,8 +41,24 @@ export default function CustomerDetails({
   setNote,
   paymentMethod,
   setPaymentMethod,
+  paymentImage,
   setPaymentImage
 }: CustomerDetailsProps) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (paymentImage) {
+      const url = URL.createObjectURL(paymentImage);
+      setPreviewUrl(url);
+
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [paymentImage]);
+
   return (
     <div>
       <h2 className='mb-2 text-lg font-semibold'>Customer Details</h2>
@@ -119,6 +137,13 @@ export default function CustomerDetails({
             accept='image/*'
             onChange={e => setPaymentImage(e.target.files?.[0] || null)}
           />
+          {previewUrl && (
+            <img
+              src={previewUrl}
+              alt='Payment Preview'
+              className='mt-2 max-h-48 max-w-xs rounded border object-contain'
+            />
+          )}
         </div>
       )}
     </div>

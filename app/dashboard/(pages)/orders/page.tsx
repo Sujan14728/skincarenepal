@@ -154,7 +154,6 @@ const OrdersPage = () => {
     }
   }, []);
 
-  // update delivered and pending counts whenever page/perPage changes (or on mount)
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -167,12 +166,11 @@ const OrdersPage = () => {
       setDeliveredCount(delivered);
       setPendingCount((pendingA ?? 0) + (pendingB ?? 0));
     })();
-    // also fetch the overall total (unfiltered) for the dashboard stat
     fetchGlobalTotal();
     return () => {
       mounted = false;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchCountByStatus, page, perPage]);
 
   const stats = useMemo(() => {
@@ -284,7 +282,7 @@ const OrdersPage = () => {
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Total Orders</CardTitle>
-            <Package className='text-muted-foreground h-4 w-4' />
+            <Package className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>{stats.total}</div>
@@ -294,7 +292,7 @@ const OrdersPage = () => {
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Delivered</CardTitle>
-            <TrendingUp className='text-muted-foreground h-4 w-4' />
+            <TrendingUp className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>{stats.delivered}</div>
@@ -304,7 +302,7 @@ const OrdersPage = () => {
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Pending</CardTitle>
-            <ShoppingCart className='text-muted-foreground h-4 w-4' />
+            <ShoppingCart className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>{stats.pending}</div>
@@ -389,7 +387,7 @@ const OrdersPage = () => {
               />
 
               <div className='mt-4 flex items-center justify-between'>
-                <div className='text-muted-foreground text-sm'>
+                <div className='text-sm text-muted-foreground'>
                   Showing page {page} of {totalPages} — {total} orders
                 </div>
                 <div className='flex items-center gap-2'>
@@ -458,6 +456,10 @@ const OrdersPage = () => {
                   <div className='text-muted-foreground'>Total</div>
                   <div className='font-medium'>Rs. {detail.total}</div>
                 </div>
+                <div>
+                  <div className='text-muted-foreground'>Delivery Cost:</div>
+                  <div className='font-medium'>Rs. {detail.shipping}</div>
+                </div>
               </div>
 
               <div>
@@ -483,20 +485,20 @@ const OrdersPage = () => {
               <div className='grid grid-cols-2 gap-2 text-sm'>
                 <div>
                   <div className='text-muted-foreground'>Shipping Address</div>
-                  <div className='font-medium whitespace-pre-wrap'>
+                  <div className='whitespace-pre-wrap font-medium'>
                     {detail.shippingAddress || '-'}
                   </div>
                 </div>
                 <div>
                   <div className='text-muted-foreground'>Note</div>
-                  <div className='font-medium whitespace-pre-wrap'>
+                  <div className='whitespace-pre-wrap font-medium'>
                     {detail.note || '-'}
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className='text-muted-foreground py-6 text-center text-sm'>
+            <div className='py-6 text-center text-sm text-muted-foreground'>
               Loading...
             </div>
           )}

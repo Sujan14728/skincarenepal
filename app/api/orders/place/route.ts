@@ -1,0 +1,163 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { sendOrderPlacementEmail } from '@/lib/email';
+import crypto from 'crypto';
+
+async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 300) {
+  let lastErr: unknown;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      // Retry on Prisma pool timeout P2024 or transient connection resets
+      const msg = (err as Error).message || '';
+      if (
+        msg.includes('P2024') ||
+        msg.includes('connection') ||
+        msg.includes('ConnectionReset')
+      ) {
+        if (i < retries)
+          await new Promise(r => setTimeout(r, delayMs * (i + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr;
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const {
+      token,
+      shippingAddress,
+      note,
+      paymentMethod,
+      paymentSlipUrl,
+      email,
+      name,
+      phone
+    } = body;
+    console.log(token, shippingAddress);
+    if (!token || !shippingAddress) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Fetch draft order
+    const draft = await withRetry(() =>
+      prisma.order.findFirst({
+        where: {
+          placementTokenHash: tokenHash,
+          status: 'PENDING_CONFIRMATION',
+          placementTokenExpiresAt: { gt: new Date() }
+        },
+        include: { items: true }
+      })
+    );
+
+    if (!draft) {
+      return NextResponse.json(
+        { error: 'Invalid or expired draft token' },
+        { status: 400 }
+      );
+    }
+
+    // Ensure draft has items
+    if (!draft.items || draft.items.length === 0) {
+      return NextResponse.json(
+        { error: 'Draft has no items. Cannot place empty order.' },
+        { status: 400 }
+      );
+    }
+
+    // Use the discount already stored in the draft order
+    const discount = draft.discount || 0;
+
+    // Recompute totals server-side from draft items and draft shipping
+    const recalculatedSubtotal = draft.items.reduce(
+      (sum, i) => sum + i.price * i.quantity,
+      0
+    );
+    const shippingCost = draft.shipping ?? 0;
+    const total = Math.max(0, recalculatedSubtotal + shippingCost - discount);
+
+    // Finalize the draft
+    const order = await withRetry(() =>
+      prisma.order.update({
+        where: { id: draft.id },
+        data: {
+          // save customer contact details if provided (or keep existing)
+          email: email || draft.email || null,
+          name: name || draft.name || null,
+          phone: phone || draft.phone || null,
+          shippingAddress,
+          note: note || draft.note,
+          paymentMethod: (paymentMethod || draft.paymentMethod) as
+            | 'COD'
+            | 'ONLINE',
+          paymentSlipUrl: paymentSlipUrl || draft.paymentSlipUrl,
+          discount,
+          subtotal: recalculatedSubtotal,
+          shipping: shippingCost,
+          total,
+          status: 'PENDING_CONFIRMATION',
+          placedAt: new Date()
+        },
+        include: { items: true }
+      })
+    );
+
+    // Send confirmation email
+    if (order.email && order.orderNumber) {
+      try {
+        const baseUrl =
+          process.env.NEXT_PUBLIC_BASE_URL ||
+          process.env.VERCEL_URL ||
+          'http://localhost:3000';
+        const origin = baseUrl.startsWith('http')
+          ? baseUrl
+          : `https://${baseUrl}`;
+        const confirmLink = `${origin}/api/orders/confirm?token=${token}&order=${order.orderNumber}`;
+
+        console.log('Attempting to send email to:', order.email);
+        console.log('Confirmation link:', confirmLink);
+
+        await sendOrderPlacementEmail(
+          order.email,
+          order.orderNumber,
+          confirmLink,
+          order
+        );
+
+        console.log('Email sent successfully to:', order.email);
+      } catch (err) {
+        console.error('❌ Email sending failed:', {
+          error: err,
+          message: err instanceof Error ? err.message : 'Unknown error',
+          email: order.email,
+          orderNumber: order.orderNumber
+        });
+      }
+    } else {
+      console.log('Skipping email - no email address or order number', {
+        hasEmail: !!order.email,
+        hasOrderNumber: !!order.orderNumber
+      });
+    }
+
+    return NextResponse.json(order, { status: 201 });
+  } catch (error) {
+    console.error('Error finalizing order:', error);
+    return NextResponse.json(
+      { error: 'Failed to place order' },
+      { status: 500 }
+    );
+  }
+}

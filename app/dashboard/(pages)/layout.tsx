@@ -11,7 +11,8 @@ import {
   LogOut,
   Menu,
   Phone,
-  Info
+  Info,
+  Ticket
 } from 'lucide-react';
 import {
   Sheet,
@@ -67,6 +68,11 @@ function SidebarContent() {
             label='Orders'
             icon={ShoppingBag}
           />
+          <SidebarLink
+            href='/dashboard/coupons'
+            label='Coupons'
+            icon={Ticket}
+          />
           <SidebarLink href='/dashboard/about' label='About Us' icon={Phone} />
           <SidebarLink href='/dashboard/contact' label='Contact' icon={Info} />
           <SidebarLink href='/dashboard/popup' label='Popup' icon={Home} />
@@ -99,9 +105,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className='bg-background flex min-h-screen'>
+    <div className='flex min-h-screen bg-background'>
       {/* Sidebar for desktop */}
-      <aside className='md:bg-card hidden md:flex md:w-64 md:flex-col md:border-r md:p-4'>
+      <aside className='hidden md:flex md:w-64 md:flex-col md:border-r md:bg-card md:p-4'>
         <SidebarContent />
       </aside>
 
@@ -125,7 +131,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Main content */}
       <div className='flex flex-1 flex-col'>
         {/* Topbar */}
-        <header className='bg-card flex items-center justify-between border-b px-6 py-3'>
+        <header className='flex items-center justify-between border-b bg-card px-6 py-3'>
           <h1 className='text-lg font-semibold'>Admin Dashboard</h1>
           <div className='hidden md:flex'>
             <form action='/api/admin/logout' method='POST'>
