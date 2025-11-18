@@ -48,6 +48,7 @@ export default function CheckoutClient() {
       // 1. Create draft if not exists
       let draftOrder = draft;
       if (!draftOrder) {
+        toast.loading('Creating order...', { id: 'order-progress' });
         const draftRes = await fetch('/api/orders/create-draft', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -77,6 +78,7 @@ export default function CheckoutClient() {
         customerForm.paymentImage &&
         customerForm.paymentMethod === 'ONLINE'
       ) {
+        toast.loading('Uploading payment slip...', { id: 'order-progress' });
         const form = new FormData();
         form.append('file', customerForm.paymentImage);
         const uploadRes = await fetch('/api/media/upload', {
@@ -89,6 +91,7 @@ export default function CheckoutClient() {
       }
 
       // 3. Confirm order - send draft token and coupon info (if any)
+      toast.loading('Placing order...', { id: 'order-progress' });
       const confirmRes = await fetch('/api/orders/place', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -115,7 +118,8 @@ export default function CheckoutClient() {
       if (!confirmRes.ok) throw new Error('Failed to place order');
 
       toast.success(
-        'Order placed successfully. Please check your email for confirmation.'
+        'Order placed successfully. Please check your email for confirmation.',
+        { id: 'order-progress' }
       );
 
       // Clear cart and draft
@@ -129,7 +133,7 @@ export default function CheckoutClient() {
       if (singleProductMode) window.history.replaceState({}, '', '/checkout');
     } catch (err) {
       console.error(err);
-      toast.error('Failed to place order');
+      toast.error('Failed to place order', { id: 'order-progress' });
     } finally {
       customerForm.setPlacing(false);
     }

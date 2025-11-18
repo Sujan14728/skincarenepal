@@ -35,10 +35,10 @@ export function NavBar() {
           unoptimized
         />
         <span className='flex flex-col items-center border-muted-foreground'>
-          <span className='text-xl font-extrabold md:text-2xl'>
-            Care And Clean Nepal
+          <span className='whitespace-nowrap text-2xl font-extrabold tracking-wider md:text-2xl lg:text-3xl'>
+            Care And Clean
           </span>
-          <span className='text-xs font-semibold text-gray-500'>
+          <span className='text-[0.6rem] font-medium tracking-tight text-gray-500 md:text-[0.7rem]'>
             Care from Nature, Clean by Choice.
           </span>
         </span>
