@@ -1,42 +1,18 @@
 'use client';
 import Marquee from 'react-fast-marquee';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 type MarqueeType = {
   id: number;
   text: string;
 };
 
-export default function MarqueeFeature() {
-  const [marquees, setMarquees] = useState<MarqueeType[]>([]);
-  const [loading, setLoading] = useState(true);
+interface MarqueeFeatureProps {
+  marquees: MarqueeType[];
+}
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds timeout
-
-    fetch('/api/marquee', { signal: controller.signal })
-      .then(res => res.json())
-      .then(data => {
-        setMarquees(data.marquees || []);
-      })
-      .catch(err => {
-        if (err.name !== 'AbortError') {
-          console.error('Marquee fetch error:', err);
-        }
-      })
-      .finally(() => {
-        setLoading(false);
-        clearTimeout(timeoutId);
-      });
-
-    return () => {
-      clearTimeout(timeoutId);
-      controller.abort();
-    };
-  }, []);
-
-  if (loading || !marquees.length) {
+export default function MarqueeFeature({ marquees }: MarqueeFeatureProps) {
+  if (!marquees || marquees.length === 0) {
     return null;
   }
 
