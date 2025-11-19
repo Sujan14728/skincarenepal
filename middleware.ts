@@ -4,7 +4,6 @@ import { getUserFromRequestEdge, hasRequiredRole } from "./lib/auth-edge";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  console.log("Middleware running for:", pathname);
 
   // Skip login and register pages
   if (

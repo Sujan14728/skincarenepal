@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 type Props = {
   coupon?: Coupon | null;
   onClose: () => void;
-  onSubmit: (coupon: Coupon) => void;
+  onSubmit: (_coupon: Coupon) => void;
 };
 
 export default function CouponForm({ coupon, onClose, onSubmit }: Props) {

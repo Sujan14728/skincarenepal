@@ -27,7 +27,7 @@ if (!EMAIL_CONFIGURED) {
     '⚠️  Email is NOT configured - missing EMAIL_USER or EMAIL_PASS environment variables'
   );
 } else {
-  console.log('✅ Email configured for:', process.env.EMAIL_USER);
+  console.info('✅ Email configured for:', process.env.EMAIL_USER);
 }
 
 const STORE_NAME = process.env.STORE_NAME || 'Skincare Nepal';
@@ -98,13 +98,6 @@ export async function sendOrderPlacementEmail(
     );
     return;
   }
-
-  console.log('📧 Preparing order placement email:', {
-    to,
-    orderNumber,
-    hasOrderData: !!order,
-    itemCount: order?.items?.length || 0
-  });
 
   try {
     const items = order?.items || [];

@@ -27,7 +27,6 @@ export default function ContactPage() {
       try {
         const res = await fetch('/api/companyinfo', { cache: 'force-cache' });
         const data = await res.json();
-        console.log(data);
 
         if (res.ok && data.success && data.companyInfo) {
           setCompanyInfo(data.companyInfo);

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 
 interface QuantitySelectorProps {
   quantity: number;
-  setQuantity: (quantity: number) => void;
+  setQuantity: (_quantity: number) => void;
 }
 
 export const QuantitySelector = ({

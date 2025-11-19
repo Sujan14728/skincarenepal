@@ -143,9 +143,9 @@ export function getThumbnailUrl(
 
 // Progress tracking for uploads
 export class UploadProgress {
-  private callbacks: Array<(progress: number) => void> = [];
+  private callbacks: Array<(_progress: number) => void> = [];
 
-  onProgress(callback: (progress: number) => void) {
+  onProgress(callback: (_progress: number) => void) {
     this.callbacks.push(callback);
   }
 
@@ -158,7 +158,7 @@ export class UploadProgress {
 export async function batchUpload(
   files: File[],
   options: UploadOptions = {},
-  onProgress?: (fileIndex: number, progress: number) => void
+  onProgress?: (_fileIndex: number, _progress: number) => void
 ): Promise<UploadResponse[]> {
   const results: UploadResponse[] = [];
 

@@ -101,11 +101,7 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const { id, ...data } = body ?? {};
 
-    console.log('PUT request body:', body);
-    console.log('Coupon ID:', id);
-
     if (!id) {
-      console.log('coupon id is required while updating the coupon');
       return NextResponse.json(
         { error: 'Coupon ID is required.' },
         { status: 400 }

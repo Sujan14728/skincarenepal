@@ -177,7 +177,6 @@ const ProductForm = ({ product, onSuccess }: ProductFormProps) => {
 
     setLoading(true);
     try {
-      console.log('Submitting form data:', formData); // Debug log
       const url = product ? `/api/products/${product.id}` : '/api/products';
       const method = product ? 'PUT' : 'POST';
 

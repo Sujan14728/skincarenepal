@@ -11,11 +11,6 @@ import SingleProductSummary from './SingleProductSummary';
 import { useState } from 'react';
 import EmptyCartMessage from '../partial/EmptyCart';
 
-export interface DraftOrder {
-  orderId: number;
-  placementToken: string;
-}
-
 export default function CheckoutClient() {
   const search = useSearchParams();
   const buyParam = search?.get('buy');
@@ -24,7 +19,6 @@ export default function CheckoutClient() {
     discountAmount: number;
     isPercentage: boolean;
   } | null>(null);
-  const [draft, setDraft] = useState<DraftOrder | null>(null);
   const {
     settings,
     cartItems,
@@ -45,34 +39,7 @@ export default function CheckoutClient() {
     try {
       customerForm.setPlacing(true);
 
-      // 1. Create draft if not exists
-      let draftOrder = draft;
-      if (!draftOrder) {
-        toast.loading('Creating order...', { id: 'order-progress' });
-        const draftRes = await fetch('/api/orders/create-draft', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            items: cartItems.map(i => ({
-              productId: i.id,
-              quantity: i.quantity,
-              price: i.salePrice ?? i.price,
-              name: i.name
-            })),
-            subtotal: cartItems.reduce(
-              (sum, i) => sum + (i.salePrice ?? i.price) * i.quantity,
-              0
-            ),
-            shipping: isDeliveryFree ? 0 : settings?.deliveryCost || 0
-          })
-        });
-
-        if (!draftRes.ok) throw new Error('Failed to create draft order');
-        draftOrder = await draftRes.json();
-        setDraft(draftOrder);
-      }
-
-      // 2. Upload payment slip if ONLINE
+      // 1. Upload payment slip if ONLINE
       let paymentSlipUrl: string | undefined;
       if (
         customerForm.paymentImage &&
@@ -90,41 +57,39 @@ export default function CheckoutClient() {
         paymentSlipUrl = url;
       }
 
-      // 3. Confirm order - send draft token and coupon info (if any)
+      // 2. Place order (no draft). Server will re-validate coupon and create order.
       toast.loading('Placing order...', { id: 'order-progress' });
+
+      const payload = {
+        items: cartItems.map(i => ({ productId: i.id, quantity: i.quantity })),
+        shipping: isDeliveryFree ? 0 : settings?.deliveryCost || 0,
+        coupon: appliedCoupon ? { code: appliedCoupon.code } : null,
+        shippingAddress: customerForm.shippingAddress,
+        note: customerForm.note || null,
+        paymentMethod: customerForm.paymentMethod || 'COD',
+        paymentSlipUrl: paymentSlipUrl || null,
+        email: customerForm.email || null,
+        name: customerForm.name || null,
+        phone: customerForm.phone || null
+      };
+
       const confirmRes = await fetch('/api/orders/place', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token: draftOrder?.placementToken,
-          userId: null,
-          email: customerForm.email || null,
-          name: customerForm.name || null,
-          phone: customerForm.phone || null,
-          shippingAddress: customerForm.shippingAddress,
-          note: customerForm.note || null,
-          paymentMethod: customerForm.paymentMethod || 'COD',
-          paymentSlipUrl: paymentSlipUrl || null,
-          coupon: appliedCoupon
-            ? {
-                code: appliedCoupon.code,
-                discountAmount: appliedCoupon.discountAmount,
-                isPercentage: appliedCoupon.isPercentage
-              }
-            : null
-        })
+        body: JSON.stringify(payload)
       });
 
-      if (!confirmRes.ok) throw new Error('Failed to place order');
+      const data = await confirmRes.json();
+      if (!confirmRes.ok)
+        throw new Error(data?.error || 'Failed to place order');
 
       toast.success(
         'Order placed successfully. Please check your email for confirmation.',
         { id: 'order-progress' }
       );
 
-      // Clear cart and draft
+      // Clear cart and local coupon
       setCartItems([]);
-      setDraft(null);
       setAppliedCoupon(null);
 
       // Reset form fields
@@ -133,7 +98,9 @@ export default function CheckoutClient() {
       if (singleProductMode) window.history.replaceState({}, '', '/checkout');
     } catch (err) {
       console.error(err);
-      toast.error('Failed to place order', { id: 'order-progress' });
+      toast.error((err as Error).message || 'Failed to place order', {
+        id: 'order-progress'
+      });
     } finally {
       customerForm.setPlacing(false);
     }
@@ -154,8 +121,6 @@ export default function CheckoutClient() {
               deliveryCost={isDeliveryFree ? 0 : settings?.deliveryCost}
               appliedCoupon={appliedCoupon}
               setAppliedCoupon={setAppliedCoupon}
-              draft={draft}
-              setDraft={setDraft}
             />
           ) : (
             <EmptyCartMessage />

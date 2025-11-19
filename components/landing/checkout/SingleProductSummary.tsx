@@ -6,10 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Product } from '@/lib/types/product';
 import { ICartItem } from '@/lib/types/cart';
 import { Loader2, Plus, Minus } from 'lucide-react';
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
-import { DraftOrder } from '@/components/landing/checkout';
 interface SingleProductSummaryProps {
   singleProduct: Product | null;
   singleQty: number;
@@ -29,8 +28,6 @@ interface SingleProductSummaryProps {
       isPercentage: boolean;
     } | null>
   >;
-  draft: DraftOrder | null;
-  setDraft: Dispatch<SetStateAction<DraftOrder | null>>;
 }
 
 export default function SingleProductSummary({
@@ -41,9 +38,7 @@ export default function SingleProductSummary({
   loadingProduct,
   deliveryCost = 100,
   appliedCoupon,
-  setAppliedCoupon,
-  draft,
-  setDraft
+  setAppliedCoupon
 }: SingleProductSummaryProps) {
   const [couponCode, setCouponCode] = useState('');
 
@@ -61,47 +56,6 @@ export default function SingleProductSummary({
     const discount = appliedCoupon.discountAmount || 0;
     return subtotal + deliveryCost - discount;
   }, [subtotal, deliveryCost, appliedCoupon]);
-
-  useEffect(() => {
-    if (!singleProduct) return;
-    let aborted = false;
-    const controller = new AbortController();
-    const createOrUpdateDraft = async () => {
-      try {
-        const res = await fetch('/api/orders/create-draft', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
-            items: [
-              {
-                productId: singleProduct.id,
-                quantity: singleQty,
-                price: singleProduct.salePrice ?? singleProduct.price,
-                name: singleProduct.name
-              }
-            ],
-            subtotal,
-            shipping: deliveryCost || 0
-          })
-        });
-        if (!res.ok) throw new Error('Failed to create draft');
-        const data = await res.json();
-        if (!aborted) setDraft(data); // data contains orderId + placementToken + totals
-      } catch (err) {
-        if (controller.signal.aborted) return;
-        console.error('Draft creation error:', err);
-      }
-    };
-
-    // Debounce to avoid creating drafts on rapid qty changes
-    const t = setTimeout(createOrUpdateDraft, 250);
-    return () => {
-      aborted = true;
-      controller.abort();
-      clearTimeout(t);
-    };
-  }, [singleProduct, singleQty, subtotal, deliveryCost, setDraft]);
 
   const handleQtyChange = (delta: number) => {
     const newQty = Math.max(1, singleQty + delta);
@@ -125,35 +79,41 @@ export default function SingleProductSummary({
   };
 
   const handleApplyCoupon = async () => {
-    if (!couponCode || !draft) {
-      toast.error('Please add product before applying coupon');
+    if (!couponCode) {
+      toast.error('Enter coupon code');
       return;
     }
+    if (!singleProduct) {
+      toast.error('Add product before applying coupon');
+      return;
+    }
+
     setApplyingCoupon(true);
     try {
-      // send draft token so server can validate and attach coupon to draft
       const res = await fetch('/api/coupons/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           couponCode,
-          draftToken: draft.placementToken
+          productId: singleProduct.id,
+          quantity: singleQty,
+          shipping: deliveryCost
         })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to apply coupon');
 
+      // setAppliedCoupon expects the same shape you already use in the component
       setAppliedCoupon({
         code: data.code,
         discountAmount: data.discountAmount,
         isPercentage: data.isPercentage
       });
-      // server should return updated totals - you can update draft if returned
-      if (data.draft) setDraft(data.draft);
-      toast.success(`Coupon "${couponCode}" applied!`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      toast.error(err.message || 'Invalid coupon');
+
+      setCouponCode('');
+      toast.success('Coupon applied');
+    } catch (err: unknown) {
+      toast.error((err as Error).message || 'Invalid coupon');
     } finally {
       setApplyingCoupon(false);
     }

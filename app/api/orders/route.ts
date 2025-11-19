@@ -270,9 +270,6 @@ export async function POST(req: NextRequest) {
           confirmLink,
           order
         );
-        console.log(
-          `Order confirmation email sent to ${order.email} with link: ${confirmLink}`
-        );
       } catch (emailError) {
         // Log email error but don't fail the order
         console.error(
