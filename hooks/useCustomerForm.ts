@@ -1,70 +1,52 @@
-// hooks/useCustomerForm.ts
 import { useState } from 'react';
-import { PaymentMethod } from '@/lib/enum/product';
-import { toast } from 'sonner';
+import { useForm, type UseFormReturn } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { CustomerFormSchema, type CustomerFormValues} from '@/lib/types/checkout';
 import { ICartItem } from '@/lib/types/cart';
 
-export const useCustomerForm = (
-  initialCart: ICartItem[],
-  initialMethod: PaymentMethod = 'COD'
-) => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [shippingAddress, setShippingAddress] = useState('');
-  const [note, setNote] = useState('');
-  const [paymentMethod, setPaymentMethod] =
-    useState<PaymentMethod>(initialMethod);
-  const [paymentImage, setPaymentImage] = useState<File | null>(null);
+export function useCustomerForm(cartItems: ICartItem[]) {
+  const form = useForm<CustomerFormValues>({
+    resolver: zodResolver(CustomerFormSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      shippingAddress: '',
+      note: '',
+      paymentMethod: 'COD'
+    }
+  });
+
   const [placing, setPlacing] = useState(false);
+  const [paymentImage, setPaymentImage] = useState<File | null>(null);
 
-  const isEmailValid = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isPhoneValid = (phone: string) => /^(?:\+977)?9\d{9}$/.test(phone);
-
-  const isFormValid = (cartItems: ICartItem[]) => {
-    if (!name.trim()) return (toast.error('Name is required'), false);
-    if (!phone.trim()) return (toast.error('Phone is required'), false);
-    if (!isPhoneValid(phone.trim()))
-      return (toast.error('Invalid phone number'), false);
-    if (email && !isEmailValid(email.trim()))
-      return (toast.error('Invalid email'), false);
-    if (!shippingAddress.trim())
-      return (toast.error('Shipping address is required'), false);
-    if (paymentMethod === 'ONLINE' && !paymentImage)
-      return (toast.error('Payment slip is required'), false);
-    if (cartItems.length === 0) return (toast.error('Cart is empty'), false);
+  async function isFormValid() {
+    const valid = await form.trigger();
+    if (!valid) return false;
+    if (!cartItems || cartItems.length === 0) return false;
     return true;
-  };
+  }
 
-  const resetForm = () => {
-    setName('');
-    setEmail('');
-    setPhone('');
-    setShippingAddress('');
-    setNote('');
-    setPaymentMethod(initialMethod);
+  function resetForm() {
+    form.reset();
     setPaymentImage(null);
-  };
+  }
 
   return {
-    name,
-    setName,
-    email,
-    setEmail,
-    phone,
-    setPhone,
-    shippingAddress,
-    setShippingAddress,
-    note,
-    setNote,
-    paymentMethod,
-    setPaymentMethod,
-    paymentImage,
-    setPaymentImage,
+    form,
     placing,
     setPlacing,
+    paymentImage,
+    setPaymentImage,
     isFormValid,
     resetForm
+  } as {
+    form: UseFormReturn<CustomerFormValues>;
+    placing: boolean;
+    setPlacing: (_v: boolean) => void;
+    paymentImage: File | null;
+    setPaymentImage: (_f: File | null) => void;
+    isFormValid: () => Promise<boolean>;
+    resetForm: () => void;
   };
-};
+}

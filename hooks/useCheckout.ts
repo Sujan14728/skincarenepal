@@ -14,7 +14,9 @@ type SiteSetting = {
 
 export const useCheckout = (buyParam: string | null) => {
   const [settings, setSettings] = useState<SiteSetting | null>(null);
-  const [cartItems, setCartItems] = useState<ICartItem[]>(() => getCartFromLocal() || []);
+  const [cartItems, setCartItems] = useState<ICartItem[]>(
+    () => getCartFromLocal() || []
+  );
   const [singleProductMode, setSingleProductMode] = useState(false);
   const [singleQty, setSingleQty] = useState<number>(1);
   const [singleProduct, setSingleProduct] = useState<Product | null>(null);
@@ -24,7 +26,7 @@ export const useCheckout = (buyParam: string | null) => {
   // Load site settings
   useEffect(() => {
     fetch('/api/settings')
-      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(res => (res.ok ? res.json() : Promise.reject()))
       .then(data => setSettings(data))
       .catch(console.error);
   }, []);
@@ -41,24 +43,30 @@ export const useCheckout = (buyParam: string | null) => {
 
     let mounted = true;
     fetch(`/api/products/${id}`)
-      .then(res => res.ok ? res.json() : Promise.reject('Product fetch failed'))
+      .then(res =>
+        res.ok ? res.json() : Promise.reject('Product fetch failed')
+      )
       .then(p => {
         if (!mounted) return;
         setSingleProduct(p);
         setSingleQty(1);
-        setCartItems([{
-          id: p.id,
-          name: p.name,
-          image: Array.isArray(p.images) ? p.images[0] : '',
-          price: p.price,
-          salePrice: p.salePrice ?? null,
-          quantity: 1
-        }]);
+        setCartItems([
+          {
+            id: p.id,
+            name: p.name,
+            image: Array.isArray(p.images) ? p.images[0] : '',
+            price: p.price,
+            salePrice: p.salePrice ?? null,
+            quantity: 1
+          }
+        ]);
       })
       .catch(console.error)
       .finally(() => mounted && setLoadingProduct(false));
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [buyParam]);
 
   // Compute free shipping
@@ -68,9 +76,16 @@ export const useCheckout = (buyParam: string | null) => {
     if (singleProductMode && singleProduct) {
       subtotal = (singleProduct.salePrice ?? singleProduct.price) * singleQty;
     } else {
-      subtotal = cartItems.reduce((sum, i) => sum + (i.salePrice ?? i.price) * i.quantity, 0);
+      subtotal = cartItems.reduce(
+        (sum, i) => sum + (i.salePrice ?? i.price) * i.quantity,
+        0
+      );
     }
-    setIsDeliveryFree(settings.freeShippingThreshold ? subtotal >= settings.freeShippingThreshold : false);
+    setIsDeliveryFree(
+      settings.freeShippingThreshold
+        ? subtotal >= settings.freeShippingThreshold
+        : false
+    );
   }, [cartItems, settings, singleProductMode, singleProduct, singleQty]);
 
   return {
@@ -81,6 +96,8 @@ export const useCheckout = (buyParam: string | null) => {
     singleProduct,
     singleQty,
     setSingleQty,
+    setSingleProductMode,
+    setSingleProduct,
     loadingProduct,
     isDeliveryFree
   };

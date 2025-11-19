@@ -11,7 +11,7 @@ export default function PaymentSection({ settings }: PaymentSectionProps) {
   const [isQrOpen, setIsQrOpen] = useState(false);
 
   return (
-    <Card className='space-y-3 p-4'>
+    <Card className='p-4'>
       <div>
         <h2 className='text-lg font-semibold'>Payment</h2>
         <p className='text-sm text-muted-foreground'>
