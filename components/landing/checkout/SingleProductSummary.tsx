@@ -251,7 +251,7 @@ export default function SingleProductSummary({
 
         <div className='mt-2 flex gap-2'>
           <Input
-            placeholder='Enter coupon code'
+            placeholder='Enter coupon code if any'
             value={couponCode}
             onChange={e => setCouponCode(e.target.value)}
             disabled={applyingCoupon || !!appliedCoupon}
