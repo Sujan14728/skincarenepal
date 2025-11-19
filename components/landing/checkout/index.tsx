@@ -27,6 +27,8 @@ export default function CheckoutClient() {
     singleProduct,
     singleQty,
     setSingleQty,
+    setSingleProductMode,
+    setSingleProduct,
     loadingProduct,
     isDeliveryFree
   } = useCheckout(buyParam);
@@ -34,17 +36,20 @@ export default function CheckoutClient() {
   const customerForm = useCustomerForm(cartItems);
 
   const placeOrder = async () => {
-    if (!customerForm.isFormValid(cartItems)) return;
+    if (!cartItems || cartItems.length === 0) {
+      toast.error('Your cart is empty. Please add items to place an order.');
+      customerForm.setPlacing(false);
+      return;
+    }
+    if (!(await customerForm.isFormValid())) return;
 
     try {
       customerForm.setPlacing(true);
 
       // 1. Upload payment slip if ONLINE
       let paymentSlipUrl: string | undefined;
-      if (
-        customerForm.paymentImage &&
-        customerForm.paymentMethod === 'ONLINE'
-      ) {
+      const paymentMethod = customerForm.form.getValues('paymentMethod');
+      if (customerForm.paymentImage && paymentMethod === 'ONLINE') {
         toast.loading('Uploading payment slip...', { id: 'order-progress' });
         const form = new FormData();
         form.append('file', customerForm.paymentImage);
@@ -57,20 +62,19 @@ export default function CheckoutClient() {
         paymentSlipUrl = url;
       }
 
-      // 2. Place order (no draft). Server will re-validate coupon and create order.
       toast.loading('Placing order...', { id: 'order-progress' });
-
+      const values = customerForm.form.getValues();
       const payload = {
         items: cartItems.map(i => ({ productId: i.id, quantity: i.quantity })),
         shipping: isDeliveryFree ? 0 : settings?.deliveryCost || 0,
         coupon: appliedCoupon ? { code: appliedCoupon.code } : null,
-        shippingAddress: customerForm.shippingAddress,
-        note: customerForm.note || null,
-        paymentMethod: customerForm.paymentMethod || 'COD',
+        shippingAddress: values.shippingAddress,
+        note: values.note || null,
+        paymentMethod: values.paymentMethod || 'COD',
         paymentSlipUrl: paymentSlipUrl || null,
-        email: customerForm.email || null,
-        name: customerForm.name || null,
-        phone: customerForm.phone || null
+        email: values.email || null,
+        name: values.name || null,
+        phone: values.phone || null
       };
 
       const confirmRes = await fetch('/api/orders/place', {
@@ -94,6 +98,15 @@ export default function CheckoutClient() {
 
       // Reset form fields
       customerForm.resetForm();
+
+      // If we were in single-product mode, clear it so UI shows empty cart
+      try {
+        setSingleProductMode(false);
+        setSingleProduct(null);
+        setSingleQty(1);
+      } catch {
+        // ignore if setters are not present for some reason
+      }
 
       if (singleProductMode) window.history.replaceState({}, '', '/checkout');
     } catch (err) {
@@ -125,7 +138,7 @@ export default function CheckoutClient() {
           ) : (
             <EmptyCartMessage />
           )}
-          {customerForm.paymentMethod === 'ONLINE' && (
+          {customerForm.form.watch('paymentMethod') === 'ONLINE' && (
             <PaymentSection settings={settings} />
           )}
         </div>

@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
       const prod = productMap.get(it.productId);
       if (!prod) {
         return NextResponse.json(
-          { error: `Product ${it.productId} not found` },
+          { error: `Product not found` },
           { status: 400 }
         );
       }
