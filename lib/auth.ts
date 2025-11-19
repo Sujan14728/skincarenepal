@@ -23,7 +23,6 @@ export const signToken = (
 export async function verifyToken(token: string) {
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET!);
-    console.log("Verified payload:", payload);
     return payload as { id: string; email: string; isAdmin: boolean };
   } catch {
     return false;

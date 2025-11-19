@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Product } from '@/lib/types/product';
 import { ICartItem } from '@/lib/types/cart';
 import { Loader2, Plus, Minus } from 'lucide-react';
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 interface SingleProductSummaryProps {
@@ -112,8 +112,8 @@ export default function SingleProductSummary({
 
       setCouponCode('');
       toast.success('Coupon applied');
-    } catch (err: any) {
-      toast.error(err.message || 'Invalid coupon');
+    } catch (err: unknown) {
+      toast.error((err as Error).message || 'Invalid coupon');
     } finally {
       setApplyingCoupon(false);
     }

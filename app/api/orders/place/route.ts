@@ -3,6 +3,12 @@ import { prisma } from '@/lib/prisma';
 import { sendOrderPlacementEmail } from '@/lib/email';
 import crypto from 'crypto';
 import { formatOrderNumber, getOrigin } from '@/lib/utils';
+import { PaymentMethod } from '@/lib/enum/product';
+
+type IncomingItem = {
+  productId: number;
+  quantity: number;
+};
 
 async function withRetry<T>(fn: () => Promise<T>, retries = 1, delayMs = 100) {
   let lastErr: unknown;
@@ -29,7 +35,19 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 1, delayMs = 100) {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = (await req.json()) as {
+      items?: IncomingItem[];
+      shipping?: number;
+      coupon?: { code?: string } | null;
+      couponCode?: string | null;
+      shippingAddress?: string | null;
+      note?: string | null;
+      paymentMethod?: PaymentMethod;
+      paymentSlipUrl?: string | null;
+      email?: string | null;
+      name?: string | null;
+      phone?: string | null;
+    };
     const {
       items: incomingItems,
       shipping = 0,
@@ -56,11 +74,11 @@ export async function POST(req: NextRequest) {
 
     // Normalize incoming items -> expect [{ productId, quantity }]
     const itemsNormalized = incomingItems
-      .map((it: any) => ({
+      .map(it => ({
         productId: Number(it.productId),
         quantity: Math.max(1, Number(it.quantity || 1))
       }))
-      .filter((it: any) => it.productId && it.quantity > 0);
+      .filter(it => it.productId && it.quantity > 0);
 
     if (!itemsNormalized.length) {
       return NextResponse.json(
@@ -70,7 +88,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Fetch products and compute canonical prices + subtotal
-    const productIds = itemsNormalized.map((i: any) => i.productId);
+    const productIds = itemsNormalized.map(i => i.productId);
     const products = await prisma.product.findMany({
       where: { id: { in: productIds } }
     });
@@ -247,19 +265,18 @@ export async function POST(req: NextRequest) {
           created.orderNumber,
           confirmUrl,
           created
-        )
-          .then(() => console.log('Email sent'))
-          .catch(e => console.error('Email error', e));
+        ).catch(e => console.error('Email error', e));
       }
     } catch (e) {
       console.error('Email send failed', e);
     }
 
     return NextResponse.json(created, { status: 201 });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     console.error('Place order error:', err);
     return NextResponse.json(
-      { error: err.message || 'Failed to place order' },
+      { error: err?.message || 'Failed to place order' },
       { status: 500 }
     );
   }

@@ -40,10 +40,10 @@ type Props = {
   orders: OrderWithRelations[];
   loading?: boolean;
   skeletonRows?: number;
-  onDelete?: (orderId: number) => void;
-  onView?: (orderId: number) => void;
-  onStatusChange?: (orderId: number, status: OrderStatus) => void;
-  onEmail?: (orderId: number) => void;
+  onDelete?: (_orderId: number) => void;
+  onView?: (_orderId: number) => void;
+  onStatusChange?: (_orderId: number, _status: OrderStatus) => void;
+  onEmail?: (_orderId: number) => void;
 };
 
 const OrdersTable = ({
@@ -181,7 +181,7 @@ export default OrdersTable;
 type RowStatusSelectProps = {
   orderId: number;
   current: OrderStatus;
-  onConfirm: (orderId: number, status: OrderStatus) => void;
+  onConfirm: (_orderId: number, _status: OrderStatus) => void;
 };
 
 function RowStatusSelect({

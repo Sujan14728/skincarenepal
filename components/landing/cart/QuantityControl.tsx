@@ -3,7 +3,7 @@ import { LuMinus, LuPlus } from 'react-icons/lu';
 
 interface QuantityControlProps {
   quantity: number;
-  onUpdate: (newQuantity: number) => void;
+  onUpdate: (_newQuantity: number) => void;
 }
 
 const QuantityControl: React.FC<QuantityControlProps> = ({

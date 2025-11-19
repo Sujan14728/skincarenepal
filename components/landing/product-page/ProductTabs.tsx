@@ -10,7 +10,6 @@ interface ProductTabsProps {
 }
 
 const ProductTabs = ({ product }: ProductTabsProps) => {
-  console.log(product);
   return (
     <div className='mt-12 rounded-lg p-4 shadow-lg'>
       <Tabs defaultValue='description' className='w-full'>

@@ -42,9 +42,6 @@ export async function GET() {
               typeof (error as { message?: unknown }).message === 'string' &&
               (error as { message: string }).message.includes('connection')))
         ) {
-          console.log(
-            `Connection error, retrying... (${retries} attempts left)`
-          );
           await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
           continue;
         }
