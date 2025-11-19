@@ -35,7 +35,7 @@ export function NavBar() {
           unoptimized
         />
         <span className='flex flex-col items-center border-muted-foreground'>
-          <span className='whitespace-nowrap text-2xl font-extrabold tracking-wider md:text-2xl lg:text-3xl'>
+          <span className='whitespace-nowrap text-2xl font-extrabold tracking-wider md:text-2xl lg:text-2xl'>
             Care And Clean
           </span>
           <span className='text-[0.6rem] font-medium tracking-tight text-gray-500 md:text-[0.7rem]'>
