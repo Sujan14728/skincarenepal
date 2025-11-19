@@ -82,3 +82,7 @@ export function getOrigin(): string {
     'http://localhost:3000';
   return baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
 }
+
+export const formatOrderNumber = (id: number, prefix = 'ORDER-', width = 6) => {
+  return `${prefix}${id.toString().padStart(width, '0')}`;
+};

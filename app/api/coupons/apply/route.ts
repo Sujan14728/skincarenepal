@@ -1,174 +1,111 @@
-import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
-
-async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 300) {
-  let lastErr: unknown;
-  for (let i = 0; i <= retries; i++) {
-    try {
-      return await fn();
-    } catch (err) {
-      lastErr = err;
-      const msg = (err as Error).message || '';
-      if (
-        msg.includes('P2024') ||
-        msg.includes('connection') ||
-        msg.includes('ConnectionReset')
-      ) {
-        if (i < retries)
-          await new Promise(r => setTimeout(r, delayMs * (i + 1)));
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw lastErr;
-}
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
-  const { couponCode } = await req.json();
-  const token = req.cookies.get('placementToken')?.value;
+  const body = await req.json().catch(() => ({}));
+  const couponCode = (body.couponCode || '').toString().trim();
+  const productId = body.productId ? Number(body.productId) : undefined;
+  const quantity = Math.max(1, Number(body.quantity || 1));
+  const clientSubtotal =
+    body.subtotal !== undefined ? Number(body.subtotal) : undefined;
+  const shipping = Number(body.shipping || 0);
 
-  if (!token || !couponCode) {
+  if (!couponCode) {
     return NextResponse.json(
-      { error: 'Missing token or couponCode' },
+      { valid: false, error: 'couponCode required' },
       { status: 400 }
     );
   }
 
-  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-
-  const order = await withRetry(() =>
-    prisma.order.findFirst({
-      where: {
-        placementTokenHash: tokenHash,
-        status: 'PENDING_CONFIRMATION',
-        placementTokenExpiresAt: { gt: new Date() }
-      },
-      include: { items: true }
-    })
-  );
-
-  if (!order) {
-    return NextResponse.json(
-      { error: 'Invalid or expired order token' },
-      { status: 400 }
-    );
-  }
-
-  const coupon = await withRetry(() =>
-    prisma.coupon.findFirst({
-      where: {
-        code: couponCode,
-        isActive: true,
-        validFrom: { lte: new Date() },
-        OR: [{ validUntil: { gte: new Date() } }, { validUntil: null }]
-      }
-    })
-  );
+  // Fetch coupon
+  const now = new Date();
+  const coupon = await prisma.coupon.findFirst({
+    where: {
+      code: couponCode,
+      isActive: true,
+      validFrom: { lte: now },
+      OR: [{ validUntil: null }, { validUntil: { gte: now } }]
+    }
+  });
 
   if (!coupon) {
     return NextResponse.json(
-      { error: 'Invalid or expired coupon' },
+      { valid: false, error: 'Invalid or expired coupon' },
       { status: 400 }
     );
   }
 
-  // Validate coupon has discount value
-  if (!coupon.discountValue || coupon.discountValue <= 0) {
+  // Compute canonical subtotal when productId provided, otherwise use client subtotal if present
+  let subtotal = 0;
+  if (productId) {
+    const product = await prisma.product.findUnique({
+      where: { id: productId }
+    });
+    if (!product) {
+      return NextResponse.json(
+        { valid: false, error: 'Product not found' },
+        { status: 400 }
+      );
+    }
+    const unitPrice = product.salePrice ?? product.price;
+    subtotal = Math.floor(unitPrice * quantity);
+  } else if (typeof clientSubtotal === 'number') {
+    subtotal = Math.floor(clientSubtotal);
+  } else {
     return NextResponse.json(
-      { error: 'Invalid coupon configuration' },
+      { valid: false, error: 'Either productId or subtotal must be provided' },
       { status: 400 }
     );
   }
 
-  // Check if coupon is active
-  if (!coupon.isActive) {
+  // Product-specific coupon check
+  if (coupon.productId && productId && coupon.productId !== productId) {
     return NextResponse.json(
-      { error: 'This coupon is not active' },
+      { valid: false, error: 'Coupon not valid for this product' },
       { status: 400 }
     );
   }
-
-  // Check usage limit if set
-  if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
+  if (coupon.productId && !productId) {
+    // Coupon requires product context
     return NextResponse.json(
-      { error: 'Coupon usage limit reached' },
+      { valid: false, error: 'Coupon requires a specific product' },
       { status: 400 }
     );
   }
 
-  // Compute subtotal from draft items
-  const draftSubtotal = order.items.reduce(
-    (sum, i) => sum + i.price * i.quantity,
-    0
-  );
-
-  // Check minimum purchase if set (against full cart subtotal)
-  if (coupon.minPurchase && draftSubtotal < coupon.minPurchase) {
+  // min purchase check
+  if (coupon.minPurchase && subtotal < coupon.minPurchase) {
     return NextResponse.json(
-      { error: `Minimum purchase of Rs. ${coupon.minPurchase} required` },
+      {
+        valid: false,
+        error: `Minimum purchase of ${coupon.minPurchase} required`
+      },
       { status: 400 }
     );
   }
 
-  // If coupon targets a specific product, only discount that portion
-  const eligibleSubtotal = coupon.productId
-    ? order.items
-        .filter(i => i.productId === coupon.productId)
-        .reduce((sum, i) => sum + i.price * i.quantity, 0)
-    : draftSubtotal;
-
-  console.log('📊 Subtotal calculation:', {
-    draftSubtotal,
-    eligibleSubtotal,
-    hasProductId: !!coupon.productId,
-    targetProductId: coupon.productId,
-    orderItemsCount: order.items.length,
-    orderItems: order.items.map(i => ({
-      productId: i.productId,
-      price: i.price,
-      quantity: i.quantity,
-      subtotal: i.price * i.quantity
-    }))
-  });
-
-  // Calculate discount based on type
+  // Compute discount
   let discount = 0;
-  if (coupon.discountType === 'PERCENTAGE') {
-    discount = Math.floor((eligibleSubtotal * coupon.discountValue) / 100);
-  } else if (coupon.discountType === 'FIXED') {
-    discount = coupon.discountValue;
+  const type = (coupon.discountType || '').toUpperCase();
+  if (type === 'PERCENTAGE') {
+    discount = Math.floor(subtotal * (coupon.discountValue / 100));
+  } else {
+    // treat as FIXED
+    discount = Math.floor(coupon.discountValue);
   }
 
-  // Ensure discount is a valid number
-  if (isNaN(discount) || discount < 0) {
-    discount = 0;
-  }
+  // Cap discount so total can't go below zero
+  discount = Math.max(0, Math.min(discount, subtotal + shipping));
 
-  console.log('Coupon details:', {
-    code: coupon.code,
-    type: coupon.discountType,
-    value: coupon.discountValue,
-    calculatedDiscount: discount,
-    subtotal: draftSubtotal
-  });
-
-  // Update order with discount
-  await withRetry(() =>
-    prisma.order.update({
-      where: { id: order.id },
-      data: { discount: Math.floor(discount) }
-    })
-  );
+  const totalAfter = Math.max(0, subtotal + shipping - discount);
 
   return NextResponse.json({
-    discountAmount: discount,
-    isPercentage: coupon.discountType === 'PERCENTAGE',
-    discountType: coupon.discountType,
-    discountValue: coupon.discountValue,
+    valid: true,
     code: coupon.code,
-    couponId: coupon.id,
-    applied: true
+    discountAmount: discount,
+    isPercentage: type === 'PERCENTAGE',
+    subtotal,
+    shipping,
+    totalAfter
   });
 }
