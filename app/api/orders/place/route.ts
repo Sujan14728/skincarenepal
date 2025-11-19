@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { sendOrderPlacementEmail } from '@/lib/email';
 import crypto from 'crypto';
 
-async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 300) {
+async function withRetry<T>(fn: () => Promise<T>, retries = 1, delayMs = 100) {
   let lastErr: unknown;
   for (let i = 0; i <= retries; i++) {
     try {
@@ -114,37 +114,36 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    // Send confirmation email
+    // Return response immediately - send email in background
+    const response = NextResponse.json(order, { status: 201 });
+
+    // Send confirmation email asynchronously (don't block response)
     if (order.email && order.orderNumber) {
-      try {
-        const baseUrl =
-          process.env.NEXT_PUBLIC_BASE_URL ||
-          process.env.VERCEL_URL ||
-          'http://localhost:3000';
-        const origin = baseUrl.startsWith('http')
-          ? baseUrl
-          : `https://${baseUrl}`;
-        const confirmLink = `${origin}/api/orders/confirm?token=${token}&order=${order.orderNumber}`;
+      const baseUrl =
+        process.env.NEXT_PUBLIC_BASE_URL ||
+        process.env.VERCEL_URL ||
+        'http://localhost:3000';
+      const origin = baseUrl.startsWith('http')
+        ? baseUrl
+        : `https://${baseUrl}`;
+      const confirmLink = `${origin}/api/orders/confirm?token=${token}&order=${order.orderNumber}`;
 
-        console.log('Attempting to send email to:', order.email);
-        console.log('Confirmation link:', confirmLink);
-
-        await sendOrderPlacementEmail(
-          order.email,
-          order.orderNumber,
-          confirmLink,
-          order
+      // Fire and forget - don't await
+      sendOrderPlacementEmail(
+        order.email,
+        order.orderNumber,
+        confirmLink,
+        order
+      )
+        .then(() => console.log('✅ Email sent successfully to:', order.email))
+        .catch(err =>
+          console.error('❌ Email sending failed:', {
+            error: err,
+            message: err instanceof Error ? err.message : 'Unknown error',
+            email: order.email,
+            orderNumber: order.orderNumber
+          })
         );
-
-        console.log('Email sent successfully to:', order.email);
-      } catch (err) {
-        console.error('❌ Email sending failed:', {
-          error: err,
-          message: err instanceof Error ? err.message : 'Unknown error',
-          email: order.email,
-          orderNumber: order.orderNumber
-        });
-      }
     } else {
       console.log('Skipping email - no email address or order number', {
         hasEmail: !!order.email,
@@ -152,7 +151,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return NextResponse.json(order, { status: 201 });
+    return response;
   } catch (error) {
     console.error('Error finalizing order:', error);
     return NextResponse.json(
