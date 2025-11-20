@@ -230,11 +230,11 @@ deploy:
         echo "Installing all dependencies (including devDependencies for build)..."
         npm ci --prefer-offline --no-audit
         
-        echo "Running database migrations..."
-        npx prisma migrate deploy
-        
         echo "Generating Prisma Client..."
         npx prisma generate
+        
+        echo "Pushing database schema changes..."
+        npx prisma db push --accept-data-loss --skip-generate
         
         echo "Building Next.js application..."
         npm run build
