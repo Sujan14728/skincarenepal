@@ -1,4 +1,5 @@
 import MarqueeFeature from './marquee';
+import { prisma } from '@/lib/prisma';
 
 type MarqueeType = {
   id: number;
@@ -7,16 +8,16 @@ type MarqueeType = {
 
 async function getMarquees(): Promise<MarqueeType[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/marquee`, {
-      next: { revalidate: 300 }, // Cache for 5 minutes
-      signal: AbortSignal.timeout(3000) // 3 second timeout
+    // Fetch directly from database instead of making HTTP request
+    const marquees = await prisma.marquee.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: {
+        id: true,
+        text: true
+      }
     });
-
-    if (!res.ok) return [];
-
-    const data = await res.json();
-    return data.marquees || [];
+    return marquees;
   } catch (error) {
     console.error('Failed to fetch marquees:', error);
     return [];

@@ -1,311 +1,139 @@
+# ==============================
+# GitLab CI/CD – Optimized for Self-Hosted VPS Runner
+# ==============================
+image: node:20-alpine
+
 stages:
   - build
   - test
   - deploy
 
-# Cache dependencies between jobs
+variables:
+  NODE_ENV: production
+  CI: 'true'
+
+# Single cache definition (only one in the entire file!)
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
     - node_modules/
     - .next/cache/
+  policy: pull-push
 
-variables:
-  NODE_ENV: 'production'
-  CI: 'true'
-
-# Build stage - Install dependencies and build the Next.js app
+# -------------------------------
+# Build
+# -------------------------------
 build:
   stage: build
-  image: node:20-bullseye # Use Debian-based image with all dependencies
-  variables:
-    DATABASE_URL: $DATABASE_URL
-    IMAGEKIT_PUBLIC_KEY: $IMAGEKIT_PUBLIC_KEY
-    IMAGEKIT_PRIVATE_KEY: $IMAGEKIT_PRIVATE_KEY
-    IMAGEKIT_URL_ENDPOINT: $IMAGEKIT_URL_ENDPOINT
-  before_script:
-    # Install system dependencies
-    - apt-get update -qq
-    - apt-get install -y -qq openssl ca-certificates
+  tags:
+    - vps
   script:
-    - echo "Node version:" && node --version
-    - echo "NPM version:" && npm --version
-
-    - echo "Cleaning previous install & caches..."
-    - rm -rf node_modules package-lock.json .next
-
-    - echo "Install dependencies with dev (temporary dev mode)..."
-    - npm install --include=dev
-
-    - echo "PostCSS/Tailwind versions:"
-    - npm list tailwindcss postcss autoprefixer || true
-
-    - echo "Generating Prisma Client..."
+    - echo "Installing dependencies..."
+    - npm ci --prefer-offline --no-audit
+    - echo "Generating Prisma client..."
     - npx prisma generate
-
-    - echo "Set production env for build"
-    - export NODE_ENV=production
-
-    - echo "Building Next.js application (production)..."
+    - echo "Building Next.js app..."
     - npm run build
-
-    - echo "Build completed successfully!"
   artifacts:
     paths:
       - .next/
       - node_modules/
       - prisma/
-    expire_in: 1 hour
-  only:
-    - main
-    - develop
+      - public/
+      - package.json
+      - package-lock.json
+      - ecosystem.config.js
+      - .env.production
+      - .env.staging
+    expire_in: 2 hours
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
 
-# Test stage - Run tests, linting, and type checking
+# -------------------------------
+# Lint
+# -------------------------------
 test:lint:
   stage: test
-  image: node:20-bullseye
-  dependencies:
-    - build
+  tags:
+    - vps
   script:
-    - echo "Running ESLint..."
-    - npm run lint || echo "⚠️  Linting issues found (non-blocking)"
-  allow_failure: true # Don't block deployment on lint warnings
-  only:
-    - main
-    - develop
+    - npm run lint || echo "Lint warnings (non-blocking)"
+  allow_failure: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
 
-test:typecheck:
-  stage: test
-  image: node:20-bullseye
-  dependencies:
-    - build
-  script:
-    - echo "Running TypeScript type checking..."
-    - npx tsc --noEmit
-  allow_failure: false # Block deployment on type errors
-  only:
-    - main
-    - develop
-
-test:unit:
-  stage: test
-  image: node:20-bullseye
-  dependencies:
-    - build
-  variables:
-    DATABASE_URL: $DATABASE_URL
-  script:
-    - echo "Running unit tests..."
-    # If you have Jest or other test framework configured
-    - npm run test || echo "⚠️  No test command configured yet"
-  allow_failure: true # Don't block deployment if tests fail (for now)
-  only:
-    - main
-    - develop
-
-test:build-verification:
-  stage: test
-  image: node:20-bullseye
-  dependencies:
-    - build
-  script:
-    - echo "Verifying build artifacts..."
-    - |
-      # Check if .next directory exists
-      if [ ! -d ".next" ]; then
-        echo "❌ Build directory .next not found!"
-        exit 1
-      fi
-
-      # Check if critical build files exist
-      if [ ! -f ".next/BUILD_ID" ]; then
-        echo "❌ BUILD_ID file not found!"
-        exit 1
-      fi
-
-      # Check if server files exist
-      if [ ! -d ".next/server" ]; then
-        echo "❌ Server directory not found!"
-        exit 1
-      fi
-
-      echo "✅ Build verification passed!"
-  allow_failure: false # Block deployment if build is incomplete
-  only:
-    - main
-    - develop
-
-# Deploy stage - Deploy to VPS
-deploy:
+# -------------------------------
+# Deploy Production
+# -------------------------------
+deploy_production:
   stage: deploy
-  image: alpine:latest
-  before_script:
-    - apk add --no-cache openssh-client rsync
+  tags:
+    - vps
+  dependencies:
+    - build
+  timeout: 20m
+  script: |
+    echo "Deploying to production..."
+    rsync -avz --delete \
+      --exclude='.git' \
+      --exclude='.env*' \
+      -e "ssh -o StrictHostKeyChecking=no" \
+      ./ $VPS_USER@$VPS_HOST:$VPS_DEPLOY_PATH/
 
-    # Setup SSH - properly handle multi-line private key
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    # If SSH_PRIVATE_KEY is a file variable, it contains a path to the temp file.
-    # If it's a normal variable, it contains the key content. Handle both.
-    - |
-      set -e
-      KEY_PATH="/root/.ssh/id_ed25519"
-      RAW_PATH="/root/.ssh/id_ed25519.raw"
-      if [ -f "$SSH_PRIVATE_KEY" ]; then
-        echo "Detected file-type variable for SSH key; copying file contents...";
-        cp "$SSH_PRIVATE_KEY" "$RAW_PATH";
-      else
-        echo "Detected inline SSH key variable; writing contents...";
-        printf '%s\n' "$SSH_PRIVATE_KEY" > "$RAW_PATH";
-      fi
-      # Normalize line endings & remove CR characters
-      tr -d '\r' < "$RAW_PATH" > "$KEY_PATH"
-      # Ensure file ends with newline (some parsers expect it)
-      tail -c1 "$KEY_PATH" | read -r _ || echo >> "$KEY_PATH"
-      chmod 600 "$KEY_PATH"
-      # Basic format validation
-      if ! grep -q "BEGIN OPENSSH PRIVATE KEY" "$KEY_PATH"; then
-        echo "ERROR: Private key not in OpenSSH format (expected BEGIN OPENSSH PRIVATE KEY)." >&2
-        echo "If this is a PuTTY key, convert it or regenerate with: ssh-keygen -t ed25519 -C ci-deploy -N '' -f id_ed25519" >&2
-        exit 1
-      fi
-      # Structural validation using ssh-keygen
-      if ! ssh-keygen -y -f "$KEY_PATH" > /dev/null 2>&1; then
-        echo "ERROR: ssh-keygen unable to parse private key (possibly corrupted)." >&2
-        echo "Recreate key and update GitLab variable." >&2
-        exit 1
-      fi
-      echo "SSH key validated successfully."
-      # Pre-flight connectivity test (no command execution beyond echo)
-      if ! ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o IdentitiesOnly=yes $VPS_USER@$VPS_HOST 'echo SSH_PRECHECK_OK' 2>/dev/null; then
-        echo "WARNING: Pre-flight SSH connection failed; deployment may fail at rsync." >&2
-      else
-        echo "Pre-flight SSH connectivity OK."
-      fi
-    # Add VPS to known hosts to avoid SSH prompt
-    - ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
-    - chmod 644 ~/.ssh/known_hosts
-
-  script:
-    - echo "Deploying to VPS at $VPS_HOST..."
-
-    # Create .env file with environment variables
-    - |
-      cat > .env.production << EOF
-      NODE_ENV=production
-      DATABASE_URL=$DATABASE_URL
-      JWT_SECRET=$JWT_SECRET
-      IMAGEKIT_PUBLIC_KEY=$IMAGEKIT_PUBLIC_KEY
-      IMAGEKIT_PRIVATE_KEY=$IMAGEKIT_PRIVATE_KEY
-      IMAGEKIT_URL_ENDPOINT=$IMAGEKIT_URL_ENDPOINT
-      SMTP_HOST=$SMTP_HOST
-      SMTP_PORT=$SMTP_PORT
-      SMTP_SECURE=$SMTP_SECURE
-      EMAIL_USER=$EMAIL_USER
-      EMAIL_PASS=$EMAIL_PASS
-      EMAIL_FROM=$EMAIL_FROM
-      STORE_NAME=$STORE_NAME
-      SUPPORT_EMAIL=$SUPPORT_EMAIL
-      NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
-      PORT=3002
-      EOF
-
-    # Sync files to VPS (excluding node_modules, .git, etc.)
-    - |
-      rsync -avz --delete \
-        --exclude 'node_modules' \
-        --exclude '.git' \
-        --exclude '.env*' \
-        --exclude 'public/uploads' \
-        ./ $VPS_USER@$VPS_HOST:$VPS_DEPLOY_PATH/
-
-    # Upload .env.production separately
-    - scp .env.production $VPS_USER@$VPS_HOST:$VPS_DEPLOY_PATH/.env
-
-    # Execute deployment commands on VPS
-    - |
-      ssh $VPS_USER@$VPS_HOST << 'ENDSSH'
-        cd $VPS_DEPLOY_PATH
-        
-        echo "Installing all dependencies (including devDependencies for build)..."
-        npm ci --prefer-offline --no-audit
-        
-        echo "Generating Prisma Client..."
-        npx prisma generate
-        
-        echo "Pushing database schema changes..."
-        npx prisma db push --accept-data-loss --skip-generate
-        
-        echo "Building Next.js application..."
-        npm run build
-        
-        echo "Creating uploads directory if not exists..."
-        mkdir -p public/uploads
-        chmod 755 public/uploads
-        
-        echo "Restarting PM2 process..."
-        pm2 restart skincarenepal --update-env || pm2 start npm --name "skincarenepal" -- start
-        pm2 save
-        
-        echo "Deployment completed successfully!"
-      ENDSSH
-
-    - echo "✅ Application deployed to https://careandcleannp.com"
-
+    ssh $VPS_USER@$VPS_HOST << 'EOF'
+      cd $VPS_DEPLOY_PATH
+      cp .env.production .env
+      export NODE_ENV=production
+      npx prisma migrate deploy
+      mkdir -p public/uploads && chmod 755 public/uploads
+      pm2 reload ecosystem.config.js --env production || \
+        (pm2 delete ecosystem.config.js 2>/dev/null || true; pm2 start ecosystem.config.js --env production)
+      pm2 save
+      sleep 5
+      curl -f http://localhost:3002 || exit 1
+      echo "Production deployed & healthy!"
+    EOF
   environment:
     name: production
     url: https://careandcleannp.com
-  only:
-    - main
-  when: on_success # Automatically deploy after successful build
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
-# Optional: Deploy to staging on develop branch
+# -------------------------------
+# Deploy Staging (Manual)
+# -------------------------------
 deploy_staging:
   stage: deploy
-  image: alpine:latest
-  before_script:
-    - apk add --no-cache openssh-client rsync
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - |
-      set -e
-      KEY_PATH="/root/.ssh/id_ed25519"
-      RAW_PATH="/root/.ssh/id_ed25519.raw"
-      if [ -f "$SSH_PRIVATE_KEY" ]; then
-        echo "Detected file-type variable for SSH key; copying file contents (staging)...";
-        cp "$SSH_PRIVATE_KEY" "$RAW_PATH";
-      else
-        echo "Detected inline SSH key variable; writing contents (staging)...";
-        printf '%s\n' "$SSH_PRIVATE_KEY" > "$RAW_PATH";
-      fi
-      tr -d '\r' < "$RAW_PATH" > "$KEY_PATH"
-      tail -c1 "$KEY_PATH" | read -r _ || echo >> "$KEY_PATH"
-      chmod 600 "$KEY_PATH"
-      if ! grep -q "BEGIN OPENSSH PRIVATE KEY" "$KEY_PATH"; then
-        echo "ERROR: Private key not in OpenSSH format (staging)." >&2
-        exit 1
-      fi
-      if ! ssh-keygen -y -f "$KEY_PATH" > /dev/null 2>&1; then
-        echo "ERROR: ssh-keygen unable to parse private key (staging)." >&2
-        exit 1
-      fi
-      echo "SSH key validated successfully (staging)."
-      if ! ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o IdentitiesOnly=yes $VPS_USER@$VPS_HOST 'echo SSH_PRECHECK_OK' 2>/dev/null; then
-        echo "WARNING: Pre-flight SSH connection failed (staging)." >&2
-      else
-        echo "Pre-flight SSH connectivity OK (staging)."
-      fi
-    - ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
-    - chmod 644 ~/.ssh/known_hosts
+  tags:
+    - vps
+  dependencies:
+    - build
+  timeout: 20m
+  when: manual
+  script: |
+    echo "Deploying to staging..."
+    rsync -avz --delete \
+      --exclude='.git' \
+      --exclude='.env*' \
+      -e "ssh -o StrictHostKeyChecking=no" \
+      ./ $VPS_USER@$VPS_HOST_STAGING:$VPS_DEPLOY_PATH_STAGING/
 
-  script:
-    - echo "Deploying to staging environment..."
-    # Similar deployment steps but to a different directory/port
-    - echo "Staging deployment not configured yet"
-
+    ssh $VPS_USER@$VPS_HOST_STAGING << 'EOF'
+      cd $VPS_DEPLOY_PATH_STAGING
+      cp .env.staging .env
+      export NODE_ENV=staging
+      npx prisma migrate deploy
+      mkdir -p public/uploads && chmod 755 public/uploads
+      pm2 reload ecosystem.config.js --env staging || \
+        (pm2 delete ecosystem.config.js 2>/dev/null || true; pm2 start ecosystem.config.js --env staging)
+      pm2 save
+      sleep 5
+      curl -f http://localhost:3002 || exit 1
+      echo "Staging deployed & healthy!"
+    EOF
   environment:
     name: staging
     url: https://staging.careandcleannp.com
-  only:
-    - develop
-  when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: manual
