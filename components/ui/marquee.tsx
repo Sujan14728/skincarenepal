@@ -1,6 +1,6 @@
 'use client';
 import Marquee from 'react-fast-marquee';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 type MarqueeType = {
   id: number;
@@ -11,7 +11,28 @@ interface MarqueeFeatureProps {
   marquees: MarqueeType[];
 }
 
-export default function MarqueeFeature({ marquees }: MarqueeFeatureProps) {
+export default function MarqueeFeature({
+  marquees: initialMarquees
+}: MarqueeFeatureProps) {
+  const [marquees, setMarquees] = useState<MarqueeType[]>(initialMarquees);
+
+  useEffect(() => {
+    // Poll for updates every 30 seconds
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/marquee', { cache: 'no-store' });
+        const data = await res.json();
+        if (data.marquees) {
+          setMarquees(data.marquees);
+        }
+      } catch (error) {
+        console.error('Failed to fetch marquees:', error);
+      }
+    }, 30000); // Poll every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   if (!marquees || marquees.length === 0) {
     return null;
   }

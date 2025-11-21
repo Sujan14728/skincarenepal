@@ -4,38 +4,57 @@ import { prisma } from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
 export const revalidate = 60; // Cache for 60 seconds
 
+// Utility for query timeout
+const withTimeout = <T>(promise: Promise<T>, timeoutMs: number): Promise<T> =>
+  Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Query timeout')), timeoutMs)
+    )
+  ]);
+
 export async function GET() {
   try {
-    // Add timeout to prevent hanging connections
-    const marquees = await Promise.race([
+    const marquees = await withTimeout(
       prisma.marquee.findMany({
         orderBy: { createdAt: 'desc' },
-        take: 10 // Limit results
+        take: 10
       }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Query timeout')), 3000)
-      )
-    ]);
+      3000
+    );
     return NextResponse.json({ marquees });
   } catch (err) {
     console.error('Marquee fetch error:', err);
-    // Return empty array on error to prevent UI breaking
     return NextResponse.json({ marquees: [] });
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const { text } = await req.json();
-    if (!text)
-      return NextResponse.json({ error: 'Text is required' }, { status: 400 });
-
+    const body = await req.json();
+    const { text } = body;
+    // Validate text: required, string, and reasonable length
+    if (
+      !text ||
+      typeof text !== 'string' ||
+      text.trim().length === 0 ||
+      text.length > 500
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'Text is required, must be a non-empty string, and under 500 characters'
+        },
+        { status: 400 }
+      );
+    }
+    // Create marquee (include updatedAt since it's required)
     const newMarquee = await prisma.marquee.create({
-      data: { text, updatedAt: new Date() }
+      data: { text: text.trim(), updatedAt: new Date() }
     });
     return NextResponse.json(newMarquee);
   } catch (err) {
-    console.error(err);
+    console.error('Marquee creation error:', err);
     return NextResponse.json(
       { error: 'Failed to create marquee' },
       { status: 500 }

@@ -91,12 +91,6 @@ export default function RootLayout({
       <head>
         {/* Pre-connect to ImageKit (if you use it) */}
         {imagekitEndpoint && <link rel='preconnect' href={imagekitEndpoint} />}
-
-        {/* ---- NO MANUAL <link rel="icon"> NEEDED ----
-             Next.js already adds them from `metadata.icons`.
-             If you really want a bullet-proof fallback, keep ONLY the .ico:
-        */}
-        <link rel='icon' href='/favicon.ico' sizes='any' />
       </head>
 
       <body
