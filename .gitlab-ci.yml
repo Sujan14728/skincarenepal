@@ -16,53 +16,57 @@ variables:
 build_and_deploy:
   stage: build
   tags:
-    - vps           # Uses your VPS runner
+    - vps # Uses your VPS runner
     - production
   only:
     - main
   script:
     - echo "🚀 Starting deployment on VPS..."
-    
+
     # Navigate to app directory
     - cd $APP_DIR
-    
+
     # Pull latest changes
     - echo "📥 Pulling latest code..."
     - git fetch origin
     - git reset --hard origin/main
-    
-    # Install dependencies
+
+    # Install dependencies (temporarily unset NODE_ENV to install devDependencies)
     - echo "📦 Installing dependencies..."
+    - export NODE_ENV=development
     - npm ci --prefer-offline --no-audit
-    
+    - export NODE_ENV=production
+
     # Generate Prisma Client
     - echo "🗄️ Generating Prisma Client..."
     - npx prisma generate
-    
+
     # Push database schema (if changes exist)
     - echo "📊 Updating database schema..."
-    - npx prisma db push --skip-generate --accept-data-loss || echo "Schema already up to date"
-    
+    - npx prisma db push --skip-generate --accept-data-loss || echo "Schema
+      already up to date"
+
     # Build Next.js application
     - echo "🔨 Building application..."
     - npm run build
-    
+
     # Restart PM2
     - echo "🔄 Restarting application..."
-    - pm2 restart skincarenepal --update-env || pm2 start npm --name "skincarenepal" -- start
+    - pm2 restart skincarenepal --update-env || pm2 start npm --name
+      "skincarenepal" -- start
     - pm2 save
-    
+
     # Health check
     - echo "🏥 Performing health check..."
     - sleep 5
     - 'curl -f http://localhost:3002 || echo "Warning: Health check failed"'
-    
+
     - echo "✅ Deployment completed successfully!"
-  
+
   environment:
     name: production
     url: https://careandcleannp.com
-  
+
   # Retry deployment if it fails
   retry:
     max: 2
