@@ -3,7 +3,6 @@
 # ==============================
 
 stages:
-  - build
   - deploy
 
 variables:
@@ -14,7 +13,7 @@ variables:
 # Build and Deploy (Combined for VPS Runner)
 # -------------------------------
 build_and_deploy:
-  stage: build
+  stage: deploy
   tags:
     - vps # Uses your VPS runner
     - production
@@ -61,7 +60,7 @@ build_and_deploy:
     - sleep 5
     - 'curl -f http://localhost:3002 || echo "Warning: Health check failed"'
 
-    - echo "✅ Deployment completed successfully!"
+    - echo "✅ Deployment completed successfully! 🎉"
 
   environment:
     name: production
