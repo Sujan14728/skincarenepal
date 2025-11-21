@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 type MarqueeType = { id: number; text: string };
 
@@ -8,22 +9,50 @@ export default function MarqueeDashboard() {
   const [newText, setNewText] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const fetchMarquees = async () => {
-    const res = await fetch('/api/marquee');
-    const data = await res.json();
-    setMarquees(data.marquees || []);
+    try {
+      const res = await fetch('/api/marquee');
+      if (!res.ok) throw new Error('Failed to fetch marquees');
+      const data = await res.json();
+      setMarquees(data.marquees || []);
+    } catch (error) {
+      console.error('Fetch error:', error);
+      toast.error('Failed to load marquees');
+    }
   };
 
   const addMarquee = async () => {
-    if (!newText) return;
-    await fetch('/api/marquee', {
-      method: 'POST',
-      body: JSON.stringify({ text: newText }),
-      headers: { 'Content-Type': 'application/json' }
-    });
-    setNewText('');
-    fetchMarquees();
+    if (!newText.trim()) {
+      toast.error('Please enter marquee text');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/marquee', {
+        method: 'POST',
+        body: JSON.stringify({ text: newText.trim() }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to add marquee');
+      }
+
+      toast.success('Marquee added successfully');
+      setNewText('');
+      fetchMarquees();
+    } catch (error) {
+      console.error('Add error:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to add marquee'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const startEdit = (marquee: MarqueeType) => {
@@ -32,20 +61,61 @@ export default function MarqueeDashboard() {
   };
 
   const saveEdit = async () => {
-    if (!editingText || editingId === null) return;
-    await fetch(`/api/marquee/${editingId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ text: editingText }),
-      headers: { 'Content-Type': 'application/json' }
-    });
-    setEditingId(null);
-    setEditingText('');
-    fetchMarquees();
+    if (!editingText.trim()) {
+      toast.error('Please enter marquee text');
+      return;
+    }
+    if (editingId === null) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/marquee/${editingId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ text: editingText.trim() }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to update marquee');
+      }
+
+      toast.success('Marquee updated successfully');
+      setEditingId(null);
+      setEditingText('');
+      fetchMarquees();
+    } catch (error) {
+      console.error('Update error:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update marquee'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const deleteMarquee = async (id: number) => {
-    await fetch(`/api/marquee/${id}`, { method: 'DELETE' });
-    fetchMarquees();
+    if (!confirm('Are you sure you want to delete this marquee?')) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/marquee/${id}`, { method: 'DELETE' });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to delete marquee');
+      }
+
+      toast.success('Marquee deleted successfully');
+      fetchMarquees();
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete marquee'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -63,12 +133,15 @@ export default function MarqueeDashboard() {
           className='flex-1 rounded border p-2'
           value={newText}
           onChange={e => setNewText(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && addMarquee()}
+          disabled={loading}
         />
         <button
-          className='rounded bg-emerald-700 px-4 text-white'
+          className='rounded bg-emerald-700 px-4 text-white disabled:opacity-50'
           onClick={addMarquee}
+          disabled={loading}
         >
-          Add
+          {loading ? 'Adding...' : 'Add'}
         </button>
       </div>
 
@@ -83,35 +156,58 @@ export default function MarqueeDashboard() {
                 <input
                   value={editingText}
                   onChange={e => setEditingText(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && saveEdit()}
                   className='flex-1 rounded border p-1'
+                  disabled={loading}
                 />
                 <button
-                  className='rounded bg-blue-600 px-3 py-1 text-white'
+                  className='rounded bg-blue-600 px-3 py-1 text-white disabled:opacity-50'
                   onClick={saveEdit}
+                  disabled={loading}
                 >
-                  Save
+                  {loading ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  className='rounded bg-gray-500 px-3 py-1 text-white'
+                  onClick={() => {
+                    setEditingId(null);
+                    setEditingText('');
+                  }}
+                  disabled={loading}
+                >
+                  Cancel
                 </button>
               </div>
             ) : (
               <span>{m.text}</span>
             )}
-            <div className='flex gap-2'>
-              <button
-                className='rounded bg-yellow-500 px-3 py-1 text-white'
-                onClick={() => startEdit(m)}
-              >
-                Edit
-              </button>
-              <button
-                className='rounded bg-red-600 px-3 py-1 text-white'
-                onClick={() => deleteMarquee(m.id)}
-              >
-                Delete
-              </button>
-            </div>
+            {editingId !== m.id && (
+              <div className='flex gap-2'>
+                <button
+                  className='rounded bg-yellow-500 px-3 py-1 text-white disabled:opacity-50'
+                  onClick={() => startEdit(m)}
+                  disabled={loading}
+                >
+                  Edit
+                </button>
+                <button
+                  className='rounded bg-red-600 px-3 py-1 text-white disabled:opacity-50'
+                  onClick={() => deleteMarquee(m.id)}
+                  disabled={loading}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
           </li>
         ))}
       </ul>
+
+      {marquees.length === 0 && (
+        <p className='mt-4 text-center text-gray-500'>
+          No marquees yet. Add one above!
+        </p>
+      )}
     </div>
   );
 }
