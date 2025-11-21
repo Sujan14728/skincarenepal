@@ -22,9 +22,6 @@ build_and_deploy:
   script:
     - echo "🚀 Starting deployment on VPS..."
 
-    # Fix permissions if needed
-    - sudo chown -R gitlab-runner:gitlab-runner $APP_DIR || true
-
     # Navigate to app directory
     - cd $APP_DIR
 
@@ -50,7 +47,7 @@ build_and_deploy:
 
     # Clean previous build artifacts
     - echo "🧹 Cleaning previous build..."
-    - rm -rf .next
+    - rm -rf .next || sudo rm -rf .next
 
     # Build Next.js application
     - echo "🔨 Building application..."
