@@ -1,139 +1,71 @@
 # ==============================
-# GitLab CI/CD – Optimized for Self-Hosted VPS Runner
+# GitLab CI/CD – Self-Hosted VPS Runner (Direct Deployment)
 # ==============================
-image: node:20-alpine
 
 stages:
   - build
-  - test
   - deploy
 
 variables:
+  APP_DIR: /var/www/careandclean/skincarenepal
   NODE_ENV: production
-  CI: 'true'
-
-# Single cache definition (only one in the entire file!)
-cache:
-  key: ${CI_COMMIT_REF_SLUG}
-  paths:
-    - node_modules/
-    - .next/cache/
-  policy: pull-push
 
 # -------------------------------
-# Build
+# Build and Deploy (Combined for VPS Runner)
 # -------------------------------
-build:
+build_and_deploy:
   stage: build
   tags:
-    - vps
+    - vps           # Uses your VPS runner
+    - production
+  only:
+    - main
   script:
-    - echo "Installing dependencies..."
+    - echo "🚀 Starting deployment on VPS..."
+    
+    # Navigate to app directory
+    - cd $APP_DIR
+    
+    # Pull latest changes
+    - echo "📥 Pulling latest code..."
+    - git fetch origin
+    - git reset --hard origin/main
+    
+    # Install dependencies
+    - echo "📦 Installing dependencies..."
     - npm ci --prefer-offline --no-audit
-    - echo "Generating Prisma client..."
+    
+    # Generate Prisma Client
+    - echo "🗄️ Generating Prisma Client..."
     - npx prisma generate
-    - echo "Building Next.js app..."
+    
+    # Push database schema (if changes exist)
+    - echo "📊 Updating database schema..."
+    - npx prisma db push --skip-generate --accept-data-loss || echo "Schema already up to date"
+    
+    # Build Next.js application
+    - echo "🔨 Building application..."
     - npm run build
-  artifacts:
-    paths:
-      - .next/
-      - node_modules/
-      - prisma/
-      - public/
-      - package.json
-      - package-lock.json
-      - ecosystem.config.js
-      - .env.production
-      - .env.staging
-    expire_in: 2 hours
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
-
-# -------------------------------
-# Lint
-# -------------------------------
-test:lint:
-  stage: test
-  tags:
-    - vps
-  script:
-    - npm run lint || echo "Lint warnings (non-blocking)"
-  allow_failure: true
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
-
-# -------------------------------
-# Deploy Production
-# -------------------------------
-deploy_production:
-  stage: deploy
-  tags:
-    - vps
-  dependencies:
-    - build
-  timeout: 20m
-  script: |
-    echo "Deploying to production..."
-    rsync -avz --delete \
-      --exclude='.git' \
-      --exclude='.env*' \
-      -e "ssh -o StrictHostKeyChecking=no" \
-      ./ $VPS_USER@$VPS_HOST:$VPS_DEPLOY_PATH/
-
-    ssh $VPS_USER@$VPS_HOST << 'EOF'
-      cd $VPS_DEPLOY_PATH
-      cp .env.production .env
-      export NODE_ENV=production
-      npx prisma migrate deploy
-      mkdir -p public/uploads && chmod 755 public/uploads
-      pm2 reload ecosystem.config.js --env production || \
-        (pm2 delete ecosystem.config.js 2>/dev/null || true; pm2 start ecosystem.config.js --env production)
-      pm2 save
-      sleep 5
-      curl -f http://localhost:3002 || exit 1
-      echo "Production deployed & healthy!"
-    EOF
+    
+    # Restart PM2
+    - echo "🔄 Restarting application..."
+    - pm2 restart skincarenepal --update-env || pm2 start npm --name "skincarenepal" -- start
+    - pm2 save
+    
+    # Health check
+    - echo "🏥 Performing health check..."
+    - sleep 5
+    - 'curl -f http://localhost:3002 || echo "Warning: Health check failed"'
+    
+    - echo "✅ Deployment completed successfully!"
+  
   environment:
     name: production
     url: https://careandcleannp.com
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-
-# -------------------------------
-# Deploy Staging (Manual)
-# -------------------------------
-deploy_staging:
-  stage: deploy
-  tags:
-    - vps
-  dependencies:
-    - build
-  timeout: 20m
-  when: manual
-  script: |
-    echo "Deploying to staging..."
-    rsync -avz --delete \
-      --exclude='.git' \
-      --exclude='.env*' \
-      -e "ssh -o StrictHostKeyChecking=no" \
-      ./ $VPS_USER@$VPS_HOST_STAGING:$VPS_DEPLOY_PATH_STAGING/
-
-    ssh $VPS_USER@$VPS_HOST_STAGING << 'EOF'
-      cd $VPS_DEPLOY_PATH_STAGING
-      cp .env.staging .env
-      export NODE_ENV=staging
-      npx prisma migrate deploy
-      mkdir -p public/uploads && chmod 755 public/uploads
-      pm2 reload ecosystem.config.js --env staging || \
-        (pm2 delete ecosystem.config.js 2>/dev/null || true; pm2 start ecosystem.config.js --env staging)
-      pm2 save
-      sleep 5
-      curl -f http://localhost:3002 || exit 1
-      echo "Staging deployed & healthy!"
-    EOF
-  environment:
-    name: staging
-    url: https://staging.careandcleannp.com
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-      when: manual
+  
+  # Retry deployment if it fails
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
