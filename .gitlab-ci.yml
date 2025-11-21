@@ -22,6 +22,9 @@ build_and_deploy:
   script:
     - echo "🚀 Starting deployment on VPS..."
 
+    # Fix permissions if needed
+    - sudo chown -R gitlab-runner:gitlab-runner $APP_DIR || true
+
     # Navigate to app directory
     - cd $APP_DIR
 
