@@ -1,3 +1,4 @@
+export const revalidate = 0;
 import MarqueeFeature from './marquee';
 import { prisma } from '@/lib/prisma';
 
