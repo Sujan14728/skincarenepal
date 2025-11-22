@@ -30,11 +30,6 @@ build_and_deploy:
     - git fetch origin
     - git reset --hard origin/main
 
-    # Fix permissions and clean node_modules
-    - echo "🧹 Fixing permissions and cleaning old node_modules..."
-    - sudo chown -R gitlab-runner:gitlab-runner $APP_DIR
-    - rm -rf node_modules package-lock.json
-
     # Install dependencies (temporarily unset NODE_ENV to include devDependencies)
     - echo "📦 Installing dependencies..."
     - export NODE_ENV=development
