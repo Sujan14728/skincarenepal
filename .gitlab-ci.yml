@@ -30,6 +30,10 @@ build_and_deploy:
     - git fetch origin
     - git reset --hard origin/main
 
+    # Clean node_modules if it exists with permission issues
+    - echo "🧹 Cleaning node_modules..."
+    - rm -rf node_modules || sudo rm -rf node_modules
+
     # Install dependencies (temporarily unset NODE_ENV to include devDependencies)
     - echo "📦 Installing dependencies..."
     - export NODE_ENV=development
