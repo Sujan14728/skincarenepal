@@ -15,7 +15,7 @@ variables:
 build_and_deploy:
   stage: deploy
   tags:
-    - vps # Uses your VPS runner
+    - vps
     - production
   only:
     - main
@@ -30,7 +30,12 @@ build_and_deploy:
     - git fetch origin
     - git reset --hard origin/main
 
-    # Install dependencies (temporarily unset NODE_ENV to install devDependencies)
+    # Fix permissions and clean node_modules
+    - echo "🧹 Fixing permissions and cleaning old node_modules..."
+    - sudo chown -R gitlab-runner:gitlab-runner $APP_DIR
+    - rm -rf node_modules package-lock.json
+
+    # Install dependencies (temporarily unset NODE_ENV to include devDependencies)
     - echo "📦 Installing dependencies..."
     - export NODE_ENV=development
     - npm ci --prefer-offline --no-audit
@@ -70,7 +75,6 @@ build_and_deploy:
     name: production
     url: https://careandcleannp.com
 
-  # Retry deployment if it fails
   retry:
     max: 2
     when:
