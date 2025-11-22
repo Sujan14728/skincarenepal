@@ -19,16 +19,18 @@ export function Hero() {
           </p>
 
           <div className='flex justify-center space-x-4 pt-4 md:justify-start'>
-            <Link href='/products'>
-              <span className='hover:bg-primary/90 inline-flex items-center justify-center rounded-full border border-transparent bg-primary px-8 py-3 text-base font-medium text-primary-foreground shadow-sm transition-colors'>
-                Shop Now
-              </span>
+            <Link
+              href='/products'
+              className='hover:bg-primary/90 inline-flex items-center justify-center rounded-full border border-transparent bg-primary px-8 py-3 text-base font-medium text-primary-foreground shadow-sm transition-colors'
+            >
+              Shop Now
             </Link>
 
-            <Link href='/about'>
-              <span className='inline-flex items-center justify-center rounded-full border border-border bg-background px-8 py-3 text-base font-medium text-foreground transition-colors hover:bg-secondary'>
-                Learn About
-              </span>
+            <Link
+              href='/about'
+              className='inline-flex items-center justify-center rounded-full border border-border bg-background px-8 py-3 text-base font-medium text-foreground transition-colors hover:bg-secondary'
+            >
+              Learn About
             </Link>
           </div>
         </div>
