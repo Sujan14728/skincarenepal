@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 60; // Cache for 60 seconds
+// Removed revalidate to ensure fresh data after mutations
 
 // Utility for query timeout
 const withTimeout = <T>(promise: Promise<T>, timeoutMs: number): Promise<T> =>
@@ -48,9 +48,9 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    // Create marquee (include updatedAt since it's required)
+    // Create marquee (updatedAt auto-handled by Prisma schema)
     const newMarquee = await prisma.marquee.create({
-      data: { text: text.trim(), updatedAt: new Date() }
+      data: { text: text.trim() }
     });
     return NextResponse.json(newMarquee);
   } catch (err) {

@@ -20,7 +20,7 @@ export default function MarqueeDashboard() {
   const fetchMarquees = async () => {
     try {
       setFetching(true);
-      const res = await fetch('/api/marquee'); // Updated to plural
+      const res = await fetch('/api/marquee', { cache: 'no-store' });
       if (!res.ok) throw new Error('Failed to fetch marquees');
       const data = await res.json();
       setMarquees(data.marquees || []);
@@ -42,7 +42,6 @@ export default function MarqueeDashboard() {
     setLoading(true);
     try {
       const res = await fetch('/api/marquee', {
-        // Updated to plural
         method: 'POST',
         body: JSON.stringify({ text: trimmedText }),
         headers: { 'Content-Type': 'application/json' }
@@ -53,9 +52,11 @@ export default function MarqueeDashboard() {
         throw new Error(error.error || 'Failed to add marquee');
       }
 
+      const created = await res.json();
       toast.success('Marquee added successfully');
       setNewText('');
-      fetchMarquees();
+      // Optimistic update: prepend new marquee to list
+      setMarquees(prev => [created, ...prev].slice(0, 10));
     } catch (error) {
       console.error('Add error:', error);
       toast.error(
@@ -92,10 +93,12 @@ export default function MarqueeDashboard() {
         throw new Error(error.error || 'Failed to update marquee');
       }
 
+      const updated = await res.json();
       toast.success('Marquee updated successfully');
       setEditingId(null);
       setEditingText('');
-      fetchMarquees();
+      // Optimistic update: replace in-place
+      setMarquees(prev => prev.map(m => (m.id === updated.id ? updated : m)));
     } catch (error) {
       console.error('Update error:', error);
       toast.error(
@@ -119,7 +122,8 @@ export default function MarqueeDashboard() {
       }
 
       toast.success('Marquee deleted successfully');
-      fetchMarquees();
+      // Optimistic update: remove from list
+      setMarquees(prev => prev.filter(m => m.id !== id));
     } catch (error) {
       console.error('Delete error:', error);
       toast.error(

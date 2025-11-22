@@ -17,20 +17,40 @@ export default function MarqueeFeature({
   const [marquees, setMarquees] = useState<MarqueeType[]>(initialMarquees);
 
   useEffect(() => {
-    // Poll for updates every 30 seconds
-    const interval = setInterval(async () => {
+    let active = true;
+
+    const fetchLatest = async () => {
       try {
         const res = await fetch('/api/marquee', { cache: 'no-store' });
         const data = await res.json();
-        if (data.marquees) {
+        if (active && data.marquees) {
           setMarquees(data.marquees);
         }
       } catch (error) {
         console.error('Failed to fetch marquees:', error);
       }
-    }, 30000); // Poll every 30 seconds
+    };
 
-    return () => clearInterval(interval);
+    // Refresh shortly after mount to catch recent updates
+    const initialTimer = setTimeout(fetchLatest, 3000);
+
+    // Poll every 20 seconds
+    const interval = setInterval(fetchLatest, 20000);
+
+    // Refresh when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchLatest();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      active = false;
+      clearTimeout(initialTimer);
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   if (!marquees || marquees.length === 0) {
