@@ -14,12 +14,14 @@ build_and_deploy:
     - main
   script:
     - echo "🚀 Starting deployment on VPS..."
-    - cd $APP_DIR
 
-    # Pull latest changes
-    - echo "📥 Pulling latest code..."
-    - git fetch origin
-    - git reset --hard origin/main
+    # Fresh clone with CI_JOB_TOKEN to ensure auth works on VPS
+    - echo "📥 Fetching latest code (fresh clone)..."
+    - rm -rf $APP_DIR
+    - git clone
+      https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/bhuwan070-group/careandcleannepal.git
+      $APP_DIR
+    - cd $APP_DIR
 
     # Clean node_modules
     - echo "🧹 Cleaning node_modules..."
