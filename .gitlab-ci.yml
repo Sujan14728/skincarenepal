@@ -1,7 +1,3 @@
-# ==============================
-# GitLab CI/CD – Self-Hosted VPS Runner (Direct Deployment)
-# ==============================
-
 stages:
   - deploy
 
@@ -9,9 +5,6 @@ variables:
   APP_DIR: /var/www/careandclean/skincarenepal
   NODE_ENV: production
 
-# -------------------------------
-# Build and Deploy (Combined for VPS Runner)
-# -------------------------------
 build_and_deploy:
   stage: deploy
   tags:
@@ -21,8 +14,6 @@ build_and_deploy:
     - main
   script:
     - echo "🚀 Starting deployment on VPS..."
-
-    # Navigate to app directory
     - cd $APP_DIR
 
     # Pull latest changes
@@ -30,31 +21,26 @@ build_and_deploy:
     - git fetch origin
     - git reset --hard origin/main
 
-    # Clean node_modules if it exists with permission issues
+    # Clean node_modules
     - echo "🧹 Cleaning node_modules..."
-    - rm -rf node_modules || sudo rm -rf node_modules
+    - rm -rf node_modules
 
-    # Install dependencies (temporarily unset NODE_ENV to include devDependencies)
+    # Install dependencies (including dev)
     - echo "📦 Installing dependencies..."
     - export NODE_ENV=development
     - npm ci --prefer-offline --no-audit
     - export NODE_ENV=production
 
-    # Generate Prisma Client
+    # Prisma
     - echo "🗄️ Generating Prisma Client..."
     - npx prisma generate
-
-    # Push database schema (if changes exist)
     - echo "📊 Updating database schema..."
     - npx prisma db push --skip-generate --accept-data-loss || echo "Schema
       already up to date"
 
-    # Clean previous build artifacts
-    - echo "🧹 Cleaning previous build..."
-    - rm -rf .next || sudo rm -rf .next
-
-    # Build Next.js application
+    # Build
     - echo "🔨 Building application..."
+    - rm -rf .next
     - npm run build
 
     # Restart PM2
@@ -66,7 +52,7 @@ build_and_deploy:
     # Health check
     - echo "🏥 Performing health check..."
     - sleep 5
-    - 'curl -f http://localhost:3002 || echo "Warning: Health check failed"'
+    - 'curl -f http://localhost:3000 || echo "Warning: Health check failed"'
 
     - echo "✅ Deployment completed successfully! 🎉"
 
@@ -76,218 +62,6 @@ build_and_deploy:
 
   retry:
     max: 2
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
