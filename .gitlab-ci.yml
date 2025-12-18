@@ -27,7 +27,7 @@ build_and_deploy:
     - echo "🧹 Cleaning node_modules..."
     - rm -rf node_modules
 
-    # Install dependencies (including dev)
+    # Install dependencies
     - echo "📦 Installing dependencies..."
     - export NODE_ENV=development
     - npm ci --prefer-offline --no-audit
