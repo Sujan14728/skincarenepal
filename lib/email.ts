@@ -1,7 +1,5 @@
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
 import { OrderStatus } from '@prisma/client';
-dotenv.config();
 
 export const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,

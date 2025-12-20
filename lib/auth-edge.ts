@@ -1,6 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest } from 'next/server';
 
-const JWT_SECRET = process.env.JWT_SECRET || "skincarenepal12345";
+const JWT_SECRET = process.env.JWT_SECRET || 'skincarenepal12345';
 
 export interface JWTPayload {
   id: number;
@@ -17,8 +17,11 @@ export interface JWTPayload {
 
 // Base64 URL decode
 function base64UrlDecode(str: string): string {
-  str += "=".repeat(4 - (str.length % 4));
-  return atob(str.replace(/-/g, "+").replace(/_/g, "/"));
+  const pad = str.length % 4;
+  if (pad) {
+    str += '='.repeat(4 - pad);
+  }
+  return atob(str.replace(/-/g, '+').replace(/_/g, '/'));
 }
 
 // Verify JWT token using Web Crypto API (Edge Runtime compatible)
@@ -26,7 +29,7 @@ export async function verifyTokenEdge(
   token: string
 ): Promise<JWTPayload | null> {
   try {
-    const parts = token.split(".");
+    const parts = token.split('.');
     if (parts.length !== 3) {
       return null;
     }
@@ -48,20 +51,20 @@ export async function verifyTokenEdge(
 
     // Import key for HMAC
     const key = await crypto.subtle.importKey(
-      "raw",
+      'raw',
       secretKey,
-      { name: "HMAC", hash: "SHA-256" },
+      { name: 'HMAC', hash: 'SHA-256' },
       false,
-      ["verify"]
+      ['verify']
     );
 
     // Decode signature
-    const signature = Uint8Array.from(base64UrlDecode(signatureB64), (c) =>
+    const signature = Uint8Array.from(base64UrlDecode(signatureB64), c =>
       c.charCodeAt(0)
     );
 
     // Verify signature
-    const isValid = await crypto.subtle.verify("HMAC", key, signature, data);
+    const isValid = await crypto.subtle.verify('HMAC', key, signature, data);
 
     if (!isValid) {
       return null;
@@ -69,7 +72,7 @@ export async function verifyTokenEdge(
 
     return payload;
   } catch (error) {
-    console.error("JWT verification failed (Edge):", error);
+    console.error('JWT verification failed (Edge):', error);
     return null;
   }
 }
@@ -78,7 +81,7 @@ export async function verifyTokenEdge(
 export async function getUserFromRequestEdge(
   request: NextRequest
 ): Promise<JWTPayload | null> {
-  const token = request.cookies.get("token")?.value;
+  const token = request.cookies.get('token')?.value;
 
   if (!token) {
     return null;
@@ -92,6 +95,6 @@ export function hasRequiredRole(
   allowedRoles: string[]
 ): boolean {
   return (
-    user !== null && allowedRoles.includes(user.isAdmin ? "admin" : "guest")
+    user !== null && allowedRoles.includes(user.isAdmin ? 'admin' : 'guest')
   );
 }
