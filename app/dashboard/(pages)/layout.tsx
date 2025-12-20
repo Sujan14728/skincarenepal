@@ -2,7 +2,7 @@
 
 import { ReactNode, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Home,
   Package,
@@ -23,6 +23,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
 
 function SidebarLink({
   href,
@@ -52,6 +53,18 @@ function SidebarLink({
 }
 
 function SidebarContent() {
+  const navigate = useRouter();
+
+  const handleLogout = async () => {
+    toast.promise(fetch('/api/admin/logout', { method: 'POST' }), {
+      success: () => {
+        navigate.push('/dashboard/login');
+        return 'Logged out successfully';
+      },
+      loading: 'Logging out...',
+      error: 'Error logging out'
+    });
+  };
   return (
     <div className='flex h-full flex-col justify-between'>
       <div>
@@ -86,17 +99,16 @@ function SidebarContent() {
       </div>
 
       <Separator className='my-4' />
-      <form action='/api/admin/logout' method='POST'>
-        <Button
-          type='submit'
-          variant='outline'
-          size='sm'
-          className='flex w-full items-center justify-center gap-1'
-        >
-          <LogOut size={16} />
-          Logout
-        </Button>
-      </form>
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
+        onClick={handleLogout}
+        className='flex w-full items-center justify-center gap-1'
+      >
+        <LogOut size={16} />
+        Logout
+      </Button>
     </div>
   );
 }

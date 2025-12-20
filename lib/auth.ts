@@ -44,7 +44,7 @@ export const attachTokenToResponse = (
 };
 
 export const clearTokenFromResponse = (
-  token: string,
+  _token: string,
   response: NextResponse
 ) => {
   response.cookies.set("token", "", {
