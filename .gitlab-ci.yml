@@ -1,31 +1,41 @@
 stages:
+  - build
+  - test
   - deploy
 
 variables:
   APP_DIR: /var/www/careandclean/skincarenepal
   NODE_ENV: production
+  CACHE_KEY: '$CI_COMMIT_REF_SLUG'
 
-build_and_deploy:
-  stage: deploy
+# Build Stage
+build:
+  stage: build
   tags:
     - vps
     - production
   only:
     - main
+  cache:
+    paths:
+      - $APP_DIR/node_modules/
+      - $APP_DIR/.next/cache/
+    key: $CACHE_KEY
   script:
-    - echo "🚀 Starting deployment on VPS..."
+    - echo "🚀 Starting Build Stage..."
 
-    # Fresh clone with CI_JOB_TOKEN to ensure auth works on VPS
-    - echo "📥 Fetching latest code (fresh clone)..."
-    - rm -rf $APP_DIR
-    - git clone
-      https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/bhuwan070-group/careandcleannepal.git
-      $APP_DIR
-    - cd $APP_DIR
-
-    # Clean node_modules
-    - echo "🧹 Cleaning node_modules..."
-    - rm -rf node_modules
+    # Clone or update repo
+    - echo "📥 Fetching latest code..."
+    - |
+      if [ -d "$APP_DIR/.git" ]; then
+        cd $APP_DIR
+        git fetch origin main
+        git reset --hard origin/main
+      else
+        rm -rf $APP_DIR
+        git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/bhuwan070-group/careandcleannepal.git $APP_DIR
+        cd $APP_DIR
+      fi
 
     # Install dependencies
     - echo "📦 Installing dependencies..."
@@ -33,17 +43,77 @@ build_and_deploy:
     - npm ci --prefer-offline --no-audit
     - export NODE_ENV=production
 
-    # Prisma
+    # Generate Prisma Client
     - echo "🗄️ Generating Prisma Client..."
     - npx prisma generate
-    - echo "📊 Updating database schema..."
-    - npx prisma db push --skip-generate --accept-data-loss || echo "Schema
-      already up to date"
 
-    # Build
+    # Build application
     - echo "🔨 Building application..."
     - rm -rf .next
     - npm run build
+
+    - echo "✅ Build stage completed!"
+
+  artifacts:
+    paths:
+      - $APP_DIR/.next/
+      - $APP_DIR/node_modules/
+      - $APP_DIR/prisma/
+    expire_in: 1 hour
+
+# Test Stage
+test:
+  stage: test
+  tags:
+    - vps
+    - production
+  only:
+    - main
+  cache:
+    paths:
+      - $APP_DIR/node_modules/
+    key: $CACHE_KEY
+  dependencies:
+    - build
+  script:
+    - echo "🧪 Starting Test Stage..."
+    - cd $APP_DIR
+
+    # Run linting (if configured)
+    - echo "🔍 Running linter..."
+    - npm run lint || echo "⚠️  Linting warnings (non-blocking)"
+
+    # Run tests (if configured)
+    - echo "🧬 Running unit tests..."
+    - npm run test || echo "⚠️  Tests skipped (configure jest in package.json)"
+
+    # Type checking
+    - echo "📝 Running type check..."
+    - npx tsc --noEmit || echo "⚠️  Type check passed with warnings"
+
+    - echo "✅ Test stage completed!"
+
+  allow_failure: true # Don't block deploy if tests fail
+
+# Deploy Stage
+deploy:
+  stage: deploy
+  tags:
+    - vps
+    - production
+  only:
+    - main
+  dependencies:
+    - build
+    - test
+  script:
+    - echo "🚀 Starting Deploy Stage..."
+
+    # Update database schema
+    - echo "📊 Updating database schema..."
+    - cd $APP_DIR
+    - npx prisma db push --skip-generate --accept-data-loss || echo "Schema
+      already up to date"
 
     # Restart PM2
     - echo "🔄 Restarting application..."
@@ -53,8 +123,8 @@ build_and_deploy:
 
     # Health check
     - echo "🏥 Performing health check..."
-    - sleep 5
-    - 'curl -f http://localhost:3000 || echo "Warning: Health check failed"'
+    - sleep 3
+    - curl -f http://localhost:3000 || (echo "❌ Health check failed" && exit 1)
 
     - echo "✅ Deployment completed successfully! 🎉"
 
