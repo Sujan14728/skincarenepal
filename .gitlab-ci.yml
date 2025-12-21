@@ -24,7 +24,7 @@ build:
   script:
     - echo "🚀 Starting Build Stage..."
 
-    # Clone or update repo
+    # Clone or update repo (avoid rm -rf)
     - echo "📥 Fetching latest code..."
     - |
       if [ -d "$APP_DIR/.git" ]; then
@@ -32,7 +32,6 @@ build:
         git fetch origin main
         git reset --hard origin/main
       else
-        rm -rf $APP_DIR
         git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/bhuwan070-group/careandcleannepal.git $APP_DIR
         cd $APP_DIR
       fi
@@ -108,15 +107,14 @@ deploy:
     - test
   script:
     - echo "🚀 Starting Deploy Stage..."
-
-    # Update database schema
-    - echo "📊 Updating database schema..."
     - cd $APP_DIR
 
     # Restore environment file
     - echo "📄 Restoring .env..."
     - cp /var/www/careandclean/env/.env $APP_DIR/.env
 
+    # Update database schema
+    - echo "📊 Updating database schema..."
     - npx prisma db push --skip-generate --accept-data-loss || echo "Schema
       already up to date"
 
