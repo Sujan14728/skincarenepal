@@ -112,6 +112,11 @@ deploy:
     # Update database schema
     - echo "📊 Updating database schema..."
     - cd $APP_DIR
+
+    # Restore environment file
+    - echo "📄 Restoring .env..."
+    - cp /var/www/careandclean/env/.env $APP_DIR/.env
+
     - npx prisma db push --skip-generate --accept-data-loss || echo "Schema
       already up to date"
 
