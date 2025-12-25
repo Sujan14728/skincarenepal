@@ -55,7 +55,10 @@ build:
 
     # Build application
     - echo "🔨 Building application..."
-    - sudo rm -rf .next || echo "Cleaning .next directory..."
+    - |
+      if [ -d "$APP_DIR/.next" ]; then
+        sudo chown -R gitlab-runner:gitlab-runner $APP_DIR/.next 2>/dev/null || echo "Fixing .next permissions..."
+      fi
     - npm run build
 
     - echo "✅ Build stage completed!"
