@@ -24,6 +24,11 @@ build:
   script:
     - echo "🚀 Starting Build Stage..."
 
+    # Add GitLab host key to known_hosts
+    - mkdir -p ~/.ssh
+    - ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts 2>/dev/null || true
+    - chmod 644 ~/.ssh/known_hosts
+
     # Clone or update repo (avoid rm -rf)
     - echo "📥 Fetching latest code..."
     - |
