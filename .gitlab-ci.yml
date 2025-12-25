@@ -55,7 +55,7 @@ build:
 
     # Build application
     - echo "🔨 Building application..."
-    - rm -rf .next
+    - sudo rm -rf .next || echo "Cleaning .next directory..."
     - npm run build
 
     - echo "✅ Build stage completed!"
