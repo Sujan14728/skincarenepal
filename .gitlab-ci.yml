@@ -29,6 +29,8 @@ build:
     - |
       if [ -d "$APP_DIR/.git" ]; then
         cd $APP_DIR
+        # Update remote URL from HTTPS to SSH if needed
+        git remote set-url origin git@gitlab.com:bhuwan070-group/careandcleannepal.git
         git fetch origin main
         git reset --hard origin/main
       else
