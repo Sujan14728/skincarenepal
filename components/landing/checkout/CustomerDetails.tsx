@@ -144,12 +144,20 @@ export default function CustomerDetails({
 
         {paymentMethod === 'ONLINE' && (
           <div className='flex flex-col gap-2'>
-            <FormLabel>Payment slip (optional)</FormLabel>
+            <FormLabel>
+              Payment slip <span className='text-red-500'>*</span>
+            </FormLabel>
             <input
               type='file'
               accept='image/*,application/pdf'
               onChange={e => setPaymentImage(e.target.files?.[0] ?? null)}
+              required
             />
+            {!paymentImage && (
+              <p className='text-sm text-red-500'>
+                Payment slip is required for online payment
+              </p>
+            )}
             {paymentImage && (
               <div className='mt-2'>
                 {paymentImage.type.startsWith('image/') ? (

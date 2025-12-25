@@ -41,6 +41,14 @@ export default function CheckoutClient() {
       customerForm.setPlacing(false);
       return;
     }
+
+    // Check if payment slip is required for ONLINE payment
+    const paymentMethod = customerForm.form.getValues('paymentMethod');
+    if (paymentMethod === 'ONLINE' && !customerForm.paymentImage) {
+      toast.error('Payment slip is required for online payment.');
+      return;
+    }
+
     if (!(await customerForm.isFormValid())) return;
 
     try {

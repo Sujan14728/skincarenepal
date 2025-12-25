@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CustomerFormSchema, type CustomerFormValues} from '@/lib/types/checkout';
+import {
+  CustomerFormSchema,
+  type CustomerFormValues
+} from '@/lib/types/checkout';
 import { ICartItem } from '@/lib/types/cart';
 
 export function useCustomerForm(cartItems: ICartItem[]) {
@@ -24,6 +27,13 @@ export function useCustomerForm(cartItems: ICartItem[]) {
     const valid = await form.trigger();
     if (!valid) return false;
     if (!cartItems || cartItems.length === 0) return false;
+
+    // Check if payment slip is required for ONLINE payment
+    const paymentMethod = form.getValues('paymentMethod');
+    if (paymentMethod === 'ONLINE' && !paymentImage) {
+      return false;
+    }
+
     return true;
   }
 

@@ -8,6 +8,7 @@ import {
   LuPhone
 } from 'react-icons/lu';
 import { FaWhatsapp } from 'react-icons/fa';
+import { SiTiktok } from 'react-icons/si';
 
 const quickLinks = [
   { href: '/', label: 'Home' },
@@ -66,6 +67,14 @@ const Footer = () => {
                 aria-label='Instagram'
               >
                 <LuInstagram className='h-5 w-5 text-primary-foreground' />
+              </a>
+              <a
+                href='https://www.tiktok.com/@careandcleannepal'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='hover:bg-primary/90 rounded-full bg-primary p-2 transition-colors'
+              >
+                <SiTiktok className='h-5 w-5 text-primary-foreground' />
               </a>
             </div>
           </div>
@@ -139,6 +148,17 @@ const Footer = () => {
                   className='text-sm text-muted-foreground transition-colors hover:text-primary'
                 >
                   info@careandcleannp.com
+                </a>
+              </li>
+              <li className='flex items-start space-x-2'>
+                <SiTiktok className='mt-0.5 h-5 w-5 flex-shrink-0 text-primary' />
+                <a
+                  href='https://www.tiktok.com/@careandcleannepal'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-sm text-muted-foreground transition-colors hover:text-primary'
+                >
+                  @careandcleannepal
                 </a>
               </li>
             </ul>
