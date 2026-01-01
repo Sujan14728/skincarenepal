@@ -60,7 +60,6 @@ build:
         sudo chown -R gitlab-runner:gitlab-runner $APP_DIR/.next 2>/dev/null || echo "Fixing .next permissions..."
       fi
     - npm run build
-
     - echo "✅ Build stage completed!"
 
   artifacts:
