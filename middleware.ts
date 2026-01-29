@@ -50,10 +50,14 @@ export async function middleware(req: NextRequest) {
     // Verify token
     try {
       if (!hasRequiredRole(user, ['admin'])) {
-        return NextResponse.redirect(new URL('/dashboard/login', req.url));
+        return NextResponse.redirect(
+          new URL('/dashboard/login', req.nextUrl.origin)
+        );
       }
     } catch {
-      return NextResponse.redirect(new URL('/dashboard/login', req.url));
+      return NextResponse.redirect(
+        new URL('/dashboard/login', req.nextUrl.origin)
+      );
     }
   }
 
