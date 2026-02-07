@@ -127,10 +127,10 @@ deploy:
     - npx prisma db push --skip-generate --accept-data-loss || echo "Schema
       already up to date"
 
-    # Restart PM2
+    # Restart PM2 (idempotent)
     - echo "🔄 Restarting application..."
-    - pm2 restart skincarenepal --update-env || pm2 start npm --name
-      "skincarenepal" -- start
+    - pm2 delete skincarenepal || true
+    - pm2 start npm --name "skincarenepal" -- start
     - pm2 save
 
     # Health check
