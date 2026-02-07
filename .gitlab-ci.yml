@@ -1,151 +1,56 @@
 stages:
   - build
-  - test
   - deploy
 
 variables:
+  APP_NAME: skincarenepal
   APP_DIR: /var/www/careandclean/skincarenepal
   NODE_ENV: production
-  CACHE_KEY: '$CI_COMMIT_REF_SLUG'
 
-# Build Stage
 build:
   stage: build
-  tags:
-    - vps
-    - production
-  only:
-    - main
-  cache:
-    paths:
-      - $APP_DIR/node_modules/
-      - $APP_DIR/.next/cache/
-    key: $CACHE_KEY
+  tags: [vps, production]
+  only: [main]
   script:
-    - echo "🚀 Starting Build Stage..."
-
-    # Add GitLab host key to known_hosts
-    - mkdir -p ~/.ssh
-    - ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts 2>/dev/null || true
-    - chmod 644 ~/.ssh/known_hosts
-
-    # Clone or update repo (avoid rm -rf)
-    - echo "📥 Fetching latest code..."
-    - |
-      if [ -d "$APP_DIR/.git" ]; then
-        cd $APP_DIR
-        # Update remote URL from HTTPS to SSH if needed
-        git remote set-url origin git@gitlab.com:bhuwan070-group/careandcleannepal.git
-        git fetch origin main
-        git reset --hard origin/main
-      else
-        git clone git@gitlab.com:bhuwan070-group/careandcleannepal.git $APP_DIR
-        cd $APP_DIR
-      fi
-
-    # Install dependencies
-    - echo "📦 Installing dependencies..."
-    - export NODE_ENV=development
-    - npm ci --prefer-offline --no-audit
-    - export NODE_ENV=production
-
-    # Generate Prisma Client
-    - echo "🗄️ Generating Prisma Client..."
-    - npx prisma generate
-
-    # Build application
     - echo "🔨 Building application..."
-    - |
-      if [ -d "$APP_DIR/.next" ]; then
-        sudo chown -R gitlab-runner:gitlab-runner $APP_DIR/.next 2>/dev/null || echo "Fixing .next permissions..."
-      fi
+    - npm ci
+    - npx prisma generate
     - npm run build
-    - echo "✅ Build stage completed!"
-
   artifacts:
     paths:
-      - $APP_DIR/.next/
-      - $APP_DIR/node_modules/
-      - $APP_DIR/prisma/
-    expire_in: 1 hour
+      - .next
+      - node_modules
+      - prisma
+    expire_in: 30 min
 
-# Test Stage
-test:
-  stage: test
-  tags:
-    - vps
-    - production
-  only:
-    - main
-  cache:
-    paths:
-      - $APP_DIR/node_modules/
-    key: $CACHE_KEY
-  dependencies:
-    - build
-  script:
-    - echo "🧪 Starting Test Stage..."
-    - cd $APP_DIR
-
-    # Run linting (if configured)
-    - echo "🔍 Running linter..."
-    - npm run lint || echo "⚠️  Linting warnings (non-blocking)"
-
-    # Run tests (if configured)
-    - echo "🧬 Running unit tests..."
-    - npm run test || echo "⚠️  Tests skipped (configure jest in package.json)"
-
-    # Type checking
-    - echo "📝 Running type check..."
-    - npx tsc --noEmit || echo "⚠️  Type check passed with warnings"
-
-    - echo "✅ Test stage completed!"
-
-  allow_failure: true # Don't block deploy if tests fail
-
-# Deploy Stage
 deploy:
   stage: deploy
-  tags:
-    - vps
-    - production
-  only:
-    - main
-  dependencies:
-    - build
-    - test
+  tags: [vps, production]
+  only: [main]
   script:
-    - echo "🚀 Starting Deploy Stage..."
-    - cd $APP_DIR
+    - echo "🚀 Deploying application..."
 
-    # Restore environment file
-    - echo "📄 Restoring .env..."
+    # Sync build to live directory
+    - rsync -a --delete .next node_modules prisma $APP_DIR/
+
+    # Restore env
     - cp /var/www/careandclean/env/.env $APP_DIR/.env
 
-    # Update database schema
-    - echo "📊 Updating database schema..."
-    - npx prisma db push --skip-generate --accept-data-loss || echo "Schema
-      already up to date"
+    # DB update
+    - cd $APP_DIR
+    - npx prisma db push --skip-generate
 
-    # Restart PM2
-    - echo "🔄 Restarting application..."
-    - pm2 restart skincarenepal --update-env || pm2 start npm --name
-      "skincarenepal" -- start
+    # Hard reset PM2
+    - pm2 stop $APP_NAME || true
+    - pm2 delete $APP_NAME || true
+    - fuser -k 3000/tcp || true
+    - pm2 start npm --name $APP_NAME -- start
     - pm2 save
 
     # Health check
-    - echo "🏥 Performing health check..."
-    - sleep 3
-    - curl -f http://localhost:3000 || (echo "❌ Health check failed" && exit 1)
+    - sleep 5
+    - curl -f http://localhost:3000
 
-    - echo "✅ Deployment completed successfully! 🎉"
-
-  environment:
-    name: production
-    url: https://careandcleannp.com
-
-  retry:
-    max: 2
-    when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+environment:
+  name: production
+  url: https://careandcleannp.com
