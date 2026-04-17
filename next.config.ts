@@ -44,6 +44,41 @@ const nextConfig: NextConfig = {
         headers: [{ key: 'Cache-Control', value: 'public, max-age=86400' }]
       }
     ];
+  },
+  async rewrites() {
+    return [
+      { source: '/', destination: '/landing' },
+      { source: '/about', destination: '/landing/about' },
+      { source: '/cart', destination: '/landing/cart' },
+      { source: '/checkout', destination: '/landing/checkout' },
+      { source: '/contact', destination: '/landing/contact' },
+      { source: '/faqs', destination: '/landing/faqs' },
+      { source: '/order-confirmed', destination: '/landing/order-confirmed' },
+      {
+        source: '/order/confirmation',
+        destination: '/landing/order/confirmation'
+      },
+      { source: '/privacy', destination: '/landing/privacy' },
+      { source: '/products', destination: '/landing/products' },
+      { source: '/products/:slug', destination: '/landing/products/:slug' },
+      { source: '/returns', destination: '/landing/returns' },
+      { source: '/shipping', destination: '/landing/shipping' },
+      { source: '/terms', destination: '/landing/terms' }
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: '/landing',
+        destination: '/',
+        permanent: true
+      },
+      {
+        source: '/landing/:path*',
+        destination: '/:path*',
+        permanent: true
+      }
+    ];
   }
 };
 
