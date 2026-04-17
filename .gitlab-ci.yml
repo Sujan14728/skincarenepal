@@ -55,10 +55,7 @@ build:
 
     # Build application
     - echo "🔨 Building application..."
-    - |
-      if [ -d "$APP_DIR/.next" ]; then
-        sudo chown -R gitlab-runner:gitlab-runner $APP_DIR/.next 2>/dev/null || echo "Fixing .next permissions..."
-      fi
+    - rm -rf $APP_DIR/.next
     - npm run build
     - echo "✅ Build stage completed!"
 
@@ -117,6 +114,8 @@ deploy:
   script:
     - echo "🚀 Starting Deploy Stage..."
     - cd $APP_DIR
+    - echo "🧾 Deploying commit $CI_COMMIT_SHA"
+    - git rev-parse HEAD
 
     # Restore environment file
     - echo "📄 Restoring .env..."
@@ -137,6 +136,13 @@ deploy:
     - echo "🏥 Performing health check..."
     - sleep 3
     - curl -f http://localhost:3000 || (echo "❌ Health check failed" && exit 1)
+
+    # Guardrail: fail deploy if old route-group chunk path is still served
+    - |
+      if curl -s http://localhost:3000 | grep -q "app/(landing)/"; then
+        echo "❌ Stale chunk map detected: app/(landing) still in HTML output"
+        exit 1
+      fi
 
     - echo "✅ Deployment completed successfully! 🎉"
 
