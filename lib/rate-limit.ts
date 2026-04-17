@@ -9,7 +9,7 @@ type LimitResult = {
 };
 
 type RateLimiterLike = {
-  limit: (identifier: string) => Promise<LimitResult>;
+  limit: (_identifier: string) => Promise<LimitResult>;
 };
 
 const hasUpstashEnv =
