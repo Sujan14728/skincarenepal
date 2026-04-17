@@ -38,6 +38,8 @@ build:
         git remote set-url origin git@gitlab.com:bhuwan070-group/careandcleannepal.git
         git fetch origin main
         git reset --hard origin/main
+        # Remove stale untracked route-group folder left from previous releases.
+        rm -rf "$APP_DIR/app/(landing)"
       else
         git clone git@gitlab.com:bhuwan070-group/careandcleannepal.git $APP_DIR
         cd $APP_DIR
@@ -116,6 +118,11 @@ deploy:
     - cd $APP_DIR
     - echo "🧾 Deploying commit $CI_COMMIT_SHA"
     - git rev-parse HEAD
+    - |
+      if [ -d "$APP_DIR/app/(landing)" ]; then
+        echo "❌ Stale source folder exists: $APP_DIR/app/(landing)"
+        exit 1
+      fi
 
     # Restore environment file
     - echo "📄 Restoring .env..."
