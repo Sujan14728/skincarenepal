@@ -39,7 +39,7 @@ const UPSTASH_RETRY_COOLDOWN_MS = 60_000;
 let upstashDisabledUntil = 0;
 
 export const globalRatelimit: RateLimiterLike = {
-  async limit(identifier: string): Promise<LimitResult> {
+  async limit(_identifier: string): Promise<LimitResult> {
     if (!remoteRatelimiter) return fallbackLimit();
 
     if (Date.now() < upstashDisabledUntil) {
@@ -47,7 +47,7 @@ export const globalRatelimit: RateLimiterLike = {
     }
 
     try {
-      return await remoteRatelimiter.limit(identifier);
+      return await remoteRatelimiter.limit(_identifier);
     } catch {
       // Temporary circuit breaker avoids repeated slow failures.
       upstashDisabledUntil = Date.now() + UPSTASH_RETRY_COOLDOWN_MS;
