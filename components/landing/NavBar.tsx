@@ -28,20 +28,21 @@ export function NavBar() {
     <nav className='flex h-20 items-center justify-between border-b border-border bg-background px-4 text-muted-foreground'>
       <Link href='/' className='flex items-center space-x-2 text-primary'>
         <Image
-          height={45}
-          width={75}
+          height={30}
+          width={200}
           alt='Care And Clean Nepal'
           src='/images/logo1.png'
           unoptimized
         />
-        <span className='flex flex-col items-center border-muted-foreground'>
+
+        {/* <span className='flex flex-col items-center border-muted-foreground'>
           <span className='whitespace-nowrap text-2xl font-extrabold tracking-wider md:text-2xl lg:text-2xl'>
             Care And Clean
           </span>
           <span className='text-[0.6rem] font-medium tracking-tight text-gray-500 md:text-[0.7rem]'>
             Care from Nature, Clean by Choice.
           </span>
-        </span>
+        </span> */}
       </Link>
 
       <div className='hidden items-center space-x-6 md:flex'>

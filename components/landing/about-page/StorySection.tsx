@@ -30,10 +30,10 @@ export default function StorySection() {
 
       <div className='flex flex-1 justify-center'>
         <Image
-          src='/images/about/story.jpg'
+          src='/images/about/story.png'
           alt='Care And Clean Nepal Story'
-          width={390}
-          height={370}
+          width={450}
+          height={450}
           className='h-90 w-100 rounded-2xl object-cover'
         />
       </div>

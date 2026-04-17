@@ -168,6 +168,18 @@ const Footer = () => {
         <div className='pt-8 text-center text-sm text-muted-foreground'>
           &copy; {currentYear} **Care and Clean Nepal**. All rights reserved.
         </div>
+
+        <div className='mt-4 text-center text-sm text-muted-foreground'>
+          Site By:{' '}
+          <Link
+            href='https://convolutionlab.com'
+            target='_blank'
+            rel='noopener noreferrer'
+            className='text-sm text-muted-foreground transition-colors hover:text-primary'
+          >
+            Convolution Lab
+          </Link>
+        </div>
       </div>
     </footer>
   );
