@@ -116,6 +116,12 @@ deploy:
   script:
     - echo "🚀 Starting Deploy Stage..."
     - cd $APP_DIR
+    - echo "📥 Syncing deploy directory to current main..."
+    - git remote set-url origin git@gitlab.com:bhuwan070-group/careandcleannepal.git
+    - git fetch origin main
+    - git reset --hard origin/main
+    - git clean -fd
+    - rm -rf "$APP_DIR/.next" "$APP_DIR/app/(landing)"
     - echo "🧾 Deploying commit $CI_COMMIT_SHA"
     - git rev-parse HEAD
     - |
@@ -127,6 +133,14 @@ deploy:
     # Restore environment file
     - echo "📄 Restoring .env..."
     - cp /var/www/careandclean/env/.env $APP_DIR/.env
+
+    # Rebuild on deploy host to avoid stale chunks when deploy runs standalone.
+    - echo "📦 Installing dependencies for deploy..."
+    - export NODE_ENV=development
+    - npm ci --prefer-offline --no-audit
+    - export NODE_ENV=production
+    - echo "🔨 Building application for deploy..."
+    - npm run build
 
     # Update database schema
     - echo "📊 Updating database schema..."
