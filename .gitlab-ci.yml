@@ -57,7 +57,12 @@ build:
 
     # Build application
     - echo "🔨 Building application..."
-    - rm -rf $APP_DIR/.next
+    - |
+      if command -v sudo >/dev/null 2>&1; then
+        sudo rm -rf "$APP_DIR/.next" "$APP_DIR/app/(landing)"
+      else
+        rm -rf "$APP_DIR/.next" "$APP_DIR/app/(landing)"
+      fi
     - npm run build
     - echo "✅ Build stage completed!"
 
@@ -117,11 +122,17 @@ deploy:
     - echo "🚀 Starting Deploy Stage..."
     - cd $APP_DIR
     - echo "📥 Syncing deploy directory to current main..."
-    - git remote set-url origin git@gitlab.com:bhuwan070-group/careandcleannepal.git
+    - git remote set-url origin
+      git@gitlab.com:bhuwan070-group/careandcleannepal.git
     - git fetch origin main
     - git reset --hard origin/main
     - git clean -fd
-    - rm -rf "$APP_DIR/.next" "$APP_DIR/app/(landing)"
+    - |
+      if command -v sudo >/dev/null 2>&1; then
+        sudo rm -rf "$APP_DIR/.next" "$APP_DIR/app/(landing)"
+      else
+        rm -rf "$APP_DIR/.next" "$APP_DIR/app/(landing)"
+      fi
     - echo "🧾 Deploying commit $CI_COMMIT_SHA"
     - git rev-parse HEAD
     - |
