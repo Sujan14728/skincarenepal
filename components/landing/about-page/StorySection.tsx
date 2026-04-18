@@ -19,9 +19,6 @@ export default function StorySection() {
         </div>
 
         <div className='order-3 flex-1 md:order-1'>
-          <h2 className='mb-10 hidden text-center text-3xl font-bold text-gray-800 md:block'>
-            Our Story
-          </h2>
           <p className='mb-4 text-lg text-gray-600'>
             Care and Clean Pvt. Ltd. was founded with a simple yet powerful
             belief-true beauty begins with nature. We are a Nepali skincare
