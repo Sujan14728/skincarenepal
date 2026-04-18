@@ -101,14 +101,27 @@ deploy:
     - echo "🔨 Building application for deploy..."
     - rm -rf .next
     - npm run build
+    - echo "🧪 Verifying built artifact contents..."
+    - |
+      if grep -q "app/(landing)/" .next/server/app/landing.html; then
+        echo "❌ Fresh build still contains app/(landing) in .next/server/app/landing.html"
+        exit 1
+      fi
+    - echo "✅ Fresh build contains /landing chunks"
     - echo "📊 Updating database schema..."
     - |
       npx prisma db push --skip-generate --accept-data-loss || \
       echo "Schema already up to date"
     - echo "🔄 Restarting application..."
     - pm2 delete skincarenepal || true
-    - pm2 start npm --cwd "$DEPLOY_DIR" --name "skincarenepal" -- start
+    - |
+      if command -v fuser >/dev/null 2>&1; then
+        fuser -k 3000/tcp || true
+      fi
+    - pm2 start npm --cwd "$DEPLOY_DIR" --name "skincarenepal" --update-env --
+      start -- -p 3000
     - pm2 save
+    - pm2 describe skincarenepal
     - echo "🏥 Performing health check..."
     - sleep 3
     - curl -f http://localhost:3000 || (echo "❌ Health check failed" && exit 1)
