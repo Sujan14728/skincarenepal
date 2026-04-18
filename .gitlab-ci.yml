@@ -6,6 +6,7 @@ stages:
 variables:
   NODE_ENV: production
   CACHE_KEY: '$CI_COMMIT_REF_SLUG'
+  DEPLOY_DIR: /home/gitlab-runner/apps/skincarenepal
 
 # Build Stage
 build:
@@ -77,13 +78,22 @@ deploy:
     - cd "$CI_PROJECT_DIR"
     - echo "🧾 Deploying commit $CI_COMMIT_SHA"
     - git rev-parse HEAD
+    - echo "📁 Preparing persistent deploy directory..."
+    - mkdir -p "$DEPLOY_DIR"
+    - |
+      rsync -a --delete \
+        --exclude='.git' \
+        --exclude='.next' \
+        --exclude='node_modules' \
+        "$CI_PROJECT_DIR/" "$DEPLOY_DIR/"
+    - cd "$DEPLOY_DIR"
     - |
       if [ -d "app/(landing)" ]; then
-        echo "❌ Stale source folder exists in workspace: app/(landing)"
+        echo "❌ Stale source folder exists in deploy dir: app/(landing)"
         exit 1
       fi
     - echo "📄 Restoring .env..."
-    - cp /var/www/careandclean/env/.env "$CI_PROJECT_DIR/.env"
+    - cp /var/www/careandclean/env/.env "$DEPLOY_DIR/.env"
     - echo "📦 Installing dependencies for deploy..."
     - export NODE_ENV=development
     - npm ci --prefer-offline --no-audit
@@ -92,10 +102,12 @@ deploy:
     - rm -rf .next
     - npm run build
     - echo "📊 Updating database schema..."
-    - npx prisma db push --skip-generate --accept-data-loss || echo "Schema already up to date"
+    - |
+      npx prisma db push --skip-generate --accept-data-loss || \
+      echo "Schema already up to date"
     - echo "🔄 Restarting application..."
     - pm2 delete skincarenepal || true
-    - pm2 start npm --cwd "$CI_PROJECT_DIR" --name "skincarenepal" -- start
+    - pm2 start npm --cwd "$DEPLOY_DIR" --name "skincarenepal" -- start
     - pm2 save
     - echo "🏥 Performing health check..."
     - sleep 3
