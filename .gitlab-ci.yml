@@ -129,8 +129,8 @@ deploy:
         ss -ltn '( sport = :3000 )' || true
         exit 1
       fi
-    - pm2 start npm --cwd "$DEPLOY_DIR" --name "skincarenepal" --update-env --
-      start -- -p 3000
+    - |
+      pm2 start npm --cwd "$DEPLOY_DIR" --name "skincarenepal" --update-env -- start -- -p 3000
     - pm2 save
     - pm2 describe skincarenepal
     - echo "🏥 Performing health check..."
