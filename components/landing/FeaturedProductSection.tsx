@@ -49,7 +49,7 @@ export function FeaturedProductsSection() {
             Featured Products
           </h2>
           <p className='text-lg text-muted-foreground'>
-            Discover our bestselling natural skincare collection
+            Discover our bestselling natural skincare products
           </p>
         </div>
 

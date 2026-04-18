@@ -15,23 +15,23 @@ export function TestimonialCard({
   productPurchased
 }: TestimonialCardProps) {
   return (
-    <div className='bg-accent flex h-full flex-col rounded-xl p-6 shadow-sm'>
-      <div className='mb-4 flex space-x-0.5'>
+    <div className='flex h-full flex-col rounded-xl bg-accent p-6 shadow-sm'>
+      <div className='mb-4 flex justify-center space-x-0.5'>
         {[...Array(5)].map((_, i) => (
           <Star key={i} className='h-5 w-5 fill-yellow-400 text-yellow-400' />
         ))}
       </div>
 
-      <p className='text-foreground mb-4 flex-grow text-base italic'>
+      <p className='mb-4 flex-grow text-base italic text-foreground'>
         &quot;{quote}&quot;
       </p>
 
       <div className='mt-auto space-y-1 pt-2'>
-        <p className='text-foreground font-semibold'>{customerName}</p>
+        <p className='font-semibold text-foreground'>{customerName}</p>
 
-        <p className='text-muted-foreground text-sm'>{location}</p>
+        <p className='text-sm text-muted-foreground'>{location}</p>
 
-        <p className='text-primary text-sm font-medium'>
+        <p className='text-sm font-medium text-primary'>
           Purchased: {productPurchased}
         </p>
       </div>

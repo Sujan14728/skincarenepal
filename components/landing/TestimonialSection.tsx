@@ -30,7 +30,7 @@ export function TestimonialsSection() {
     <section className='bg-background py-16 md:py-24'>
       <div className='mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8'>
         <div className='mb-12'>
-          <h2 className='mb-2 text-4xl font-bold text-foreground'>
+          <h2 className='mb-2 text-3xl font-bold text-foreground md:text-4xl'>
             What Our Customers Say
           </h2>
           <p className='text-lg text-muted-foreground'>

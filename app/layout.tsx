@@ -20,8 +20,8 @@ const geistMono = Geist_Mono({
    ------------------------------------------------- */
 export const metadata: Metadata = {
   title: {
-    default: 'Care And Clean Nepal',
-    template: '%s | Care And Clean Nepal'
+    default: 'Care And Clean ',
+    template: '%s | Care And Clean '
   },
   description:
     'Shop 100% natural organic face packs in Nepal. Free delivery and best prices.',
@@ -44,26 +44,24 @@ export const metadata: Metadata = {
     'organic skincare',
     'face pack nepal',
     'natural beauty products',
-    'Care And Clean Nepal'
+    'Care And Clean'
   ],
-  authors: [
-    { name: 'Care And Clean Nepal', url: 'https://careandcleannp.com' }
-  ],
-  applicationName: 'Care And Clean Nepal',
+  authors: [{ name: 'Care And Clean ', url: 'https://careandcleannp.com' }],
+  applicationName: 'Care And Clean',
   alternates: { canonical: 'https://careandcleannp.com' },
 
   openGraph: {
     type: 'website',
     url: 'https://careandcleannp.com',
-    siteName: 'Care And Clean Nepal',
-    title: 'Care And Clean Nepal',
+    siteName: 'Care And Clean ',
+    title: 'Care And Clean',
     description:
       'Shop 100% natural organic face packs in Nepal. Free delivery and best prices.',
     images: [{ url: '/logo.jpg', width: 800, height: 600 }]
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Care And Clean Nepal',
+    title: 'Care And Clean',
     description:
       'Shop 100% natural organic face packs in Nepal. Free delivery and best prices.',
     images: ['/logo.jpg']
@@ -107,7 +105,7 @@ export default function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'Organization',
-              name: 'Care And Clean Nepal',
+              name: 'Care And Clean ',
               url: 'https://careandcleannp.com',
               logo: 'https://careandcleannp.com/logo.jpg',
               sameAs: []
@@ -122,7 +120,7 @@ export default function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'WebSite',
-              name: 'Care And Clean Nepal',
+              name: 'Care And Clean',
               url: 'https://careandcleannp.com',
               potentialAction: {
                 '@type': 'SearchAction',
