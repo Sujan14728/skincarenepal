@@ -122,11 +122,22 @@ deploy:
         fuser -k 3000/tcp || true
       fi
     - |
+      if command -v lsof >/dev/null 2>&1; then
+        lsof -ti tcp:3000 | xargs -r kill -9 || true
+      fi
+    - |
+      if command -v sudo >/dev/null 2>&1; then
+        sudo -n fuser -k 3000/tcp >/dev/null 2>&1 || true
+      fi
+    - |
       if command -v ss >/dev/null 2>&1 && ss -ltn '( sport = :3000 )' | grep -q ':3000'; then
-        echo "ERROR: port 3000 is still in use after cleanup."
-        echo "Likely another process/user (e.g. root PM2) is serving old build."
-        echo "Run as root: pm2 delete skincarenepal ; fuser -k 3000/tcp"
-        ss -ltn '( sport = :3000 )' || true
+        echo "ERROR: port 3000 is still in use after all cleanup attempts."
+        echo "Details:"
+        ss -ltnp '( sport = :3000 )' || true
+        if command -v lsof >/dev/null 2>&1; then
+          lsof -iTCP:3000 -sTCP:LISTEN || true
+        fi
+        echo "Fix host process ownership once: run as root -> pm2 delete skincarenepal ; fuser -k 3000/tcp"
         exit 1
       fi
     - |
@@ -135,8 +146,8 @@ deploy:
     - pm2 describe skincarenepal
     - echo "Performing health check..."
     - sleep 3
-    - 'curl -f http://localhost:3000 || (echo "ERROR: health check failed" &&
-      exit 1)'
+    - |
+      curl -f http://localhost:3000 || { echo "ERROR: health check failed"; exit 1; }
     - |
       if curl -s http://localhost:3000 | grep -q "app/(landing)/"; then
         echo "ERROR: stale chunk map detected: app/(landing) still in HTML output"
