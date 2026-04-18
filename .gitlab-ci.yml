@@ -4,7 +4,6 @@ stages:
   - deploy
 
 variables:
-  APP_DIR: /var/www/careandclean/skincarenepal
   NODE_ENV: production
   CACHE_KEY: '$CI_COMMIT_REF_SLUG'
 
@@ -18,60 +17,22 @@ build:
     - main
   cache:
     paths:
-      - $APP_DIR/node_modules/
-      - $APP_DIR/.next/cache/
+      - node_modules/
+      - .next/cache/
     key: $CACHE_KEY
   script:
     - echo "🚀 Starting Build Stage..."
-
-    # Add GitLab host key to known_hosts
-    - mkdir -p ~/.ssh
-    - ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts 2>/dev/null || true
-    - chmod 644 ~/.ssh/known_hosts
-
-    # Clone or update repo (avoid rm -rf)
-    - echo "📥 Fetching latest code..."
-    - |
-      if [ -d "$APP_DIR/.git" ]; then
-        cd $APP_DIR
-        # Update remote URL from HTTPS to SSH if needed
-        git remote set-url origin git@gitlab.com:bhuwan070-group/careandcleannepal.git
-        git fetch origin main
-        git reset --hard origin/main
-        # Remove stale untracked route-group folder left from previous releases.
-        rm -rf "$APP_DIR/app/(landing)"
-      else
-        git clone git@gitlab.com:bhuwan070-group/careandcleannepal.git $APP_DIR
-        cd $APP_DIR
-      fi
-
-    # Install dependencies
+    - cd "$CI_PROJECT_DIR"
     - echo "📦 Installing dependencies..."
     - export NODE_ENV=development
     - npm ci --prefer-offline --no-audit
     - export NODE_ENV=production
-
-    # Generate Prisma Client
     - echo "🗄️ Generating Prisma Client..."
     - npx prisma generate
-
-    # Build application
     - echo "🔨 Building application..."
-    - |
-      if command -v sudo >/dev/null 2>&1; then
-        sudo rm -rf "$APP_DIR/.next" "$APP_DIR/app/(landing)"
-      else
-        rm -rf "$APP_DIR/.next" "$APP_DIR/app/(landing)"
-      fi
+    - rm -rf .next
     - npm run build
     - echo "✅ Build stage completed!"
-
-  artifacts:
-    paths:
-      - $APP_DIR/.next/
-      - $APP_DIR/node_modules/
-      - $APP_DIR/prisma/
-    expire_in: 1 hour
 
 # Test Stage
 test:
@@ -83,29 +44,22 @@ test:
     - main
   cache:
     paths:
-      - $APP_DIR/node_modules/
+      - node_modules/
     key: $CACHE_KEY
   dependencies:
     - build
   script:
     - echo "🧪 Starting Test Stage..."
-    - cd $APP_DIR
-
-    # Run linting (if configured)
+    - cd "$CI_PROJECT_DIR"
     - echo "🔍 Running linter..."
     - npm run lint || echo "⚠️  Linting warnings (non-blocking)"
-
-    # Run tests (if configured)
     - echo "🧬 Running unit tests..."
     - npm run test || echo "⚠️  Tests skipped (configure jest in package.json)"
-
-    # Type checking
     - echo "📝 Running type check..."
     - npx tsc --noEmit || echo "⚠️  Type check passed with warnings"
-
     - echo "✅ Test stage completed!"
 
-  allow_failure: true # Don't block deploy if tests fail
+  allow_failure: true
 
 # Deploy Stage
 deploy:
@@ -120,62 +74,37 @@ deploy:
     - test
   script:
     - echo "🚀 Starting Deploy Stage..."
-    - cd $APP_DIR
-    - echo "📥 Syncing deploy directory to current main..."
-    - git remote set-url origin
-      git@gitlab.com:bhuwan070-group/careandcleannepal.git
-    - git fetch origin main
-    - git reset --hard origin/main
-    - git clean -fd
-    - |
-      if command -v sudo >/dev/null 2>&1; then
-        sudo rm -rf "$APP_DIR/.next" "$APP_DIR/app/(landing)"
-      else
-        rm -rf "$APP_DIR/.next" "$APP_DIR/app/(landing)"
-      fi
+    - cd "$CI_PROJECT_DIR"
     - echo "🧾 Deploying commit $CI_COMMIT_SHA"
     - git rev-parse HEAD
     - |
-      if [ -d "$APP_DIR/app/(landing)" ]; then
-        echo "❌ Stale source folder exists: $APP_DIR/app/(landing)"
+      if [ -d "app/(landing)" ]; then
+        echo "❌ Stale source folder exists in workspace: app/(landing)"
         exit 1
       fi
-
-    # Restore environment file
     - echo "📄 Restoring .env..."
-    - cp /var/www/careandclean/env/.env $APP_DIR/.env
-
-    # Rebuild on deploy host to avoid stale chunks when deploy runs standalone.
+    - cp /var/www/careandclean/env/.env "$CI_PROJECT_DIR/.env"
     - echo "📦 Installing dependencies for deploy..."
     - export NODE_ENV=development
     - npm ci --prefer-offline --no-audit
     - export NODE_ENV=production
     - echo "🔨 Building application for deploy..."
+    - rm -rf .next
     - npm run build
-
-    # Update database schema
     - echo "📊 Updating database schema..."
-    - npx prisma db push --skip-generate --accept-data-loss || echo "Schema
-      already up to date"
-
-    # Restart PM2 (idempotent)
+    - npx prisma db push --skip-generate --accept-data-loss || echo "Schema already up to date"
     - echo "🔄 Restarting application..."
     - pm2 delete skincarenepal || true
-    - pm2 start npm --name "skincarenepal" -- start
+    - pm2 start npm --cwd "$CI_PROJECT_DIR" --name "skincarenepal" -- start
     - pm2 save
-
-    # Health check
     - echo "🏥 Performing health check..."
     - sleep 3
     - curl -f http://localhost:3000 || (echo "❌ Health check failed" && exit 1)
-
-    # Guardrail: fail deploy if old route-group chunk path is still served
     - |
       if curl -s http://localhost:3000 | grep -q "app/(landing)/"; then
         echo "❌ Stale chunk map detected: app/(landing) still in HTML output"
         exit 1
       fi
-
     - echo "✅ Deployment completed successfully! 🎉"
 
   environment:
