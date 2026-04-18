@@ -22,18 +22,18 @@ build:
       - .next/cache/
     key: $CACHE_KEY
   script:
-    - echo "🚀 Starting Build Stage..."
+    - echo "Starting build stage..."
     - cd "$CI_PROJECT_DIR"
-    - echo "📦 Installing dependencies..."
+    - echo "Installing dependencies..."
     - export NODE_ENV=development
     - npm ci --prefer-offline --no-audit
     - export NODE_ENV=production
-    - echo "🗄️ Generating Prisma Client..."
+    - echo "Generating Prisma Client..."
     - npx prisma generate
-    - echo "🔨 Building application..."
+    - echo "Building application..."
     - rm -rf .next
     - npm run build
-    - echo "✅ Build stage completed!"
+    - echo "Build stage completed."
 
 # Test Stage
 test:
@@ -50,15 +50,15 @@ test:
   dependencies:
     - build
   script:
-    - echo "🧪 Starting Test Stage..."
+    - echo "Starting test stage..."
     - cd "$CI_PROJECT_DIR"
-    - echo "🔍 Running linter..."
-    - npm run lint || echo "⚠️  Linting warnings (non-blocking)"
-    - echo "🧬 Running unit tests..."
-    - npm run test || echo "⚠️  Tests skipped (configure jest in package.json)"
-    - echo "📝 Running type check..."
-    - npx tsc --noEmit || echo "⚠️  Type check passed with warnings"
-    - echo "✅ Test stage completed!"
+    - echo "Running linter..."
+    - npm run lint || echo "Linting warnings (non-blocking)."
+    - echo "Running unit tests..."
+    - npm run test || echo "Tests skipped (configure jest in package.json)."
+    - echo "Running type check..."
+    - npx tsc --noEmit || echo "Type check passed with warnings."
+    - echo "Test stage completed."
 
   allow_failure: true
 
@@ -74,14 +74,14 @@ deploy:
     - build
     - test
   script:
-    - echo "🚀 Starting Deploy Stage..."
+    - echo "Starting deploy stage..."
     - cd "$CI_PROJECT_DIR"
-    - echo "👤 Deploy runner user: $(whoami)"
+    - 'echo "Deploy runner user: $(whoami)"'
     - export PM2_HOME=/home/gitlab-runner/.pm2
-    - echo "📂 PM2_HOME=$PM2_HOME"
-    - echo "🧾 Deploying commit $CI_COMMIT_SHA"
+    - echo "PM2_HOME=$PM2_HOME"
+    - echo "Deploying commit $CI_COMMIT_SHA"
     - git rev-parse HEAD
-    - echo "📁 Preparing persistent deploy directory..."
+    - echo "Preparing persistent deploy directory..."
     - mkdir -p "$DEPLOY_DIR"
     - |
       rsync -a --delete \
@@ -92,30 +92,30 @@ deploy:
     - cd "$DEPLOY_DIR"
     - |
       if [ -d "app/(landing)" ]; then
-        echo "❌ Stale source folder exists in deploy dir: app/(landing)"
+        echo "ERROR: stale source folder exists in deploy dir: app/(landing)"
         exit 1
       fi
-    - echo "📄 Restoring .env..."
+    - echo "Restoring .env..."
     - cp /var/www/careandclean/env/.env "$DEPLOY_DIR/.env"
-    - echo "📦 Installing dependencies for deploy..."
+    - echo "Installing dependencies for deploy..."
     - export NODE_ENV=development
     - npm ci --prefer-offline --no-audit
     - export NODE_ENV=production
-    - echo "🔨 Building application for deploy..."
+    - echo "Building application for deploy..."
     - rm -rf .next
     - npm run build
-    - echo "🧪 Verifying built artifact contents..."
+    - echo "Verifying built artifact contents..."
     - |
       if grep -q "app/(landing)/" .next/server/app/landing.html; then
-        echo "❌ Fresh build still contains app/(landing) in .next/server/app/landing.html"
+        echo "ERROR: fresh build still contains app/(landing) in .next/server/app/landing.html"
         exit 1
       fi
-    - echo "✅ Fresh build contains /landing chunks"
-    - echo "📊 Updating database schema..."
+    - echo "Fresh build contains /landing chunks."
+    - echo "Updating database schema..."
     - |
       npx prisma db push --skip-generate --accept-data-loss || \
       echo "Schema already up to date"
-    - echo "🔄 Restarting application..."
+    - echo "Restarting application..."
     - pm2 delete skincarenepal || true
     - |
       if command -v fuser >/dev/null 2>&1; then
@@ -123,7 +123,7 @@ deploy:
       fi
     - |
       if command -v ss >/dev/null 2>&1 && ss -ltn '( sport = :3000 )' | grep -q ':3000'; then
-        echo "❌ Port 3000 is still in use after cleanup."
+        echo "ERROR: port 3000 is still in use after cleanup."
         echo "Likely another process/user (e.g. root PM2) is serving old build."
         echo "Run as root: pm2 delete skincarenepal ; fuser -k 3000/tcp"
         ss -ltn '( sport = :3000 )' || true
@@ -133,15 +133,16 @@ deploy:
       pm2 start npm --cwd "$DEPLOY_DIR" --name "skincarenepal" --update-env -- start -- -p 3000
     - pm2 save
     - pm2 describe skincarenepal
-    - echo "🏥 Performing health check..."
+    - echo "Performing health check..."
     - sleep 3
-    - curl -f http://localhost:3000 || (echo "❌ Health check failed" && exit 1)
+    - 'curl -f http://localhost:3000 || (echo "ERROR: health check failed" &&
+      exit 1)'
     - |
       if curl -s http://localhost:3000 | grep -q "app/(landing)/"; then
-        echo "❌ Stale chunk map detected: app/(landing) still in HTML output"
+        echo "ERROR: stale chunk map detected: app/(landing) still in HTML output"
         exit 1
       fi
-    - echo "✅ Deployment completed successfully! 🎉"
+    - echo "Deployment completed successfully."
 
   environment:
     name: production
