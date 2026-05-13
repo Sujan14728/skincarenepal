@@ -14,8 +14,8 @@ export function FeaturedProductsSection() {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    // Fetch featured/top products; API already includes IN_STOCK and COMING_SOON
-    fetch('/api/products/top?limit=3')
+    // Fetch more featured/top products (may include COMING_SOON) and pick 3 IN_STOCK
+    fetch('/api/products/top?limit=10')
       .then(res => res.json())
       .then(topData => {
         if (!mounted) return;
@@ -26,7 +26,9 @@ export function FeaturedProductsSection() {
           }[] = topData.data;
           const items = productsWithOrders
             .map(d => d.product)
-            .filter((p): p is Product => !!p);
+            .filter((p): p is Product => !!p)
+            .filter(p => p.status === 'IN_STOCK')
+            .slice(0, 3);
           setProducts(items);
         } else {
           setProducts([]);

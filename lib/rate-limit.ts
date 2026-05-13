@@ -26,11 +26,15 @@ const fallbackLimit = async (): Promise<LimitResult> => ({
 // Redis client over HTTP works in middleware/edge runtime.
 const redis = hasUpstashEnv ? Redis.fromEnv() : null;
 
+// Enable analytics only when explicitly requested via UPSTASH_ANALYTICS=true
+const enableAnalytics =
+  hasUpstashEnv && process.env.UPSTASH_ANALYTICS === 'true';
+
 const remoteRatelimiter = hasUpstashEnv
   ? new Ratelimit({
       redis: redis as Redis,
       limiter: Ratelimit.slidingWindow(120, '1 m'),
-      analytics: true,
+      analytics: enableAnalytics,
       prefix: 'sknc:middleware'
     })
   : null;

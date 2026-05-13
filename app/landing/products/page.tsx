@@ -70,11 +70,7 @@ const ProductPage = async () => {
           {/* Product Grid */}
           <div className='grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
             {products
-              ?.filter(
-                product =>
-                  product.status !== 'COMING_SOON' &&
-                  product.status !== 'DISCONTINUED'
-              )
+              ?.filter(product => product.status !== 'DISCONTINUED')
               ?.map((product, index) => (
                 <ProductCard
                   key={index}

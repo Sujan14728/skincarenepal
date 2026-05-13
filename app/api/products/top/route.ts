@@ -26,9 +26,9 @@ export async function GET(req: Request) {
 
   const allIds = groups.map(g => g.productId).filter(Boolean) as number[];
   if (allIds.length === 0) {
-    // Fallback: no orders yet — return latest IN_STOCK products only
+    // Fallback: no orders yet — return latest IN_STOCK or COMING_SOON products
     const latest = await prisma.product.findMany({
-      where: { status: 'IN_STOCK' },
+      where: { status: { in: ['IN_STOCK', 'COMING_SOON'] } },
       orderBy: { createdAt: 'desc' },
       take: limit
     });
@@ -37,11 +37,11 @@ export async function GET(req: Request) {
     });
   }
 
-  // ✅ Fetch only IN_STOCK products for featured section
+  // Fetch products that are IN_STOCK or COMING_SOON for featured section
   const validProducts = await prisma.product.findMany({
     where: {
       id: { in: allIds },
-      status: 'IN_STOCK'
+      status: { in: ['IN_STOCK', 'COMING_SOON'] }
     }
   });
 
@@ -69,10 +69,10 @@ export async function GET(req: Request) {
     );
     const remaining = limit - result.length;
 
-    // Fetch extra IN_STOCK products only
+    // Fetch extra IN_STOCK or COMING_SOON products
     const extraInStock = await prisma.product.findMany({
       where: {
-        status: 'IN_STOCK',
+        status: { in: ['IN_STOCK', 'COMING_SOON'] },
         id: { notIn: Array.from(alreadyIds) }
       },
       orderBy: { createdAt: 'desc' },
