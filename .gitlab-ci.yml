@@ -24,6 +24,18 @@ build:
   script:
     - echo "Starting build stage..."
     - cd "$CI_PROJECT_DIR"
+    - |
+      # Acquire an exclusive deploy lock to prevent concurrent deploys on the host
+      LOCKFILE=/tmp/deploy_skincarenepal.lock
+      exec 9>"$LOCKFILE"
+      if ! command -v flock >/dev/null 2>&1; then
+        echo "flock not available; proceeding without lock"
+      else
+        if ! flock -n 9; then
+          echo "Another deploy is already running; exiting."
+          exit 1
+        fi
+      fi
     - echo "Installing dependencies..."
     - export NODE_ENV=development
     - npm ci --prefer-offline --no-audit
@@ -116,28 +128,41 @@ deploy:
       npx prisma db push --skip-generate --accept-data-loss || \
       echo "Schema already up to date"
     - echo "Restarting application..."
-    - pm2 delete skincarenepal || true
     - |
-      if command -v fuser >/dev/null 2>&1; then
-        fuser -k 3000/tcp || true
-      fi
-    - |
-      if command -v lsof >/dev/null 2>&1; then
-        lsof -ti tcp:3000 | xargs -r kill -9 || true
-      fi
-    - |
-      if command -v sudo >/dev/null 2>&1; then
-        sudo -n fuser -k 3000/tcp >/dev/null 2>&1 || true
-      fi
+      # Try to remove existing pm2 process and free port 3000 with retries.
+      pm2 delete skincarenepal || true
+      for i in 1 2; do
+        if command -v fuser >/dev/null 2>&1; then
+          fuser -k 3000/tcp >/dev/null 2>&1 && break || true
+        fi
+        if command -v lsof >/dev/null 2>&1; then
+          lsof -ti tcp:3000 | xargs -r kill -9 || true
+        fi
+        if command -v sudo >/dev/null 2>&1; then
+          sudo -n fuser -k 3000/tcp >/dev/null 2>&1 || true
+          sudo -n pm2 delete skincarenepal >/dev/null 2>&1 || true
+        fi
+        sleep 1
+      done
     - |
       if command -v ss >/dev/null 2>&1 && ss -ltn '( sport = :3000 )' | grep -q ':3000'; then
-        echo "ERROR: port 3000 is still in use after all cleanup attempts."
+        echo "WARNING: port 3000 is still in use after cleanup attempts."
         echo "Details:"
         ss -ltnp '( sport = :3000 )' || true
         if command -v lsof >/dev/null 2>&1; then
           lsof -iTCP:3000 -sTCP:LISTEN || true
         fi
-        echo "Fix host process ownership once: run as root -> pm2 delete skincarenepal ; fuser -k 3000/tcp"
+        echo "Attempting one final sudo cleanup (may require sudo privileges)..."
+        if command -v sudo >/dev/null 2>&1; then
+          sudo -n pm2 delete skincarenepal >/dev/null 2>&1 || true
+          sudo -n fuser -k 3000/tcp >/dev/null 2>&1 || true
+        fi
+        sleep 1
+      fi
+    - |
+      if command -v ss >/dev/null 2>&1 && ss -ltn '( sport = :3000 )' | grep -q ':3000'; then
+        echo "ERROR: port 3000 still in use after final attempts. Manual intervention required:"
+        echo "  As root on the host run: pm2 delete skincarenepal ; fuser -k 3000/tcp"
         exit 1
       fi
     - |
