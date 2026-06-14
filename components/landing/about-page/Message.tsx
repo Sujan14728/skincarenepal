@@ -8,7 +8,7 @@ export default function Message() {
         <div className='flex w-full flex-1 justify-center'>
           <div className='relative h-[420px] w-full max-w-[500px] overflow-hidden rounded-2xl shadow-md'>
             <Image
-              src='/images/team/cofounder.jpg'
+              src='/images/team/co-founder.jpeg'
               alt='Founder'
               width={550}
               height={420}
@@ -20,11 +20,11 @@ export default function Message() {
         {/* Text Content Container */}
         <div className='flex-1 text-center md:text-left'>
           <p className='mb-2 text-start text-lg italic leading-relaxed text-gray-600'>
-            "At Care and Clean, we believe that true beauty begins with nature.
+            At Care and Clean, we believe that true beauty begins with nature.
             Our mission is to provide safe, effective, and affordable skincare
             solutions that help people feel confident in their own skin. Thank
             you for trusting us and being part of our journey toward natural
-            beauty and healthy living."
+            beauty and healthy living.
           </p>
           <span className='mb-6 h-1 w-10 rounded font-bold text-primary'>
             Care from Nature, Clean by Choice
