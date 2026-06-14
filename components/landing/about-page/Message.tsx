@@ -8,7 +8,7 @@ export default function Message() {
         <div className='flex w-full flex-1 justify-center'>
           <div className='relative h-[420px] w-full max-w-[500px] overflow-hidden rounded-2xl shadow-md'>
             <Image
-              src='/images/team/co-founder.jpeg'
+              src='/images/team/cofounder.jpg'
               alt='Founder'
               width={550}
               height={420}
