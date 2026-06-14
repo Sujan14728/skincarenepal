@@ -1,3 +1,4 @@
+import Message from '@/components/landing/about-page/Message';
 import StorySection from '../../../components/landing/about-page/StorySection';
 // import TeamSection from '../../../components/landing/about-page/TeamSection';
 import ValuesSection from '../../../components/landing/about-page/ValuesSection';
@@ -6,6 +7,7 @@ export default function AboutPage() {
   return (
     <div className='mx-auto max-w-6xl px-4 py-12'>
       <StorySection />
+      <Message />
       {/* <TeamSection /> */}
       <ValuesSection />
 

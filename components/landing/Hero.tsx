@@ -38,7 +38,7 @@ export function Hero() {
         <div className='flex w-full justify-center lg:w-1/2 lg:justify-end'>
           <div className='relative h-[360px] w-full overflow-hidden rounded-[1.8rem] lg:h-[480px] lg:w-[780px]'>
             <Image
-              src='/images/story1.png'
+              src='/images/team/hero-banner.jpeg'
               alt='Natural organic face pack from Care and Clean Nepal'
               fill
               sizes='(min-width: 1024px) 50vw, 100vw'
