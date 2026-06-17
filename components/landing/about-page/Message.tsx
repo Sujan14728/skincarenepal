@@ -33,7 +33,7 @@ export default function Message() {
           <div className='mt-4'>
             <h4 className='text-lg font-bold text-gray-900'>Parash Balayar</h4>
             <p className='text-base font-medium text-emerald-600'>
-              Co-Founder & CEO
+              Co-Founder & Managing Director
             </p>
           </div>
         </div>
