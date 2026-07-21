@@ -10,7 +10,7 @@ export default function StorySection() {
       <div className='mb-24 flex flex-col items-center gap-6 md:flex-row'>
         <div className='order-2 flex flex-1 justify-center md:order-2'>
           <Image
-            src='/images/about/story.png'
+            src='/images/products/hero-image.jpg'
             alt='Care And Clean Nepal Story'
             width={500}
             height={400}
