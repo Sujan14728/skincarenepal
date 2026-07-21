@@ -6,7 +6,7 @@ export default function Message() {
       <div className='mx-auto flex max-w-6xl flex-col items-center gap-8 px-4 md:flex-row md:gap-12'>
         {/* Image Container */}
         <div className='flex w-full flex-1 justify-center'>
-          <div className='relative h-[400px] w-full max-w-[500px] overflow-hidden rounded-2xl shadow-md'>
+          <div className='relative h-[380px] w-full max-w-[500px] overflow-hidden rounded-2xl shadow-md'>
             <Image
               src='/images/team/cofounder.jpg'
               alt='Founder'
