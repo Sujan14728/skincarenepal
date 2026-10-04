@@ -108,7 +108,10 @@ export function pickRoutine(products: StorefrontProduct[]) {
   });
 }
 
-export function effectivePrice(p: { price: number; salePrice: number | null }) {
+export function effectivePrice(p: {
+  price: number;
+  salePrice?: number | null;
+}) {
   return p.salePrice && p.salePrice < p.price ? p.salePrice : p.price;
 }
 

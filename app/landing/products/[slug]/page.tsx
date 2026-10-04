@@ -4,8 +4,10 @@ import Script from 'next/script';
 import { prisma } from '@/lib/prisma';
 import ProductDetailView from '@/components/storefront/products/ProductDetailView';
 import {
+  effectivePrice,
   getPublishedReviews,
   getStorefrontProducts,
+  isPurchasable,
   pickRoutine,
   stripHtml
 } from '@/lib/storefront';
@@ -129,9 +131,9 @@ const ProductPage = async ({ params }: ProductPageProps) => {
             offers: {
               '@type': 'Offer',
               priceCurrency: 'NPR',
-              price: (product.salePrice ?? product.price) || product.price,
+              price: effectivePrice(product),
               availability:
-                product.stock > 0 && product.status !== 'DISCONTINUED'
+                isPurchasable(product)
                   ? 'https://schema.org/InStock'
                   : 'https://schema.org/OutOfStock',
               url: `https://careandcleannp.com/products/${product.slug}`

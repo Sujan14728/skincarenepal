@@ -63,6 +63,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { OrderStatus } from '@prisma/client';
 import { cn } from '@/lib/utils';
+import { refreshAdminCounts } from '@/components/dashboard/AdminContext';
 
 type SearchField = 'orderId' | 'name' | 'phone';
 
@@ -234,6 +235,7 @@ const OrdersPage = () => {
       const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete failed');
       toast.success('Order deleted');
+      refreshAdminCounts();
       if (detail?.id === orderId) setDetailOpen(false);
       fetchOrders();
       fetchCounts();
@@ -255,6 +257,7 @@ const OrdersPage = () => {
       });
       if (!res.ok) throw new Error('Failed to update status');
       toast.success('Order status updated');
+      refreshAdminCounts();
     } catch {
       toast.error('Failed to update status');
       // revert by refetching

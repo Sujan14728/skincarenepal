@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
       data: {
         name,
         slug,
-        excerpt: excerpt || null,
+        excerpt: excerpt ?? '',
         description: description || null,
         keyBenefits: keyBenefits || [],
         keyIngredients: keyIngredients || [],

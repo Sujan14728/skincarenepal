@@ -95,12 +95,16 @@ export default function CouponForm({ coupon, onClose, onSubmit }: Props) {
       code: form.code,
       discountType: form.discountType,
       discountValue: Number(form.discountValue),
-      minPurchase: form.minPurchase ? Number(form.minPurchase) : undefined,
-      usageLimit: form.usageLimit ? Number(form.usageLimit) : undefined,
-      productId: form.productId ? Number(form.productId) : undefined,
+      // null (not undefined) survives JSON, so clearing a field on edit works.
+      minPurchase: form.minPurchase ? Number(form.minPurchase) : null,
+      usageLimit: form.usageLimit ? Number(form.usageLimit) : null,
+      productId: form.productId ? Number(form.productId) : null,
       isActive: !!form.isActive,
       validFrom: form.validFrom ? dayjs(form.validFrom).toDate() : undefined,
-      validUntil: form.validUntil ? dayjs(form.validUntil).toDate() : undefined
+      // Valid through the whole selected day, not just until its midnight.
+      validUntil: form.validUntil
+        ? dayjs(form.validUntil).endOf('day').toDate()
+        : null
     };
 
     setSaving(true);

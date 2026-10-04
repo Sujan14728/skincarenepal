@@ -102,7 +102,7 @@ export default function HomeView({
           </div>
           {rating.average !== null && (
             <p className='proof'>
-              ⭐ {rating.average}/5 from {rating.count.toLocaleString()}{' '}
+              ⭐ {rating.average}/5 from {rating.count.toLocaleString('en-IN')}{' '}
               {rating.count === 1 ? 'review' : 'reviews'}
             </p>
           )}
@@ -452,7 +452,16 @@ function ReviewTile({
       {kind === 'photo' && (
         <figure
           className='photo-frame review-photo-frame'
+          role='button'
+          tabIndex={0}
+          aria-label={`View photo review by ${review.customerName}`}
           onClick={onOpen}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onOpen();
+            }
+          }}
           style={{ cursor: 'zoom-in' }}
         >
           <img

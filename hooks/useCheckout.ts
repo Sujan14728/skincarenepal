@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { ICartItem } from '@/lib/types/cart';
 import { Product } from '@/lib/types/product';
 import { getCartFromLocal } from '@/lib/utils/local-storage';
+import { effectivePrice } from '@/lib/storefront-utils';
 
 type SiteSetting = {
   id: number;
@@ -74,10 +75,10 @@ export const useCheckout = (buyParam: string | null) => {
     if (!settings) return;
     let subtotal = 0;
     if (singleProductMode && singleProduct) {
-      subtotal = (singleProduct.salePrice ?? singleProduct.price) * singleQty;
+      subtotal = effectivePrice(singleProduct) * singleQty;
     } else {
       subtotal = cartItems.reduce(
-        (sum, i) => sum + (i.salePrice ?? i.price) * i.quantity,
+        (sum, i) => sum + effectivePrice(i) * i.quantity,
         0
       );
     }

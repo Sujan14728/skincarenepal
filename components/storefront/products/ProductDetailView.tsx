@@ -119,7 +119,7 @@ export default function ProductDetailView({
                   className='cc-detail-rating'
                   aria-label={`${product.rating} out of 5 stars from ${product.reviewCount} reviews`}
                 >
-                  <Stars />
+                  <Stars rating={product.rating} />
                   <strong>{product.rating}</strong>
                   <span>
                     ({product.reviewCount}{' '}
@@ -159,9 +159,11 @@ export default function ProductDetailView({
               >
                 {buyLabel(product)}
               </button>
-              <a className='cc-detail-routine-link' href='#routine'>
-                Add to Routine →
-              </a>
+              {routine.length > 0 && (
+                <a className='cc-detail-routine-link' href='#routine'>
+                  Add to Routine →
+                </a>
+              )}
               <ul
                 className='cc-detail-trust'
                 aria-label='Product trust markers'

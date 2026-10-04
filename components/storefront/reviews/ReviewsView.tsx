@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Check, Play } from 'lucide-react';
 import MediaLightbox from '@/components/storefront/MediaLightbox';
+import { starString } from '@/components/storefront/products/ProductCard';
 import {
   DESIGN_IMAGES,
   initials,
@@ -86,7 +87,7 @@ export default function ReviewsView({
                 ⭐ {overall.average}/5 Average Rating
               </span>
               <span className='stat-chip'>
-                {overall.count.toLocaleString()} Customer{' '}
+                {overall.count.toLocaleString('en-IN')} Customer{' '}
                 {overall.count === 1 ? 'Review' : 'Reviews'}
               </span>
               <span className='stat-chip'>Shared on Instagram</span>
@@ -217,7 +218,9 @@ export default function ReviewsView({
                   <article key={rating.productId} className='rating-card'>
                     <h3>{rating.product}</h3>
                     <div className='score'>{rating.score}</div>
-                    <div className='rating-stars'>★★★★★</div>
+                    <div className='rating-stars' aria-hidden='true'>
+                      {starString(rating.score)}
+                    </div>
                     <p className='rating-count'>
                       {rating.count} {rating.count === 1 ? 'Review' : 'Reviews'}
                     </p>

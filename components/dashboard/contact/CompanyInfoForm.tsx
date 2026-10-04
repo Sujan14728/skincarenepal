@@ -62,17 +62,18 @@ export default function CompanyInfoForm() {
     e.preventDefault();
     setLoading(true);
     try {
-      const body: CompanyInfoBody = {};
       const emails = clean(form.companyEmails);
       const phones = clean(form.companyPhones);
+      const location = form.companyLocation.trim();
+      // Always send all three so removing the last email/phone or the
+      // location actually clears it (the route treats omitted as unchanged).
+      const body: CompanyInfoBody = {
+        companyEmails: emails,
+        companyPhones: phones,
+        companyLocation: location
+      };
 
-      if (emails.length > 0) body.companyEmails = emails;
-      if (phones.length > 0) body.companyPhones = phones;
-      if (form.companyLocation.trim() !== '') {
-        body.companyLocation = form.companyLocation.trim();
-      }
-
-      if (Object.keys(body).length === 0) {
+      if (!emails.length && !phones.length && !location) {
         toast.error('Add at least one detail before saving');
         setLoading(false);
         return;

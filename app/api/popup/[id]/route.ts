@@ -44,28 +44,30 @@ export async function PUT(
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
-    // Delete old popup details first
-    await prisma.popupDetails.deleteMany({
-      where: { popupContentId: id }
-    });
-
-    // Update popup content and recreate its details
-    const popup = await prisma.popupContent.update({
-      where: { id },
-      data: {
-        title,
-        description: description || '',
-        PopupDetails: {
-          create: (popupdetails || []).map(
-            (d: { name: string; image: string }) => ({
-              name: d.name,
-              image: d.image
-            })
-          )
-        }
-      },
-      include: { PopupDetails: true }
-    });
+    // Replace details atomically so a failed update can't lose the slides.
+    const [, popup] = await prisma.$transaction([
+      prisma.popupDetails.deleteMany({
+        where: { popupContentId: id }
+      }),
+      prisma.popupContent.update({
+        where: { id },
+        data: {
+          title,
+          description: description || '',
+          // Not @updatedAt in the schema, so set it explicitly.
+          updatedAt: new Date(),
+          PopupDetails: {
+            create: (popupdetails || []).map(
+              (d: { name: string; image: string }) => ({
+                name: d.name,
+                image: d.image
+              })
+            )
+          }
+        },
+        include: { PopupDetails: true }
+      })
+    ]);
 
     return NextResponse.json(popup);
   } catch (error) {

@@ -91,17 +91,22 @@ export async function PUT(
       }
     });
     if (body.status && updated.email) {
-      // fetch full order with items to include in status email
-      const full = await prisma.order.findUnique({
-        where: { id: updated.id },
-        include: { items: true }
-      });
-      await sendOrderStatusEmail(
-        updated.email,
-        updated.orderNumber,
-        body.status,
-        full || undefined
-      );
+      // The status is already saved; an SMTP failure must not report the
+      // update as failed (the admin would retry and send duplicates).
+      try {
+        const full = await prisma.order.findUnique({
+          where: { id: updated.id },
+          include: { items: true }
+        });
+        await sendOrderStatusEmail(
+          updated.email,
+          updated.orderNumber,
+          body.status,
+          full || undefined
+        );
+      } catch (emailError) {
+        console.error(`Status email failed for order ${id}:`, emailError);
+      }
     }
     return NextResponse.json(updated);
   } catch (error) {

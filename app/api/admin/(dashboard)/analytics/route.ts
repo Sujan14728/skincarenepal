@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dayjs, { type Dayjs } from 'dayjs';
+import type { Dayjs } from 'dayjs';
 import { OrderStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getAdmin } from '@/lib/auth';
+import { storeTime } from '@/lib/nepal-time';
 import type {
   AnalyticsRange,
   AnalyticsResponse,
@@ -55,7 +56,7 @@ export async function GET(req: NextRequest) {
     : '30d';
   const { days, bucket } = RANGES[range];
 
-  const now = dayjs();
+  const now = storeTime();
   const start = now.subtract(days - 1, 'day').startOf('day');
   const prevStart = start.subtract(days, 'day');
 
@@ -137,7 +138,7 @@ export async function GET(req: NextRequest) {
       });
     }
     for (const o of orders) {
-      const key = bucketStart(dayjs(o.placedAt), bucket).format('YYYY-MM-DD');
+      const key = bucketStart(storeTime(o.placedAt), bucket).format('YYYY-MM-DD');
       const point = buckets.get(key);
       if (!point) continue;
       point.orders += 1;

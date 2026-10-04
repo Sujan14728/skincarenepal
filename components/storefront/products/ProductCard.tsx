@@ -24,10 +24,16 @@ export function productTagline(product: StorefrontProduct) {
   return product.excerpt || stripHtml(product.description);
 }
 
-export function Stars() {
+/** Rounded rating as filled stars, padded with empty ones to five. */
+export function starString(rating: number | null | undefined) {
+  const filled = Math.max(0, Math.min(5, Math.round(rating ?? 0)));
+  return '★'.repeat(filled) + '☆'.repeat(5 - filled);
+}
+
+export function Stars({ rating }: { rating: number | null }) {
   return (
     <span className='cc-stars' aria-hidden='true'>
-      ★★★★★
+      {starString(rating)}
     </span>
   );
 }
@@ -75,7 +81,7 @@ export function CardBody({ product }: { product: StorefrontProduct }) {
             className='cc-rating-row'
             aria-label={`${product.rating} out of 5 stars from ${product.reviewCount} reviews`}
           >
-            <Stars />
+            <Stars rating={product.rating} />
             <strong>{product.rating}</strong>
             <span>({product.reviewCount})</span>
           </div>

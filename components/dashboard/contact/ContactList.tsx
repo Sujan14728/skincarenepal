@@ -29,6 +29,7 @@ import {
   type Contact,
   type ContactStatus
 } from './ContactDetails';
+import { refreshAdminCounts } from '@/components/dashboard/AdminContext';
 
 type Filter = 'ALL' | 'UNREAD' | 'REPLIED' | 'ARCHIVED';
 
@@ -82,7 +83,10 @@ export default function ContactList() {
   const fetchContacts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/contact?q=${debouncedSearch}`);
+      // Route defaults to 20 rows (max 100); tab counts come from this list.
+      const res = await fetch(
+        `/api/contact?limit=100&q=${encodeURIComponent(debouncedSearch)}`
+      );
       const data = await res.json();
       if (res.ok) setContacts(data.contacts || []);
       else toast.error(data.error);
@@ -104,6 +108,7 @@ export default function ContactList() {
 
       if (res.ok) {
         toast.success('Message deleted');
+        refreshAdminCounts();
         setContacts(prev => prev.filter(c => c.id !== id));
         setSelectedId(null);
       } else {
@@ -114,7 +119,11 @@ export default function ContactList() {
     }
   };
 
-  const handleStatusChange = async (id: number, newStatus: ContactStatus) => {
+  const handleStatusChange = async (
+    id: number,
+    newStatus: ContactStatus,
+    { quiet = false } = {}
+  ) => {
     setUpdatingId(id);
     try {
       const res = await fetch(`/api/contact/${id}`, {
@@ -129,7 +138,8 @@ export default function ContactList() {
       setContacts(prev =>
         prev.map(c => (c.id === id ? { ...c, status: newStatus } : c))
       );
-      toast.success(STATUS_TOAST[newStatus]);
+      if (!quiet) toast.success(STATUS_TOAST[newStatus]);
+      refreshAdminCounts();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update');
     } finally {
@@ -289,7 +299,12 @@ export default function ContactList() {
                   <li key={c.id}>
                     <button
                       type='button'
-                      onClick={() => setSelectedId(c.id)}
+                      onClick={() => {
+                        setSelectedId(c.id);
+                        // Opening an unread message marks it read.
+                        if (unread)
+                          handleStatusChange(c.id, 'READ', { quiet: true });
+                      }}
                       aria-current={active ? 'true' : undefined}
                       className={cn(
                         'relative flex w-full flex-col gap-0.5 px-4 py-3.5 text-left outline-none transition-colors focus-visible:bg-muted/50',

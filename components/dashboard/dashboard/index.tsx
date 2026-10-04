@@ -236,7 +236,10 @@ export default function DashboardMain() {
         setError(null);
       })
       .catch(err => {
-        if (err.name !== 'AbortError') setError(err.message);
+        if (err.name === 'AbortError') return;
+        // Drop the previous range's numbers so the error state is shown.
+        setError(err.message);
+        setData(null);
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);

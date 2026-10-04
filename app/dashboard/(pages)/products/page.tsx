@@ -163,7 +163,9 @@ const ProductsPage = () => {
         toast.success('Product deleted');
         fetchProducts();
       } else {
-        toast.error('Product could not be deleted. Try again.');
+        // Surface the server's reason (e.g. the product has been ordered).
+        const data = await response.json().catch(() => null);
+        toast.error(data?.error || 'Product could not be deleted. Try again.');
       }
     } catch (error) {
       console.error('Error deleting product:', error);

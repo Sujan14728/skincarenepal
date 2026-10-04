@@ -176,7 +176,7 @@ const SettingsPage = () => {
       const saveRes = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedSettings)
+        body: JSON.stringify({ qrImageUrl: updatedSettings.qrImageUrl })
       });
 
       if (!saveRes.ok) {
@@ -212,7 +212,7 @@ const SettingsPage = () => {
       const saveRes = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedSettings)
+        body: JSON.stringify({ qrImageUrl: updatedSettings.qrImageUrl })
       });
 
       if (saveRes.ok) {
@@ -237,12 +237,19 @@ const SettingsPage = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!Number.isFinite(settings.deliveryCost) || !Number.isFinite(settings.freeShippingThreshold)) {
+      toast.error('Enter both amounts before saving.');
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
+        body: JSON.stringify({
+          deliveryCost: settings.deliveryCost,
+          freeShippingThreshold: settings.freeShippingThreshold
+        })
       });
 
       setLoading(false);

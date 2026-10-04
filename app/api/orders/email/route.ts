@@ -24,16 +24,18 @@ export async function POST(req: NextRequest) {
     }
     const order = await prisma.order.findUnique({
       where: { id: Number(orderId) },
-      include: { items: true }
+      include: { items: true, user: { select: { email: true } } }
     });
-    if (!order || !order.email)
+    // The admin dialog falls back to the linked user's email, so do the same.
+    const recipient = order?.email ?? order?.user?.email;
+    if (!order || !recipient)
       return NextResponse.json(
         { error: 'Order or email not found' },
         { status: 404 }
       );
 
 
-    await sendCustomOrderEmail(order.email, subject, message, order);
+    await sendCustomOrderEmail(recipient, subject, message, order);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(

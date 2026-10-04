@@ -85,7 +85,7 @@ const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) => {
 
   const handleInputChange = (
     field: keyof Product,
-    value: string | number | string[] | undefined
+    value: string | number | string[] | null | undefined
   ) => {
     setFormData(prev => ({
       ...prev,
@@ -296,7 +296,8 @@ const ProductForm = ({ product, onSuccess, onCancel }: ProductFormProps) => {
                   const value = e.target.value;
                   handleInputChange(
                     'salePrice',
-                    value ? parseInt(value) : undefined
+                    // null (not undefined) survives JSON, so clearing removes the sale
+                    value ? parseInt(value) : null
                   );
                 }}
                 placeholder='0'

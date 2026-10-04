@@ -52,6 +52,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
   AdminContext,
+  onAdminCountsChanged,
   useAdmin,
   type AdminInfo
 } from '@/components/dashboard/AdminContext';
@@ -171,7 +172,12 @@ const initials = (admin: AdminInfo | null) => {
 function useLogout() {
   const router = useRouter();
   return () =>
-    toast.promise(fetch('/api/admin/logout', { method: 'POST' }), {
+    toast.promise(
+      // fetch resolves on any status; treat non-2xx (e.g. 429) as failure.
+      fetch('/api/admin/logout', { method: 'POST' }).then(res => {
+        if (!res.ok) throw new Error('Logout failed');
+      }),
+      {
       loading: 'Logging out…',
       success: () => {
         router.push('/dashboard/login');
@@ -603,6 +609,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     setMenuOpen(false);
     loadAdmin();
   }, [pathname, loadAdmin]);
+  // Pages signal status changes (orders verified, messages read) here.
+  useEffect(() => onAdminCountsChanged(loadAdmin), [loadAdmin]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
