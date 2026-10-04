@@ -5,6 +5,7 @@ import {
   ALLOWED_IMAGE_TYPES,
   ALLOWED_VIDEO_TYPES,
 } from "@/lib/media/imagekit";
+import { getAdmin } from "@/lib/auth";
 
 // POST /api/media/upload - Server-side upload to ImageKit
 export async function POST(req: NextRequest) {
@@ -35,9 +36,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    // Public for checkout payment slips, so anonymous callers may only upload
+    // images into the default folder; videos and custom folders are admin-only.
+    const isAdmin = Boolean(await getAdmin(req));
+    const fileType = file.type.startsWith("video/") ? "video" : "image";
+    if (!isAdmin && fileType === "video") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     // Validate file type and size
     try {
-      const fileType = file.type.startsWith("video/") ? "video" : "image";
       validateFile(file, fileType);
     } catch (validationError) {
       return NextResponse.json(
@@ -52,8 +60,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Prepare upload options
-    const folder = (formData.get("folder") as string) || "articles/images";
-    const useUniqueFileName = formData.get("useUniqueFileName") !== "false";
+    const folder =
+      (isAdmin && (formData.get("folder") as string)) || "articles/images";
+    const useUniqueFileName =
+      !isAdmin || formData.get("useUniqueFileName") !== "false";
     const tags = formData.get("tags") as string;
 
     // Generate filename

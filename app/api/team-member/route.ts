@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 // Helper: validate ImageKit URL (allow empty strings)
@@ -80,6 +81,8 @@ export async function GET() {
 // POST - Create new member
 // =====================================
 export async function POST(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   try {
     const data = await req.json();
     if (!isValidImageKitUrl(data?.image)) {
@@ -106,6 +109,8 @@ export async function POST(req: NextRequest) {
 // PUT - Update existing member
 // =====================================
 export async function PUT(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   try {
     const data = await req.json();
     const { id, ...update } = data;
@@ -138,6 +143,8 @@ export async function PUT(req: NextRequest) {
 // DELETE - Remove a member
 // =====================================
 export async function DELETE(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   try {
     const { id } = await req.json();
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });

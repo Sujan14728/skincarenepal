@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 // GET /api/popup/[id]
@@ -33,6 +34,8 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   try {
     const { title, description, popupdetails } = await req.json();
     const id = Number((await params).id);
@@ -79,6 +82,8 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   try {
     const id = Number((await params).id);
 

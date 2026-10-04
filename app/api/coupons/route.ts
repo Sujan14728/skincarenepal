@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   try {
     const body = await req.json();
     const {
@@ -61,6 +64,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   try {
     const url = req.nextUrl;
     const page = Number(url.searchParams.get('page') ?? 1);
@@ -97,6 +102,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   try {
     const body = await req.json();
     const { id, ...data } = body ?? {};
@@ -128,6 +135,8 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   try {
     const url = req.nextUrl;
     const idParam = url.searchParams.get('id');
