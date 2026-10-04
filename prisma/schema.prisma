@@ -36,6 +36,30 @@ model Product {
   status         ProductStatus @default(IN_STOCK)
   orderItems     OrderItem[]
   coupons        Coupon[]
+  reviews        Review[]
+}
+
+// Customer reviews curated by admins (e.g. reposted from Instagram).
+model Review {
+  id           Int        @id @default(autoincrement())
+  type         ReviewType @default(TEXT)
+  customerName String
+  location     String?
+  instagramUrl String?
+  rating       Int        @default(5)
+  content      String?
+  mediaUrl     String?
+  thumbnailUrl String?
+  productId    Int?
+  product      Product?   @relation(fields: [productId], references: [id], onDelete: SetNull)
+  isFeatured   Boolean    @default(false)
+  isPublished  Boolean    @default(true)
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([isPublished, sortOrder])
+  @@index([productId])
 }
 
 model Order {
@@ -186,6 +210,12 @@ enum ContactStatus {
   READ
   REPLIED
   ARCHIVED
+}
+
+enum ReviewType {
+  TEXT
+  IMAGE
+  VIDEO
 }
 
 enum PaymentMethod {

@@ -5,33 +5,34 @@ type Props = {
   status: OrderStatus;
 };
 
+// Soft tints grouped by stage: waiting on us (amber), in progress (blue),
+// done (green), dead end (red). The label always carries the meaning too.
+const STATUS: Record<
+  OrderStatus,
+  { variant: 'warning' | 'blue' | 'success' | 'red'; label: string }
+> = {
+  PENDING_CONFIRMATION: { variant: 'warning', label: 'Pending confirmation' },
+  PENDING_VERIFICATION: { variant: 'warning', label: 'Pending verification' },
+  VERIFIED: { variant: 'blue', label: 'Verified' },
+  PROCESSING: { variant: 'blue', label: 'Processing' },
+  SHIPPED: { variant: 'blue', label: 'Shipped' },
+  DELIVERED: { variant: 'success', label: 'Delivered' },
+  CANCELLED: { variant: 'red', label: 'Cancelled' },
+  REJECTED: { variant: 'red', label: 'Rejected' }
+};
+
 const OrderStatusBadge = ({ status }: Props) => {
-  const getVariantAndLabel = (status: OrderStatus) => {
-    switch (status) {
-      case 'PENDING_CONFIRMATION':
-        return { variant: 'secondary' as const, label: 'Pending Confirmation' };
-      case 'PENDING_VERIFICATION':
-        return { variant: 'default' as const, label: 'Pending Verification' };
-      case 'PROCESSING':
-        return { variant: 'default' as const, label: 'Processing' };
-      case 'SHIPPED':
-        return { variant: 'default' as const, label: 'Shipped' };
-      case 'DELIVERED':
-        return { variant: 'default' as const, label: 'Delivered' };
-      case 'CANCELLED':
-        return { variant: 'destructive' as const, label: 'Cancelled' };
-      case 'REJECTED':
-        return { variant: 'destructive' as const, label: 'Rejected' };
-      case 'VERIFIED':
-        return { variant: 'success' as const, label: 'Verified' };
-      default:
-        return { variant: 'secondary' as const, label: status };
-    }
+  const { variant, label } = STATUS[status] ?? {
+    variant: 'warning' as const,
+    label: status
   };
 
-  const { variant, label } = getVariantAndLabel(status);
-
-  return <Badge variant={variant}>{label}</Badge>;
+  return (
+    <Badge variant={variant} className='gap-1.5'>
+      <span className='size-1.5 rounded-full bg-current' aria-hidden />
+      {label}
+    </Badge>
+  );
 };
 
 export default OrderStatusBadge;

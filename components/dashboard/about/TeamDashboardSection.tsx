@@ -1,8 +1,31 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { Pencil, Trash2, Plus } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  ImagePlus,
+  Loader2,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Trash2,
+  Users,
+  X
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import PageHeader from '@/components/dashboard/PageHeader';
+import EmptyState from '@/components/dashboard/EmptyState';
+import ConfirmDelete from '@/components/dashboard/ConfirmDelete';
+import FormSheet from '@/components/dashboard/FormSheet';
+import {
+  Field,
+  FormBody,
+  FormFooter,
+  FormSection
+} from '@/components/dashboard/form';
 
 type TeamMember = {
   id: number;
@@ -11,15 +34,27 @@ type TeamMember = {
   image: string;
 };
 
+const EMPTY_FORM = { name: '', title: '', image: '' };
+
+function initials(name: string) {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase())
+    .join('');
+}
+
 export default function TeamDashboardSection() {
   const [members, setMembers] = useState<TeamMember[]>([]);
-  const [form, setForm] = useState({ name: '', title: '', image: '' });
-  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState(EMPTY_FORM);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch members
   const fetchMembers = async () => {
     try {
       const res = await fetch('/api/team-member');
@@ -28,7 +63,9 @@ export default function TeamDashboardSection() {
       setMembers(data);
     } catch (err) {
       console.error(err);
-      alert('Failed to fetch members');
+      toast.error('Could not load team members. Refresh the page to try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -36,12 +73,11 @@ export default function TeamDashboardSection() {
     fetchMembers();
   }, []);
 
-  // Handle image selection & upload
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
+    e.target.value = '';
     if (!selectedFile) return;
 
-    setFile(selectedFile);
     setUploading(true);
 
     const formData = new FormData();
@@ -60,24 +96,25 @@ export default function TeamDashboardSection() {
 
       if (!res.ok) {
         console.error('Upload failed:', data.error);
-        setUploading(false);
+        toast.error('Photo upload failed. Try a different image.');
         return;
       }
 
       setForm(prev => ({ ...prev, image: data.url }));
     } catch (err) {
       console.error('Upload error:', err);
+      toast.error('Photo upload failed. Check your connection and try again.');
     } finally {
       setUploading(false);
     }
   };
 
-  // Add or update member
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const method = editingId ? 'PUT' : 'POST';
     const body = editingId ? { id: editingId, ...form } : form;
 
+    setSaving(true);
     try {
       const res = await fetch('/api/team-member', {
         method,
@@ -87,18 +124,18 @@ export default function TeamDashboardSection() {
 
       if (!res.ok) throw new Error('Save failed');
 
+      toast.success(editingId ? 'Team member saved' : 'Team member added');
       await fetchMembers();
       resetForm();
     } catch (err) {
       console.error(err);
-      alert('Save failed');
+      toast.error('Could not save team member. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
-  // Delete member
   const handleDelete = async (id: number) => {
-    if (!confirm('Delete this member?')) return;
-
     try {
       const res = await fetch('/api/team-member', {
         method: 'DELETE',
@@ -108,142 +145,246 @@ export default function TeamDashboardSection() {
 
       if (!res.ok) throw new Error('Delete failed');
 
+      toast.success('Team member deleted');
       await fetchMembers();
     } catch (err) {
       console.error(err);
-      alert('Delete failed');
+      toast.error('Could not delete team member. Please try again.');
     }
   };
 
-  // Edit member
+  const openCreate = () => {
+    setForm(EMPTY_FORM);
+    setEditingId(null);
+    setShowForm(true);
+  };
+
   const handleEdit = (member: TeamMember) => {
     setForm({ name: member.name, title: member.title, image: member.image });
-    setFile(null);
     setEditingId(member.id);
     setShowForm(true);
   };
 
-  // Reset form
   const resetForm = () => {
-    setForm({ name: '', title: '', image: '' });
-    setFile(null);
+    setForm(EMPTY_FORM);
     setEditingId(null);
     setShowForm(false);
   };
 
-  return (
-    <section className='mx-auto max-w-3xl py-8'>
-      {/* Header */}
-      <div className='mb-4 flex items-center justify-between'>
-        <h2 className='text-2xl font-bold text-gray-700'>Team Members</h2>
-        {!showForm && (
-          <button
-            onClick={() => setShowForm(true)}
-            className='flex items-center gap-2 rounded bg-green-700 px-4 py-2 text-white'
-          >
-            <Plus size={18} /> Add Member
-          </button>
-        )}
-      </div>
+  const addButton = (
+    <Button onClick={openCreate}>
+      <Plus />
+      Add team member
+    </Button>
+  );
 
-      {/* Form */}
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          className='mb-6 space-y-3 rounded-lg border p-4 shadow-sm'
-        >
-          <input
-            className='w-full border p-2'
-            placeholder='Name'
-            value={form.name}
-            onChange={e => setForm({ ...form, name: e.target.value })}
-            required
-          />
-          <input
-            className='w-full border p-2'
-            placeholder='Title'
-            value={form.title}
-            onChange={e => setForm({ ...form, title: e.target.value })}
-            required
-          />
-          <input
-            type='file'
-            accept='image/*'
-            onChange={handleFileChange}
-            className='w-full border p-2'
-          />
-          {uploading && (
-            <div className='text-sm text-gray-500'>Uploading image...</div>
-          )}
-          {(file || form.image) && (
-            <div className='flex justify-center'>
-              <Image
-                src={form.image || URL.createObjectURL(file!)}
-                alt='Preview'
-                width={64}
-                height={64}
-                className='rounded-full'
-              />
+  return (
+    <div className='flex flex-col gap-6'>
+      <PageHeader
+        title='About us'
+        description='The team members shown on the storefront About page.'
+        actions={addButton}
+      />
+
+      {loading ? (
+        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className='flex flex-col gap-3 rounded-xl border bg-card p-3 shadow-xs'
+            >
+              <Skeleton className='aspect-[4/5] w-full rounded-lg' />
+              <Skeleton className='h-4 w-2/3' />
+              <Skeleton className='h-3 w-1/2' />
             </div>
-          )}
-          <div className='flex justify-end gap-2'>
-            <button
-              type='submit'
-              className='rounded bg-green-700 px-4 py-2 text-white'
-              disabled={uploading}
+          ))}
+        </div>
+      ) : members.length === 0 ? (
+        <section className='rounded-xl border bg-card shadow-xs'>
+          <EmptyState
+            icon={Users}
+            title='No team members yet'
+            description='Add the people behind Care & Clean. They appear on the About page in the order they were added.'
+            action={addButton}
+          />
+        </section>
+      ) : (
+        <ul className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+          {members.map(member => (
+            <li
+              key={member.id}
+              className='group flex flex-col gap-3 rounded-xl border bg-card p-3 shadow-xs'
             >
-              {editingId ? 'Update' : 'Add'}
-            </button>
-            <button
-              type='button'
-              onClick={resetForm}
-              className='rounded border px-4 py-2'
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+              <div className='relative aspect-[4/5] overflow-hidden rounded-lg border bg-accent'>
+                {member.image ? (
+                  <Image
+                    src={member.image}
+                    alt={member.name}
+                    fill
+                    sizes='(min-width: 1280px) 20vw, (min-width: 640px) 40vw, 90vw'
+                    className='object-cover'
+                  />
+                ) : (
+                  <span className='grid size-full place-items-center font-display text-3xl font-semibold text-accent-foreground'>
+                    {initials(member.name)}
+                  </span>
+                )}
+              </div>
+              <div className='flex items-start justify-between gap-2 px-1'>
+                <div className='flex min-w-0 flex-col gap-0.5'>
+                  <p className='truncate font-medium text-foreground'>
+                    {member.name}
+                  </p>
+                  <p className='truncate text-sm text-muted-foreground'>
+                    {member.title}
+                  </p>
+                </div>
+                <div className='flex shrink-0 items-center'>
+                  <Button
+                    variant='ghost'
+                    size='icon-sm'
+                    onClick={() => handleEdit(member)}
+                    aria-label={`Edit ${member.name}`}
+                  >
+                    <Pencil />
+                  </Button>
+                  <ConfirmDelete
+                    title='Delete team member?'
+                    description={`${member.name} will be removed from the About page. This can't be undone.`}
+                    confirmLabel='Delete team member'
+                    onConfirm={() => handleDelete(member.id)}
+                  >
+                    <Button
+                      variant='ghost'
+                      size='icon-sm'
+                      className='text-muted-foreground hover:text-destructive'
+                      aria-label={`Delete ${member.name}`}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </ConfirmDelete>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
 
-      {/* Members List */}
-      <ul className='space-y-3'>
-        {members.map(member => (
-          <li
-            key={member.id}
-            className='flex items-center gap-4 rounded-lg border p-3 shadow-sm'
-          >
-            {member.image ? (
-              <Image
-                src={member.image}
-                alt={member.name}
-                width={60}
-                height={60}
-                className='rounded-full object-cover'
-              />
-            ) : (
-              <div className='flex h-[60px] w-[60px] items-center justify-center rounded-full bg-gray-200'>
-                {member.name[0].toUpperCase()}
+      <FormSheet
+        open={showForm}
+        onOpenChange={open => {
+          if (!open) resetForm();
+        }}
+        title={editingId ? 'Edit team member' : 'Add team member'}
+        description='Shown on the storefront About page.'
+      >
+        <form onSubmit={handleSubmit} className='flex min-h-0 flex-1 flex-col'>
+          <FormBody>
+            <FormSection
+              title='Photo'
+              description='A portrait works best. JPG, PNG or WebP.'
+            >
+              <div className='flex items-end gap-4'>
+                {form.image ? (
+                  <div className='relative aspect-[4/5] w-36 overflow-hidden rounded-lg border'>
+                    <Image
+                      src={form.image}
+                      alt='Team member photo'
+                      fill
+                      sizes='144px'
+                      className='object-cover'
+                    />
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='icon-sm'
+                      className='absolute right-1.5 top-1.5 size-7 rounded-full bg-background/90'
+                      onClick={() => setForm(prev => ({ ...prev, image: '' }))}
+                      aria-label='Remove photo'
+                    >
+                      <X />
+                    </Button>
+                  </div>
+                ) : (
+                  <button
+                    type='button'
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className='flex aspect-[4/5] w-36 flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-3 text-center text-muted-foreground transition-colors hover:border-primary/50 hover:bg-accent/40 disabled:pointer-events-none'
+                  >
+                    {uploading ? (
+                      <Loader2 className='size-5 animate-spin' />
+                    ) : (
+                      <ImagePlus className='size-5' />
+                    )}
+                    <span className='text-xs font-medium'>
+                      {uploading ? 'Uploading…' : 'Upload photo'}
+                    </span>
+                  </button>
+                )}
+                {form.image && (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? (
+                      <Loader2 className='animate-spin' />
+                    ) : (
+                      <RefreshCw />
+                    )}
+                    {uploading ? 'Uploading…' : 'Replace photo'}
+                  </Button>
+                )}
               </div>
-            )}
-            <div className='flex-1'>
-              <div className='font-bold'>{member.name}</div>
-              <div className='text-sm text-gray-600'>{member.title}</div>
-            </div>
-            <button
-              onClick={() => handleEdit(member)}
-              className='rounded bg-blue-600 p-2 text-white hover:bg-blue-700'
-            >
-              <Pencil size={18} />
-            </button>
-            <button
-              onClick={() => handleDelete(member.id)}
-              className='rounded bg-red-600 p-2 text-white hover:bg-red-700'
-            >
-              <Trash2 size={18} />
-            </button>
-          </li>
-        ))}
-      </ul>
-    </section>
+              <input
+                ref={fileInputRef}
+                type='file'
+                accept='image/*'
+                onChange={handleFileChange}
+                className='hidden'
+              />
+            </FormSection>
+
+            <FormSection title='Details'>
+              <Field label='Name' htmlFor='member-name' required>
+                <Input
+                  id='member-name'
+                  placeholder='e.g. Aasha Shrestha'
+                  value={form.name}
+                  onChange={e => setForm({ ...form, name: e.target.value })}
+                  required
+                />
+              </Field>
+              <Field
+                label='Title'
+                htmlFor='member-title'
+                hint='Their role, shown under the name.'
+                required
+              >
+                <Input
+                  id='member-title'
+                  placeholder='e.g. Founder & formulator'
+                  value={form.title}
+                  onChange={e => setForm({ ...form, title: e.target.value })}
+                  required
+                />
+              </Field>
+            </FormSection>
+          </FormBody>
+          <FormFooter>
+            <Button variant='outline' type='button' onClick={resetForm}>
+              Cancel
+            </Button>
+            <Button type='submit' disabled={uploading || saving}>
+              {saving && <Loader2 className='animate-spin' />}
+              {editingId ? 'Save changes' : 'Add team member'}
+            </Button>
+          </FormFooter>
+        </form>
+      </FormSheet>
+    </div>
   );
 }

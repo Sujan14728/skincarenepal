@@ -1,0 +1,147 @@
+/* =========================================================
+   Contact — MagicPath "Contact Page" design (peaceful-field-4469).
+   Layout uses Tailwind utilities; these are the design's custom classes.
+   ========================================================= */
+
+.cc-contact .font-sora {
+  font-family: var(--cc-sans);
+}
+.cc-contact .font-fraunces {
+  font-family: var(--cc-serif);
+}
+.cc-contact .pill-button {
+  letter-spacing: 0.08em;
+  border-radius: 999px;
+  justify-content: center;
+  align-items: center;
+  min-width: 44px;
+  min-height: 48px;
+  padding: 0 24px;
+  font-family: var(--cc-sans);
+  font-size: 12px;
+  font-weight: 600;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    transform 0.2s;
+  display: inline-flex;
+}
+.cc-contact .pill-button:active {
+  transform: translateY(1px);
+}
+.cc-contact .pill-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.cc-contact .field-label {
+  color: #17220f;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--cc-sans);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+}
+.cc-contact .field-label input,
+.cc-contact .field-label select,
+.cc-contact .field-label textarea {
+  color: #17220f;
+  background: #fff;
+  border: 1px solid #dce6d3;
+  border-radius: 8px;
+  outline: none;
+  width: 100%;
+  padding: 0 14px;
+  font-family: var(--cc-sans);
+  font-size: 16px;
+  font-weight: 400;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.cc-contact .field-label input,
+.cc-contact .field-label select {
+  height: 48px;
+}
+.cc-contact .field-label textarea {
+  resize: vertical;
+  min-height: 128px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+.cc-contact .field-label input::placeholder,
+.cc-contact .field-label textarea::placeholder {
+  color: #56634f;
+  opacity: 0.8;
+}
+.cc-contact .field-label input:focus,
+.cc-contact .field-label select:focus,
+.cc-contact .field-label textarea:focus {
+  border-color: #3a9712;
+  box-shadow:
+    0 0 0 2px #3a9712,
+    0 0 0 4px #fff;
+}
+.cc-contact .hero-image {
+  animation: 0.7s both cc-hero-in;
+}
+.cc-contact .hero-copy {
+  animation: 0.7s 80ms both cc-copy-in;
+}
+.cc-contact .form-card {
+  animation: 0.8s cubic-bezier(0.22, 1.25, 0.36, 1) both cc-rise-in;
+}
+.cc-contact .success-state {
+  animation: 0.35s both cc-success-in;
+}
+.cc-contact .ken-burns {
+  animation: 6s ease-in-out infinite alternate cc-ken-burns-contact;
+}
+@keyframes cc-hero-in {
+  0% {
+    opacity: 0;
+    transform: translate(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0);
+  }
+}
+@keyframes cc-copy-in {
+  0% {
+    opacity: 0;
+    transform: translate(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0);
+  }
+}
+@keyframes cc-rise-in {
+  0% {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes cc-success-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes cc-ken-burns-contact {
+  0% {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.03);
+  }
+}

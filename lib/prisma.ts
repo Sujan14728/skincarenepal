@@ -33,6 +33,15 @@ export const prisma =
 
 if (process.env.NODE_ENV !== 'production') global.prisma = prisma;
 
+/**
+ * Prisma error code (e.g. P2025). Duck-typed because `instanceof` against the
+ * runtime/library class fails in the production bundle.
+ */
+export const prismaErrorCode = (err: unknown) =>
+  typeof err === 'object' && err !== null && 'code' in err
+    ? String((err as { code: unknown }).code)
+    : null;
+
 // Graceful shutdown
 // process.on('beforeExit', async () => {
 //   await prisma.$disconnect();

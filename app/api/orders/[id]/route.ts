@@ -84,7 +84,9 @@ export async function PUT(
         status: body.status,
         note: body.note,
         paymentSlipUrl: body.paymentSlipUrl,
-        paymentMethod: body.paymentMethod || 'COD',
+        // Only change the payment method when one is sent; status-only
+        // updates used to reset ONLINE orders to COD.
+        paymentMethod: body.paymentMethod ?? undefined,
         verifiedAt: body.verifiedAt ? new Date(body.verifiedAt) : undefined
       }
     });

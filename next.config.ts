@@ -62,6 +62,7 @@ const nextConfig: NextConfig = {
       { source: '/products', destination: '/landing/products' },
       { source: '/products/:slug', destination: '/landing/products/:slug' },
       { source: '/returns', destination: '/landing/returns' },
+      { source: '/reviews', destination: '/landing/reviews' },
       { source: '/shipping', destination: '/landing/shipping' },
       { source: '/terms', destination: '/landing/terms' }
     ];

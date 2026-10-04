@@ -1,21 +1,29 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Coupon } from '@/lib/types/coupon';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { CheckedState } from '@radix-ui/react-checkbox';
+import { Loader2, Percent, Wallet } from 'lucide-react';
 import dayjs from 'dayjs';
 import { toast } from 'sonner';
+import { Coupon } from '@/lib/types/coupon';
+import {
+  Field,
+  FieldRow,
+  FormBody,
+  FormFooter,
+  FormSection,
+  SwitchField
+} from '@/components/dashboard/form';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 type Props = {
   coupon?: Coupon | null;
@@ -23,12 +31,29 @@ type Props = {
   onSubmit: (_coupon: Coupon) => void;
 };
 
+const ALL_PRODUCTS = 'all';
+
+const DISCOUNT_TYPES = [
+  {
+    value: 'PERCENTAGE',
+    label: 'Percentage',
+    hint: 'e.g. 15% off',
+    icon: Percent
+  },
+  {
+    value: 'FIXED',
+    label: 'Fixed amount',
+    hint: 'e.g. Rs. 200 off',
+    icon: Wallet
+  }
+] as const;
+
 export default function CouponForm({ coupon, onClose, onSubmit }: Props) {
   const [products, setProducts] = useState<Array<{ id: number; name: string }>>(
     []
   );
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    ...coupon,
     code: coupon?.code ?? '',
     discountType: coupon?.discountType ?? 'PERCENTAGE',
     discountValue: coupon?.discountValue ?? 0,
@@ -59,21 +84,8 @@ export default function CouponForm({ coupon, onClose, onSubmit }: Props) {
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-
-    setForm(prev => ({
-      ...prev,
-      [name]:
-        type === 'checkbox'
-          ? checked
-          : type === 'number'
-            ? value === ''
-              ? ''
-              : value
-            : type === 'date'
-              ? value
-              : value
-    }));
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,6 +103,7 @@ export default function CouponForm({ coupon, onClose, onSubmit }: Props) {
       validUntil: form.validUntil ? dayjs(form.validUntil).toDate() : undefined
     };
 
+    setSaving(true);
     try {
       const method = coupon ? 'PUT' : 'POST';
       const res = await fetch('/api/coupons', {
@@ -100,137 +113,264 @@ export default function CouponForm({ coupon, onClose, onSubmit }: Props) {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      toast.success(
-        coupon ? 'Coupon updated successfully' : 'Coupon created successfully'
-      );
+      toast.success(coupon ? 'Coupon updated' : 'Coupon created');
       onSubmit(data.coupon ?? data);
       onClose();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      toast.error(err.message || 'Something went wrong');
+    } catch (err) {
+      toast.error(
+        err instanceof Error && err.message
+          ? err.message
+          : 'Could not save the coupon. Please try again.'
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
+  const isPercent = form.discountType === 'PERCENTAGE';
+
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className='sm:max-w-[500px]'>
-        <DialogHeader>
-          <DialogTitle>{coupon ? 'Edit' : 'Create'} Coupon</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className='space-y-4'>
-          <div>
-            <Label>Code</Label>
+    <form onSubmit={handleSubmit} className='flex min-h-0 flex-1 flex-col'>
+      <FormBody>
+        <FormSection
+          title='Discount'
+          description='The code customers enter at checkout and what it takes off.'
+        >
+          <Field
+            label='Coupon code'
+            htmlFor='code'
+            required
+            hint='Customers must type the code exactly as shown.'
+          >
             <Input
+              id='code'
               name='code'
               value={form.code}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div>
-            <Label>Discount Type</Label>
-            <select
-              name='discountType'
-              value={form.discountType}
               onChange={e =>
                 setForm(prev => ({
                   ...prev,
-                  discountType: e.target.value as 'PERCENTAGE' | 'FIXED'
+                  code: e.target.value.toUpperCase().replace(/\s+/g, '')
                 }))
               }
+              placeholder='e.g. GLOW15'
+              autoComplete='off'
+              spellCheck={false}
+              className='font-mono uppercase tracking-wide'
               required
-              className='w-full rounded border px-2 py-1'
+            />
+          </Field>
+
+          <Field label='Discount type' required>
+            <div
+              role='radiogroup'
+              aria-label='Discount type'
+              className='grid grid-cols-2 gap-2'
             >
-              <option value='PERCENTAGE'>Percentage</option>
-              <option value='FIXED'>Fixed Amount</option>
-            </select>
-          </div>
-          <div>
-            <Label>Discount Value</Label>
-            <Input
-              type='number'
-              name='discountValue'
-              value={form.discountValue ?? ''}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div>
-            <Label>Minimum Purchase</Label>
-            <Input
-              type='number'
-              name='minPurchase'
-              value={form.minPurchase ?? ''}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <Label>Product (Optional - leave empty for all products)</Label>
-            <select
-              name='productId'
-              value={form.productId ?? ''}
-              onChange={e =>
+              {DISCOUNT_TYPES.map(({ value, label, hint, icon: Icon }) => {
+                const active = form.discountType === value;
+                return (
+                  <label
+                    key={value}
+                    className={cn(
+                      'flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50',
+                      active
+                        ? 'border-primary bg-accent ring-1 ring-primary'
+                        : 'hover:border-primary/40 hover:bg-muted/40'
+                    )}
+                  >
+                    <input
+                      type='radio'
+                      name='discountType'
+                      value={value}
+                      checked={active}
+                      onChange={() =>
+                        setForm(prev => ({ ...prev, discountType: value }))
+                      }
+                      className='sr-only'
+                    />
+                    <Icon
+                      aria-hidden
+                      className={cn(
+                        'mt-0.5 size-4 shrink-0',
+                        active ? 'text-primary' : 'text-muted-foreground'
+                      )}
+                    />
+                    <span className='flex flex-col gap-0.5'>
+                      <span className='text-sm font-medium text-foreground'>
+                        {label}
+                      </span>
+                      <span className='text-xs text-muted-foreground'>
+                        {hint}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </Field>
+
+          <Field
+            label='Discount value'
+            htmlFor='discountValue'
+            required
+            hint={
+              isPercent
+                ? 'Percentage taken off the order subtotal.'
+                : 'Amount in rupees taken off the order subtotal.'
+            }
+          >
+            <div className='relative sm:max-w-[220px]'>
+              {!isPercent && (
+                <span className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground'>
+                  Rs.
+                </span>
+              )}
+              <Input
+                id='discountValue'
+                type='number'
+                name='discountValue'
+                inputMode='numeric'
+                min={0}
+                max={isPercent ? 100 : undefined}
+                value={form.discountValue ?? ''}
+                onChange={handleChange}
+                className={cn('tabular-nums', isPercent ? 'pr-8' : 'pl-10')}
+                required
+              />
+              {isPercent && (
+                <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground'>
+                  %
+                </span>
+              )}
+            </div>
+          </Field>
+        </FormSection>
+
+        <FormSection
+          title='Conditions'
+          description='Limit when and how often the coupon can be used.'
+        >
+          <FieldRow>
+            <Field
+              label='Minimum purchase'
+              htmlFor='minPurchase'
+              optional
+              hint='Leave empty for no minimum.'
+            >
+              <div className='relative'>
+                <span className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground'>
+                  Rs.
+                </span>
+                <Input
+                  id='minPurchase'
+                  type='number'
+                  name='minPurchase'
+                  inputMode='numeric'
+                  min={0}
+                  value={form.minPurchase ?? ''}
+                  onChange={handleChange}
+                  className='pl-10 tabular-nums'
+                />
+              </div>
+            </Field>
+            <Field
+              label='Usage limit'
+              htmlFor='usageLimit'
+              optional
+              hint='Total redemptions allowed. Empty means unlimited.'
+            >
+              <Input
+                id='usageLimit'
+                type='number'
+                name='usageLimit'
+                inputMode='numeric'
+                min={0}
+                value={form.usageLimit ?? ''}
+                onChange={handleChange}
+                placeholder='Unlimited'
+                className='tabular-nums'
+              />
+            </Field>
+          </FieldRow>
+          <Field
+            label='Product'
+            optional
+            hint='Restrict the coupon to one product, or leave it on all products.'
+          >
+            <Select
+              value={form.productId ? String(form.productId) : ALL_PRODUCTS}
+              onValueChange={v =>
                 setForm(prev => ({
                   ...prev,
-                  productId: e.target.value ? Number(e.target.value) : ''
+                  productId: v === ALL_PRODUCTS ? '' : Number(v)
                 }))
               }
-              className='w-full rounded border px-2 py-1'
             >
-              <option value=''>All Products</option>
-              {products.map(product => (
-                <option key={product.id} value={product.id}>
-                  {product.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className='flex items-center space-x-2'>
-            <Checkbox
-              id='isActive'
-              name='isActive'
-              checked={!!form.isActive}
-              onCheckedChange={(checked: CheckedState) =>
-                setForm(prev => ({ ...prev, isActive: !!checked }))
-              }
-            />
-            <Label htmlFor='isActive'>Active</Label>
-          </div>
-          <div>
-            <Label>Usage Limit</Label>
-            <Input
-              type='number'
-              name='usageLimit'
-              value={form.usageLimit ?? ''}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <Label>Valid From</Label>
-            <Input
-              type='date'
-              name='validFrom'
-              value={form.validFrom ?? ''}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <Label>Valid Until</Label>
-            <Input
-              type='date'
-              name='validUntil'
-              value={form.validUntil ?? ''}
-              onChange={handleChange}
-            />
-          </div>
-          <DialogFooter className='flex justify-end space-x-2'>
-            <Button variant='outline' onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type='submit'>{coupon ? 'Update' : 'Create'}</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              <SelectTrigger className='w-full' aria-label='Product'>
+                <SelectValue placeholder='All products' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value={ALL_PRODUCTS}>All products</SelectItem>
+                  {products.map(product => (
+                    <SelectItem key={product.id} value={String(product.id)}>
+                      {product.name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+        </FormSection>
+
+        <FormSection
+          title='Schedule'
+          description='Leave the dates empty to start now and never expire.'
+        >
+          <FieldRow>
+            <Field label='Valid from' htmlFor='validFrom' optional>
+              <Input
+                id='validFrom'
+                type='date'
+                name='validFrom'
+                value={form.validFrom ?? ''}
+                onChange={handleChange}
+              />
+            </Field>
+            <Field label='Valid until' htmlFor='validUntil' optional>
+              <Input
+                id='validUntil'
+                type='date'
+                name='validUntil'
+                min={form.validFrom || undefined}
+                value={form.validUntil ?? ''}
+                onChange={handleChange}
+              />
+            </Field>
+          </FieldRow>
+        </FormSection>
+
+        <FormSection title='Status'>
+          <SwitchField
+            label='Active'
+            description='Inactive coupons are rejected at checkout, even within their dates.'
+            checked={!!form.isActive}
+            onCheckedChange={checked =>
+              setForm(prev => ({ ...prev, isActive: checked }))
+            }
+          />
+        </FormSection>
+      </FormBody>
+
+      <FormFooter>
+        <Button type='button' variant='outline' onClick={onClose}>
+          Cancel
+        </Button>
+        <Button type='submit' disabled={saving}>
+          {saving && <Loader2 className='animate-spin' />}
+          {coupon ? 'Save changes' : 'Create coupon'}
+        </Button>
+      </FormFooter>
+    </form>
   );
 }
