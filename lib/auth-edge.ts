@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'skincarenepal12345';
+// No fallback: a default secret would let anyone who has read the source
+// mint admin tokens. Without JWT_SECRET every token is rejected.
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export interface JWTPayload {
   id: number;
@@ -28,6 +30,11 @@ function base64UrlDecode(str: string): string {
 export async function verifyTokenEdge(
   token: string
 ): Promise<JWTPayload | null> {
+  if (!JWT_SECRET) {
+    console.error('JWT_SECRET is not set; rejecting all tokens.');
+    return null;
+  }
+
   try {
     const parts = token.split('.');
     if (parts.length !== 3) {
@@ -35,6 +42,11 @@ export async function verifyTokenEdge(
     }
 
     const [headerB64, payloadB64, signatureB64] = parts;
+
+    const header = JSON.parse(base64UrlDecode(headerB64)) as { alg?: string };
+    if (header.alg !== 'HS256') {
+      return null;
+    }
 
     // Decode payload
     const payload = JSON.parse(base64UrlDecode(payloadB64)) as JWTPayload;

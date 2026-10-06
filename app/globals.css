@@ -22,7 +22,10 @@
   --border: oklch(0.929 0.013 255.508);
   --input: oklch(0.929 0.013 255.508);
   --ring: oklch(0.55 0.17 150);
-  --chart-1: oklch(0.646 0.222 41.116);
+  /* Brand green, validated >= 3:1 on white (dataviz validator). */
+  --chart-1: #2f7d12;
+  --chart-grid: #ececea;
+  --chart-axis: #8a8a85;
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
@@ -141,4 +144,64 @@
 html,
 body {
   scroll-behavior: smooth;
+}
+
+/* -------------------------------------------------
+   Admin portal theme. Applied to the dashboard shell and to <body> while
+   the dashboard is mounted (so dialogs/sheets portalled to <body> match).
+   Cool porcelain canvas, white surfaces, pine-green chrome, leaf accent.
+   ------------------------------------------------- */
+.admin-theme {
+  --canvas: #f4f6f3;
+  --background: #ffffff;
+  --foreground: #111a15;
+  --card: #ffffff;
+  --card-foreground: #111a15;
+  --popover: #ffffff;
+  --popover-foreground: #111a15;
+  --primary: #2f7d12;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2ed;
+  --secondary-foreground: #1b2a21;
+  --muted: #f0f3ef;
+  --muted-foreground: #5d6a62;
+  --accent: #eaf4e4;
+  --accent-foreground: #245f0e;
+  --destructive: #c42b2b;
+  --border: #e2e7e1;
+  --input: #d5dcd4;
+  --ring: #2f7d12;
+  --radius: 0.75rem;
+
+  /* Sidebar ("pine") */
+  --pine: #0f2a1d;
+  --pine-raised: #17392a;
+  --pine-line: rgba(201, 225, 208, 0.12);
+  --pine-foreground: #e9f2ec;
+  --pine-muted: #8fa99a;
+  --pine-accent: #a6e38a;
+
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.admin-theme ::selection {
+  background: #cfe9c2;
+  color: #111a15;
+}
+
+/* Topographic contour lines – a nod to the hills, used only on pine chrome. */
+.admin-contours {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520' viewBox='0 0 520 520' fill='none' stroke='%23a6e38a' stroke-opacity='0.09' stroke-width='1'%3E%3Cpath d='M-20 420c60-40 110-30 160-60s70-90 140-100 120 30 180 10 80-60 100-70'/%3E%3Cpath d='M-20 450c70-36 120-24 170-52s80-84 146-92 116 32 176 14 78-52 98-60'/%3E%3Cpath d='M-20 480c76-30 130-18 180-44s90-76 150-84 112 34 172 18 76-46 96-52'/%3E%3Cpath d='M-20 510c84-24 140-12 190-36s98-68 156-76 108 36 168 22 74-40 94-44'/%3E%3Cpath d='M120 300c20-40 70-70 120-64s70 46 60 80-60 50-100 40-90-20-80-56z'/%3E%3Cpath d='M150 296c14-28 52-48 88-44s52 34 44 58-44 36-74 30-66-16-58-44z'/%3E%3Cpath d='M180 292c8-16 32-28 56-26s34 22 28 38-30 22-48 18-42-12-36-30z'/%3E%3Cpath d='M-20 140c80 20 140-10 200-40s110-40 170-10 110 40 190 10'/%3E%3Cpath d='M-20 170c80 18 144-8 206-36s108-34 166-6 110 36 188 8'/%3E%3Cpath d='M-20 200c84 16 150-6 212-32s104-28 160-2 110 32 188 6'/%3E%3C/svg%3E");
+  background-size: 520px 520px;
+  background-position: -60px 100%;
+  background-repeat: no-repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-theme *,
+  .admin-theme *::before,
+  .admin-theme *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

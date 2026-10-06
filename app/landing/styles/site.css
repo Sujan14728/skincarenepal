@@ -1,0 +1,453 @@
+/* =========================================================
+   Care & Clean storefront — shared shell (tokens, header, footer)
+   Ported from the MagicPath "Full Website" design.
+   Everything is scoped under .cc-site so the admin panel's
+   shadcn tokens are never affected.
+   ========================================================= */
+
+.cc-site {
+  --cc-green: #3a9712;
+  --cc-cta: #307d0f;
+  --cc-cta-hover: #26630c;
+  --cc-fresh: #44ab18;
+  --cc-forest: #1e4e09;
+  --cc-mint: #ecf9e7;
+  --cc-page: #f7faf3;
+  --cc-ink: #17220f;
+  --cc-secondary: #56634f;
+  --cc-border: #dce6d3;
+  --cc-sun: #f2c94c;
+  --cc-sans: var(--font-sora), sans-serif;
+  --cc-serif: var(--font-fraunces), serif;
+
+  --cc-nav-h: 78px;
+  --cc-bar-h: 0px;
+  --cc-header-h: calc(var(--cc-nav-h) + var(--cc-bar-h));
+
+  min-height: 100vh;
+  background: var(--cc-page);
+  color: var(--cc-ink);
+  font-family: var(--cc-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  /* clip (not hidden) so position: sticky keeps working */
+  overflow-x: clip;
+}
+.cc-site.has-marquee {
+  --cc-bar-h: 34px;
+}
+/* Base element rules use :where() so page/utility classes always win. */
+:where(.cc-site) a {
+  color: inherit;
+  text-decoration: none;
+}
+:where(.cc-site) button {
+  cursor: pointer;
+}
+:where(.cc-site) figure {
+  margin: 0;
+}
+:where(.cc-site) img {
+  max-width: 100%;
+  display: block;
+}
+.cc-site .button:focus-visible,
+.cc-site button:focus-visible,
+.cc-site a:focus-visible {
+  outline: 3px solid var(--cc-sun);
+  outline-offset: 3px;
+}
+
+/* ---------- Header ---------- */
+.cc-site .site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  line-height: 1.65;
+}
+.cc-site .site-header-spacer {
+  height: var(--cc-header-h);
+}
+.cc-site .site-marquee {
+  height: var(--cc-bar-h);
+  background: var(--cc-forest);
+  color: #e6f5dc;
+  font:
+    600 11px/34px var(--cc-sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  overflow: hidden;
+}
+.cc-site .site-marquee span {
+  margin: 0 28px;
+}
+.cc-site .site-marquee span::after {
+  content: '•';
+  color: var(--cc-sun);
+  margin-left: 56px;
+}
+.cc-site .site-nav {
+  position: relative;
+  z-index: 10;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 28px;
+  width: 100%;
+  height: var(--cc-nav-h);
+  padding: 0 max(24px, 50% - 640px);
+  transition: all 0.3s;
+  display: grid;
+  border-bottom: 1px solid transparent;
+}
+/* Blur lives on a pseudo-element: backdrop-filter on the nav itself would
+   become the containing block of the fixed mobile menu. */
+.cc-site .site-nav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background: #ffffffeb;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  transition: opacity 0.3s;
+}
+.cc-site .site-nav.is-scrolled {
+  border-bottom-color: var(--cc-border);
+}
+.cc-site .site-nav.is-scrolled::before {
+  opacity: 1;
+}
+.cc-site .logo,
+.cc-site .footer-logo {
+  color: var(--cc-green);
+  white-space: nowrap;
+  font:
+    500 23px/1.1 var(--cc-serif);
+}
+.cc-site .logo span {
+  color: var(--cc-fresh);
+}
+.cc-site .site-nav nav {
+  align-items: center;
+  gap: 28px;
+  display: flex;
+}
+.cc-site .site-nav nav a,
+.cc-site .button {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font:
+    600 12px/1.2 var(--cc-sans);
+}
+.cc-site .site-nav nav a {
+  transition: color 0.2s;
+}
+.cc-site .site-nav nav a:hover,
+.cc-site .site-nav nav a[aria-current='page'] {
+  color: var(--cc-green);
+}
+.cc-site .nav-actions {
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  display: flex;
+}
+.cc-site .menu-button {
+  color: var(--cc-green);
+  background: 0 0;
+  border: 0;
+  min-width: 44px;
+  min-height: 44px;
+  display: none;
+}
+
+/* ---------- Buttons ---------- */
+.cc-site .button {
+  border: 1.5px solid #0000;
+  border-radius: 999px;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 0 21px;
+  transition: all 0.2s;
+  display: inline-flex;
+}
+.cc-site .button.solid {
+  background: var(--cc-cta);
+  color: #fff;
+}
+.cc-site .button.solid:hover {
+  background: var(--cc-cta-hover);
+}
+.cc-site .button.outline {
+  border-color: var(--cc-ink);
+  color: var(--cc-ink);
+  /* The design inherits Tailwind v4's 1px .outline utility; v3 would draw 3px. */
+  outline: 1px solid currentColor;
+}
+.cc-site .button.outline:focus-visible {
+  outline: 3px solid var(--cc-sun);
+  outline-offset: 3px;
+}
+.cc-site .button.outline:hover {
+  background: #0000000d;
+}
+.cc-site .button.light-outline {
+  color: var(--cc-mint);
+  border-color: var(--cc-mint);
+  margin: 34px auto 0;
+}
+.cc-site .button.light-outline:hover {
+  background: #ffffff1a;
+}
+.cc-site .button.small {
+  min-height: 42px;
+  padding: 0 15px;
+  font-size: 11px;
+}
+.cc-site .button:disabled,
+.cc-site .button[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---------- Footer ---------- */
+.cc-site .site-footer {
+  background: var(--cc-forest);
+  color: var(--cc-mint);
+  padding: 74px max(24px, 50% - 640px) 20px;
+  line-height: 1.65;
+}
+.cc-site .footer-grid {
+  grid-template-columns: 2fr 1fr 1.4fr;
+  gap: 60px;
+  padding-bottom: 60px;
+  display: grid;
+}
+.cc-site .footer-logo {
+  color: var(--cc-mint);
+  margin-bottom: 15px;
+  font-size: 24px;
+}
+.cc-site .site-footer p {
+  color: #e6f5dcbf;
+  font-size: 14px;
+  margin: 0 0 14px;
+}
+.cc-site .socials {
+  gap: 18px;
+  margin-top: 22px;
+  display: flex;
+}
+.cc-site .socials a {
+  margin: 0;
+  display: inline-flex;
+}
+.cc-site .socials svg {
+  width: 21px;
+  height: 21px;
+}
+.cc-site .site-footer h3 {
+  color: var(--cc-sun);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 17px;
+  font:
+    600 11px var(--cc-sans);
+}
+.cc-site .site-footer a {
+  color: var(--cc-mint);
+  margin-bottom: 12px;
+  font-size: 14px;
+  display: block;
+  transition: color 0.2s;
+}
+.cc-site .site-footer p a {
+  display: inline;
+}
+.cc-site .site-footer a:hover {
+  color: var(--cc-sun);
+}
+.cc-site .footer-bottom {
+  text-align: center;
+  color: #e6f5dc99;
+  border-top: 1px solid #ffffff1a;
+  padding-top: 18px;
+  font-size: 13px;
+}
+.cc-site .footer-bottom nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 20px;
+  margin-bottom: 10px;
+}
+.cc-site .footer-bottom nav a {
+  color: #e6f5dc99;
+  font-size: 12px;
+  margin: 0;
+  display: inline;
+}
+.cc-site .footer-bottom small {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+}
+.cc-site .footer-bottom small a {
+  display: inline;
+  margin: 0;
+  font-size: 11px;
+  color: #e6f5dc99;
+}
+
+/* ---------- Video lightbox (shared by review tiles) ---------- */
+.cc-site .cc-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #0b1a05d9;
+  animation: cc-fade-in 0.2s both;
+}
+.cc-site .cc-lightbox-inner {
+  position: relative;
+  width: min(420px, 100%);
+  max-height: calc(100vh - 48px);
+}
+.cc-site .cc-lightbox video,
+.cc-site .cc-lightbox img {
+  width: 100%;
+  max-height: calc(100vh - 120px);
+  border-radius: 20px;
+  background: #000;
+  object-fit: contain;
+}
+.cc-site .cc-lightbox-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 0;
+  background: #fff;
+  color: var(--cc-ink);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 20px #0000003d;
+}
+.cc-site .cc-lightbox-meta {
+  margin-top: 14px;
+  color: #e6f5dc;
+  font-size: 13px;
+  text-align: center;
+}
+.cc-site .cc-lightbox-meta a {
+  color: var(--cc-sun);
+  font-weight: 600;
+}
+@keyframes cc-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (width<=800px) {
+  .cc-site {
+    --cc-nav-h: 68px;
+  }
+  .cc-site .site-nav {
+    grid-template-columns: 1fr auto;
+    padding: 0 18px;
+  }
+  .cc-site .logo {
+    font-size: 18px;
+  }
+  .cc-site .site-nav nav {
+    background: var(--cc-forest);
+    flex-direction: column;
+    justify-content: center;
+    gap: 30px;
+    display: none;
+    position: fixed;
+    top: var(--cc-header-h);
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+  .cc-site .site-nav nav.mobile-open {
+    display: flex;
+  }
+  .cc-site .site-nav nav a {
+    color: var(--cc-mint);
+    font-size: 16px;
+  }
+  .cc-site .site-nav nav a:hover,
+  .cc-site .site-nav nav a[aria-current='page'] {
+    color: var(--cc-sun);
+  }
+  .cc-site .nav-cta {
+    min-height: 42px;
+    padding: 0 14px;
+    font-size: 10px !important;
+  }
+  .cc-site .menu-button {
+    display: block;
+  }
+  .cc-site .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 35px 22px;
+  }
+  .cc-site .footer-grid > div:first-child {
+    grid-column: span 2;
+  }
+}
+@media (width<=430px) {
+  .cc-site .nav-cta {
+    display: none;
+  }
+  .cc-site .footer-grid {
+    grid-template-columns: 1fr;
+  }
+  .cc-site .footer-grid > div:first-child {
+    grid-column: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc-site *,
+  .cc-site :before,
+  .cc-site :after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ---------- Pages without a dedicated design (checkout, policies…) ---------- */
+.cc-site .cc-shop {
+  min-height: 60vh;
+  padding: 24px 0 72px;
+  background: var(--cc-page);
+}
+.cc-site .cc-shop h1 {
+  font-family: var(--cc-serif);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--cc-ink);
+}
+.cc-site .cc-shop h2 {
+  color: var(--cc-ink);
+}
+.cc-site .cc-shop a:not([class]) {
+  color: var(--cc-green);
+}

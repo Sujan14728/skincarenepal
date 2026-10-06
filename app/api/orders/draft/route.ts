@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
+  // Not used by the storefront; admin-only so the public can't create junk orders.
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   // Expect client to send a minimal items list; server will validate and
   // recompute prices/totals from the database to avoid client tampering.
   const body = await req.json();

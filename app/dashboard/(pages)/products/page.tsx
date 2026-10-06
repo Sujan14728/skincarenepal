@@ -1,63 +1,103 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger
-} from '@/components/ui/alert-dialog';
-import { toast } from 'sonner';
-import {
+  AlertTriangle,
+  CheckCircle2,
+  ImageOff,
+  Package,
+  PackageX,
+  Pencil,
   Plus,
   Search,
-  Edit,
-  Trash2,
-  Package,
-  TrendingUp,
-  ShoppingCart
+  Trash2
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import ConfirmDelete from '@/components/dashboard/ConfirmDelete';
+import EmptyState from '@/components/dashboard/EmptyState';
+import FormSheet from '@/components/dashboard/FormSheet';
+import PageHeader from '@/components/dashboard/PageHeader';
 import ProductForm from '@/components/dashboard/ProductForm';
-import Image from 'next/image';
+import StatCard from '@/components/dashboard/StatCard';
+import { formatNPR, formatNumber } from '@/components/dashboard/format';
+import { ProductStatus } from '@/lib/enum/product';
 import { Product } from '@/lib/types/product';
+import { cn } from '@/lib/utils';
+
+const LOW_STOCK_THRESHOLD = 20;
+
+const STATUS_META: Record<
+  ProductStatus,
+  { label: string; variant: 'success' | 'red' | 'blue' | 'secondary' }
+> = {
+  IN_STOCK: { label: 'In stock', variant: 'success' },
+  OUT_OF_STOCK: { label: 'Out of stock', variant: 'red' },
+  COMING_SOON: { label: 'Coming soon', variant: 'blue' },
+  DISCONTINUED: { label: 'Discontinued', variant: 'secondary' }
+};
+
+type StatusFilter = 'ALL' | ProductStatus;
+
+const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
+  { value: 'ALL', label: 'All statuses' },
+  { value: 'IN_STOCK', label: 'In stock' },
+  { value: 'OUT_OF_STOCK', label: 'Out of stock' },
+  { value: 'COMING_SOON', label: 'Coming soon' },
+  { value: 'DISCONTINUED', label: 'Discontinued' }
+];
+
+/** Plain-text summary for the table: excerpt first, else the rich description stripped of HTML. */
+const summaryOf = (product: Product) => {
+  const text =
+    product.excerpt?.trim() ||
+    (product.description ?? '')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  return text;
+};
+
+function TableSkeleton() {
+  return (
+    <ul className='divide-y'>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <li key={i} className='flex items-center gap-4 px-5 py-3'>
+          <Skeleton className='size-11 shrink-0 rounded-lg' />
+          <div className='flex flex-1 flex-col gap-2'>
+            <Skeleton className='h-4 w-48' />
+            <Skeleton className='h-3 w-72 max-w-full' />
+          </div>
+          <Skeleton className='hidden h-4 w-20 sm:block' />
+          <Skeleton className='hidden h-4 w-12 sm:block' />
+          <Skeleton className='h-5 w-20 rounded-md' />
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [stats, setStats] = useState({
-    total: 0,
-    active: 0,
-    outOfStock: 0
-  });
 
-  // Fetch products
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
@@ -65,31 +105,54 @@ const ProductsPage = () => {
       if (response.ok) {
         const data = await response.json();
         setProducts(data);
-        calculateStats(data);
       } else {
-        toast.error('Failed to fetch products');
+        toast.error('Products could not be loaded. Refresh the page to try again.');
       }
     } catch (error) {
       console.error('Error fetching products:', error);
-      toast.error('Error loading products');
+      toast.error('Products could not be loaded. Check your connection and refresh.');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Calculate statistics
-  const calculateStats = (productList: Product[]) => {
-    const stats = {
-      total: productList.length,
-      active: productList.filter(p => p.status === 'IN_STOCK').length,
-      outOfStock: productList.filter(
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const stats = useMemo(
+    () => ({
+      total: products.length,
+      inStock: products.filter(p => p.status === 'IN_STOCK' && p.stock > 0)
+        .length,
+      lowStock: products.filter(
+        p =>
+          p.status !== 'DISCONTINUED' &&
+          p.stock > 0 &&
+          p.stock <= LOW_STOCK_THRESHOLD
+      ).length,
+      outOfStock: products.filter(
         p => p.stock === 0 || p.status === 'OUT_OF_STOCK'
       ).length
-    };
-    setStats(stats);
-  };
+    }),
+    [products]
+  );
 
-  // Delete product
+  const filteredProducts = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return products.filter(product => {
+      if (statusFilter !== 'ALL' && product.status !== statusFilter) {
+        return false;
+      }
+      if (!term) return true;
+      return (
+        product.name.toLowerCase().includes(term) ||
+        (product.excerpt ?? '').toLowerCase().includes(term) ||
+        (product.description ?? '').toLowerCase().includes(term)
+      );
+    });
+  }, [products, searchTerm, statusFilter]);
+
   const handleDelete = async (productId: number) => {
     try {
       const response = await fetch(`/api/products/${productId}`, {
@@ -97,290 +160,300 @@ const ProductsPage = () => {
       });
 
       if (response.ok) {
-        toast.success('Product deleted successfully');
-        fetchProducts(); // Refresh the list
+        toast.success('Product deleted');
+        fetchProducts();
       } else {
-        toast.error('Failed to delete product');
+        // Surface the server's reason (e.g. the product has been ordered).
+        const data = await response.json().catch(() => null);
+        toast.error(data?.error || 'Product could not be deleted. Try again.');
       }
     } catch (error) {
       console.error('Error deleting product:', error);
-      toast.error('Error deleting product');
+      toast.error('Product could not be deleted. Check your connection and try again.');
     }
   };
 
-  // Filter products based on search
-  const filteredProducts = products.filter(
-    product =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.description &&
-        product.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-NP', {
-      style: 'currency',
-      currency: 'NPR',
-      minimumFractionDigits: 0
-    }).format(price);
-  };
-
-  const handleEdit = (product: Product) => {
-    setSelectedProduct(product);
-    setIsEditOpen(true);
-  };
-
-  const handleCreateSuccess = () => {
-    setIsCreateOpen(false);
-    fetchProducts();
-  };
-
-  const handleEditSuccess = () => {
-    setIsEditOpen(false);
+  const openCreate = () => {
     setSelectedProduct(null);
+    setSheetOpen(true);
+  };
+
+  const openEdit = (product: Product) => {
+    setSelectedProduct(product);
+    setSheetOpen(true);
+  };
+
+  const handleSuccess = () => {
+    setSheetOpen(false);
     fetchProducts();
   };
+
+  const isFiltering = searchTerm.trim() !== '' || statusFilter !== 'ALL';
 
   return (
-    <div className='space-y-6'>
-      {/* Header */}
-      <div className='flex items-center justify-between'>
-        <div>
-          <h1 className='text-3xl font-bold tracking-tight'>Products</h1>
-          <p className='text-muted-foreground'>
-            Manage your product inventory and details
-          </p>
-        </div>
+    <div className='flex flex-col gap-6'>
+      <PageHeader
+        title='Products'
+        description='Manage your catalogue, pricing and stock levels.'
+        actions={
+          <Button onClick={openCreate}>
+            <Plus />
+            Add product
+          </Button>
+        }
+      />
 
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className='mr-2 h-4 w-4' />
-              Add Product
-            </Button>
-          </DialogTrigger>
-          <DialogContent className='max-h-[90vh] !max-w-[60vw] overflow-y-auto'>
-            <DialogHeader>
-              <DialogTitle>Create New Product</DialogTitle>
-            </DialogHeader>
-            <ProductForm onSuccess={handleCreateSuccess} />
-          </DialogContent>
-        </Dialog>
+      <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+        <StatCard
+          label='Total products'
+          value={loading ? '–' : formatNumber(stats.total)}
+          icon={Package}
+          hint='Every product in the catalogue'
+        />
+        <StatCard
+          label='In stock'
+          value={loading ? '–' : formatNumber(stats.inStock)}
+          icon={CheckCircle2}
+          hint='Available to order now'
+        />
+        <StatCard
+          label='Low stock'
+          value={loading ? '–' : formatNumber(stats.lowStock)}
+          icon={AlertTriangle}
+          hint={`${LOW_STOCK_THRESHOLD} or fewer units left`}
+        />
+        <StatCard
+          label='Out of stock'
+          value={loading ? '–' : formatNumber(stats.outOfStock)}
+          icon={PackageX}
+          hint='No units left or marked out of stock'
+        />
       </div>
 
-      {/* Stats Cards */}
-      <div className='grid gap-4 lg:grid-cols-3'>
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Total Products
-            </CardTitle>
-            <Package className='text-muted-foreground h-4 w-4' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>{stats.total}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Active Products
-            </CardTitle>
-            <TrendingUp className='text-muted-foreground h-4 w-4' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>{stats.active}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Out of Stock</CardTitle>
-            <ShoppingCart className='text-muted-foreground h-4 w-4' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>{stats.outOfStock}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Search */}
-      <Card>
-        <CardContent className='pt-6'>
-          <div className='relative'>
-            <Search className='text-muted-foreground absolute top-2.5 left-2 h-4 w-4' />
+      <section className='rounded-xl border bg-card shadow-xs'>
+        <div className='flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center'>
+          <div className='relative flex-1'>
+            <Search
+              className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground'
+              aria-hidden
+            />
             <Input
-              placeholder='Search products by name, category, or tags...'
+              type='search'
+              placeholder='Search by name or description'
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className='pl-8'
+              className='pl-9'
+              aria-label='Search products'
             />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Products Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Products ({filteredProducts.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className='flex justify-center py-8'>
-              <div className='h-8 w-8 animate-spin rounded-full border-b-2 border-gray-900'></div>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Stock</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className='text-right'>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProducts.map(product => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <div className='flex items-center space-x-3'>
-                        {product.images[0] && (
-                          <Image
-                            height={40}
-                            width={40}
-                            src={product.images[0]}
-                            alt={product.name}
-                            className='h-10 w-10 rounded object-cover'
-                          />
-                        )}
-                        <div>
-                          <div className='font-medium'>{product.name}</div>
-                          {product.description && (
-                            <div className='text-muted-foreground text-sm'>
-                              {product.description.substring(0, 50)}...
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className='font-medium'>
-                          {formatPrice(product.price)}
-                        </div>
-                        {product.salePrice &&
-                          product.salePrice < product.price && (
-                            <div className='text-muted-foreground text-sm line-through'>
-                              {formatPrice(product.salePrice)}
-                            </div>
-                          )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`font-medium ${
-                          product.stock <= 10
-                            ? 'text-red-600'
-                            : 'text-green-600'
-                        }`}
-                      >
-                        {product.stock}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`rounded-full px-2 py-1 text-sm font-medium ${
-                          product.status === 'IN_STOCK'
-                            ? 'bg-green-100 text-green-800'
-                            : product.status === 'DISCONTINUED'
-                              ? 'bg-red-100 text-red-800'
-                              : ''
-                        }`}
-                      >
-                        {product.status}
-                      </span>
-                    </TableCell>
-                    <TableCell className='text-right'>
-                      <div className='flex justify-end space-x-2'>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          onClick={() => handleEdit(product)}
-                        >
-                          <Edit className='h-4 w-4' />
-                        </Button>
-
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant='ghost' size='sm'>
-                              <Trash2 className='h-4 w-4' />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Delete Product
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete &quot;
-                                {product.name}&quot;? This action cannot be
-                                undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(product.id)}
-                                className='bg-red-600 hover:bg-red-700'
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+          <Select
+            value={statusFilter}
+            onValueChange={value => setStatusFilter(value as StatusFilter)}
+          >
+            <SelectTrigger
+              className='w-full sm:w-44'
+              aria-label='Filter by status'
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {STATUS_FILTERS.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
                 ))}
-              </TableBody>
-            </Table>
-          )}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
 
-          {!loading && filteredProducts.length === 0 && (
-            <div className='py-8 text-center'>
-              <Package className='mx-auto h-12 w-12 text-gray-400' />
-              <h3 className='mt-2 text-sm font-medium text-gray-900'>
-                No products
-              </h3>
-              <p className='mt-1 text-sm text-gray-500'>
-                {searchTerm
-                  ? 'No products match your search.'
-                  : 'Get started by creating a new product.'}
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className='max-h-[90vh] !max-w-[60vw] overflow-y-auto'>
-          <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
-          </DialogHeader>
-          {selectedProduct && (
-            <ProductForm
-              product={selectedProduct}
-              onSuccess={handleEditSuccess}
+        {loading ? (
+          <TableSkeleton />
+        ) : filteredProducts.length === 0 ? (
+          isFiltering ? (
+            <EmptyState
+              icon={Search}
+              title='No products match your filters'
+              description='Try a different search term or status.'
+              action={
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => {
+                    setSearchTerm('');
+                    setStatusFilter('ALL');
+                  }}
+                >
+                  Clear filters
+                </Button>
+              }
             />
-          )}
-        </DialogContent>
-      </Dialog>
+          ) : (
+            <EmptyState
+              icon={Package}
+              title='No products yet'
+              description='Add your first product to start selling.'
+              action={
+                <Button size='sm' onClick={openCreate}>
+                  <Plus />
+                  Add product
+                </Button>
+              }
+            />
+          )
+        ) : (
+          <div className='overflow-x-auto'>
+            <table className='w-full min-w-[720px] text-sm'>
+              <thead>
+                <tr className='border-b bg-muted/40 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground'>
+                  <th className='px-5 py-2.5 font-medium'>Product</th>
+                  <th className='px-5 py-2.5 text-right font-medium'>Price</th>
+                  <th className='px-5 py-2.5 text-right font-medium'>Stock</th>
+                  <th className='px-5 py-2.5 font-medium'>Status</th>
+                  <th className='px-5 py-2.5 text-right font-medium'>
+                    <span className='sr-only'>Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className='divide-y'>
+                {filteredProducts.map(product => {
+                  const onSale =
+                    product.salePrice != null &&
+                    product.salePrice > 0 &&
+                    product.salePrice < product.price;
+                  const lowStock = product.stock <= LOW_STOCK_THRESHOLD;
+                  const status = STATUS_META[product.status] ?? {
+                    label: product.status,
+                    variant: 'secondary' as const
+                  };
+                  const summary = summaryOf(product);
+
+                  return (
+                    <tr key={product.id} className='hover:bg-muted/30'>
+                      <td className='px-5 py-3'>
+                        <div className='flex items-center gap-3'>
+                          <span className='relative grid size-11 shrink-0 place-items-center overflow-hidden rounded-lg border bg-muted text-muted-foreground'>
+                            {product.images[0] ? (
+                              <Image
+                                src={product.images[0]}
+                                alt=''
+                                fill
+                                sizes='44px'
+                                className='object-cover'
+                              />
+                            ) : (
+                              <ImageOff className='size-4' aria-hidden />
+                            )}
+                          </span>
+                          <div className='flex min-w-0 flex-col gap-0.5'>
+                            <span className='truncate font-medium text-foreground'>
+                              {product.name}
+                            </span>
+                            {summary && (
+                              <span className='line-clamp-1 max-w-md text-sm text-muted-foreground'>
+                                {summary}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className='whitespace-nowrap px-5 py-3 text-right tabular-nums'>
+                        {onSale ? (
+                          <div className='flex flex-col items-end gap-0.5'>
+                            <span className='font-medium text-foreground'>
+                              {formatNPR(product.salePrice as number)}
+                            </span>
+                            <span className='text-xs text-muted-foreground line-through'>
+                              {formatNPR(product.price)}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className='font-medium text-foreground'>
+                            {formatNPR(product.price)}
+                          </span>
+                        )}
+                      </td>
+                      <td className='whitespace-nowrap px-5 py-3 text-right'>
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-1 tabular-nums',
+                            lowStock
+                              ? 'font-semibold text-red-700'
+                              : 'text-foreground'
+                          )}
+                        >
+                          {lowStock && (
+                            <AlertTriangle
+                              className='size-3.5'
+                              aria-label='Low stock'
+                            />
+                          )}
+                          {formatNumber(product.stock)}
+                        </span>
+                      </td>
+                      <td className='px-5 py-3'>
+                        <Badge variant={status.variant}>{status.label}</Badge>
+                      </td>
+                      <td className='px-5 py-3'>
+                        <div className='flex justify-end gap-1'>
+                          <Button
+                            variant='ghost'
+                            size='icon-sm'
+                            onClick={() => openEdit(product)}
+                            aria-label={`Edit ${product.name}`}
+                          >
+                            <Pencil />
+                          </Button>
+                          <ConfirmDelete
+                            title='Delete product?'
+                            description={
+                              <>
+                                &ldquo;{product.name.trim()}&rdquo; will be removed
+                                from your store. This can&rsquo;t be undone.
+                              </>
+                            }
+                            confirmLabel='Delete product'
+                            onConfirm={() => handleDelete(product.id)}
+                          >
+                            <Button
+                              variant='ghost'
+                              size='icon-sm'
+                              className='text-muted-foreground hover:text-destructive'
+                              aria-label={`Delete ${product.name}`}
+                            >
+                              <Trash2 />
+                            </Button>
+                          </ConfirmDelete>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <FormSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        size='lg'
+        title={selectedProduct ? 'Edit product' : 'Add product'}
+        description={
+          selectedProduct
+            ? `Update details, pricing and stock for ${selectedProduct.name.trim()}.`
+            : 'Add a new product to your store.'
+        }
+      >
+        <ProductForm
+          key={selectedProduct?.id ?? 'new'}
+          product={selectedProduct ?? undefined}
+          onSuccess={handleSuccess}
+          onCancel={() => setSheetOpen(false)}
+        />
+      </FormSheet>
     </div>
   );
 };

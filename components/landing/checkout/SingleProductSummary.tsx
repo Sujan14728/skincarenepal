@@ -9,6 +9,7 @@ import { Loader2, Plus, Minus } from 'lucide-react';
 import { Dispatch, SetStateAction, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
+import { effectivePrice } from '@/lib/storefront-utils';
 interface SingleProductSummaryProps {
   singleProduct: Product | null;
   singleQty: number;
@@ -47,7 +48,7 @@ export default function SingleProductSummary({
   // Compute subtotal and delivery
   const subtotal = useMemo(() => {
     if (!singleProduct) return 0;
-    return (singleProduct.salePrice ?? singleProduct.price) * singleQty;
+    return effectivePrice(singleProduct) * singleQty;
   }, [singleProduct, singleQty]);
 
   const total = useMemo(() => {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'; // For specific error handling
+import { requireAdmin } from '@/lib/auth';
+import { prisma, prismaErrorCode } from '@/lib/prisma';
 
 export async function GET(
   req: NextRequest,
@@ -30,6 +30,8 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   const id = parseInt((await params).id);
   if (isNaN(id)) {
     return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
@@ -61,7 +63,7 @@ export async function PUT(
     });
     return NextResponse.json(updated);
   } catch (err) {
-    if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025') {
+    if (prismaErrorCode(err) === 'P2025') {
       return NextResponse.json({ error: 'Marquee not found' }, { status: 404 });
     }
     console.error(`Marquee update error for ID ${id}:`, err);
@@ -76,6 +78,8 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   const id = parseInt((await params).id);
   if (isNaN(id)) {
     return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
@@ -85,7 +89,7 @@ export async function DELETE(
     await prisma.marquee.delete({ where: { id } });
     return NextResponse.json({ message: 'Marquee deleted successfully' });
   } catch (err) {
-    if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025') {
+    if (prismaErrorCode(err) === 'P2025') {
       return NextResponse.json({ error: 'Marquee not found' }, { status: 404 });
     }
     console.error(`Marquee delete error for ID ${id}:`, err);

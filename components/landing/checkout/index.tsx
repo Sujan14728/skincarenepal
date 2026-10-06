@@ -8,8 +8,9 @@ import { toast } from 'sonner';
 import CustomerDetails from './CustomerDetails';
 import PaymentSection from './PaymentSection';
 import SingleProductSummary from './SingleProductSummary';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import EmptyCartMessage from '../partial/EmptyCart';
+import { clearCart } from '@/lib/utils/local-storage';
 
 export default function CheckoutClient() {
   const search = useSearchParams();
@@ -35,12 +36,27 @@ export default function CheckoutClient() {
 
   const customerForm = useCustomerForm(cartItems);
 
+  // Set synchronously so a fast double click can't place two orders before
+  // `placing` re-renders the button as disabled.
+  const submittingRef = useRef(false);
+
   const placeOrder = async () => {
-    if (!cartItems || cartItems.length === 0) {
-      toast.error('Your cart is empty. Please add items to place an order.');
-      customerForm.setPlacing(false);
+    if (submittingRef.current) return;
+    // Only the product shown in the summary may be ordered; without ?buy= the
+    // page shows "no product" and must not submit a stale stored cart.
+    if (!singleProductMode || !singleProduct || cartItems.length === 0) {
+      toast.error('Please choose a product to order.');
       return;
     }
+    submittingRef.current = true;
+    try {
+      await submitOrder();
+    } finally {
+      submittingRef.current = false;
+    }
+  };
+
+  const submitOrder = async () => {
 
     // Check if payment slip is required for ONLINE payment
     const paymentMethod = customerForm.form.getValues('paymentMethod');
@@ -74,7 +90,6 @@ export default function CheckoutClient() {
       const values = customerForm.form.getValues();
       const payload = {
         items: cartItems.map(i => ({ productId: i.id, quantity: i.quantity })),
-        shipping: isDeliveryFree ? 0 : settings?.deliveryCost || 0,
         coupon: appliedCoupon ? { code: appliedCoupon.code } : null,
         shippingAddress: values.shippingAddress,
         note: values.note || null,
@@ -100,8 +115,9 @@ export default function CheckoutClient() {
         { id: 'order-progress' }
       );
 
-      // Clear cart and local coupon
+      // Clear cart (state and storage) and local coupon
       setCartItems([]);
+      clearCart();
       setAppliedCoupon(null);
 
       // Reset form fields
@@ -156,7 +172,7 @@ export default function CheckoutClient() {
           <Button
             className='mt-4 w-full'
             onClick={placeOrder}
-            disabled={customerForm.placing}
+            disabled={customerForm.placing || !singleProduct}
           >
             {customerForm.placing ? 'Placing Order...' : 'Place Order'}
           </Button>

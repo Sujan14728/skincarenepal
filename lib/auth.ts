@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt, { SignOptions } from "jsonwebtoken";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
@@ -22,11 +22,28 @@ export const signToken = (
 
 export async function verifyToken(token: string) {
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET!);
+    const payload = jwt.verify(token, process.env.JWT_SECRET!, {
+      algorithms: ["HS256"],
+    });
     return payload as { id: string; email: string; isAdmin: boolean };
   } catch {
     return false;
   }
+}
+
+/** The signed-in admin from the `token` cookie, or null. */
+export async function getAdmin(req: NextRequest) {
+  const token = req.cookies.get("token")?.value;
+  if (!token) return null;
+  const user = await verifyToken(token);
+  return user && user.isAdmin ? user : null;
+}
+
+/** Returns a 401 response when the request is not from an admin. */
+export async function requireAdmin(req: NextRequest) {
+  return (await getAdmin(req))
+    ? null
+    : NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 
 /** Attach cookie to NextResponse */

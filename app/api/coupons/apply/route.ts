@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { effectivePrice } from '@/lib/storefront-utils';
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
@@ -35,6 +36,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
+    return NextResponse.json(
+      { valid: false, error: 'This coupon has reached its usage limit' },
+      { status: 400 }
+    );
+  }
+
   // Compute canonical subtotal when productId provided, otherwise use client subtotal if present
   let subtotal = 0;
   if (productId) {
@@ -47,7 +55,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const unitPrice = product.salePrice ?? product.price;
+    const unitPrice = effectivePrice(product);
     subtotal = Math.floor(unitPrice * quantity);
   } else if (typeof clientSubtotal === 'number') {
     subtotal = Math.floor(clientSubtotal);
@@ -94,8 +102,8 @@ export async function POST(req: NextRequest) {
     discount = Math.floor(coupon.discountValue);
   }
 
-  // Cap discount so total can't go below zero
-  discount = Math.max(0, Math.min(discount, subtotal + shipping));
+  // Cap at the merchandise subtotal, matching /api/orders/place
+  discount = Math.max(0, Math.min(discount, subtotal));
 
   const totalAfter = Math.max(0, subtotal + shipping - discount);
 

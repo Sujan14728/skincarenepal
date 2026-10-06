@@ -4,6 +4,8 @@ import { sendOrderPlacementEmail } from '@/lib/email';
 import crypto from 'crypto';
 import { formatOrderNumber, getOrigin } from '@/lib/utils';
 import { PaymentMethod } from '@/lib/enum/product';
+import { isEmail } from '@/lib/validate';
+import { effectivePrice, isPurchasable } from '@/lib/storefront-utils';
 
 type IncomingItem = {
   productId: number;
@@ -33,11 +35,26 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 1, delayMs = 100) {
   throw lastErr;
 }
 
+const MAX_QUANTITY = 50;
+
+const isUploadedSlipUrl = (value: string) => {
+  try {
+    const url = new URL(value);
+    const endpoint = process.env.IMAGEKIT_URL_ENDPOINT;
+    return (
+      url.protocol === 'https:' &&
+      ((endpoint && value.startsWith(endpoint)) ||
+        url.hostname.endsWith('imagekit.io'))
+    );
+  } catch {
+    return false;
+  }
+};
+
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as {
+    const body = (await req.json().catch(() => null)) as {
       items?: IncomingItem[];
-      shipping?: number;
       coupon?: { code?: string } | null;
       couponCode?: string | null;
       shippingAddress?: string | null;
@@ -47,10 +64,12 @@ export async function POST(req: NextRequest) {
       email?: string | null;
       name?: string | null;
       phone?: string | null;
-    };
+    } | null;
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
     const {
       items: incomingItems,
-      shipping = 0,
       coupon: couponPayload,
       couponCode: couponCodeFallback,
       shippingAddress,
@@ -72,17 +91,56 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Normalize incoming items -> expect [{ productId, quantity }]
-    const itemsNormalized = incomingItems
-      .map(it => ({
-        productId: Number(it.productId),
-        quantity: Math.max(1, Number(it.quantity || 1))
-      }))
-      .filter(it => it.productId && it.quantity > 0);
-
-    if (!itemsNormalized.length) {
+    // The confirmation link is emailed, so an order without a valid email
+    // could never be confirmed.
+    if (!email || !isEmail(email)) {
       return NextResponse.json(
-        { error: 'No valid items provided' },
+        { error: 'A valid email is required' },
+        { status: 400 }
+      );
+    }
+    const method = paymentMethod ?? 'COD';
+    if (method !== 'COD' && method !== 'ONLINE') {
+      return NextResponse.json(
+        { error: 'Invalid payment method' },
+        { status: 400 }
+      );
+    }
+    if (
+      method === 'ONLINE' &&
+      (!paymentSlipUrl || !isUploadedSlipUrl(paymentSlipUrl))
+    ) {
+      return NextResponse.json(
+        { error: 'A payment slip is required for online payment' },
+        { status: 400 }
+      );
+    }
+
+    // Normalize incoming items -> [{ productId, quantity }], merging repeats.
+    const quantities = new Map<number, number>();
+    for (const it of incomingItems) {
+      const productId = Number(it?.productId);
+      const quantity = Number(it?.quantity ?? 1);
+      if (
+        !Number.isInteger(productId) ||
+        productId < 1 ||
+        !Number.isInteger(quantity) ||
+        quantity < 1
+      ) {
+        return NextResponse.json(
+          { error: 'Invalid item in order' },
+          { status: 400 }
+        );
+      }
+      quantities.set(productId, (quantities.get(productId) ?? 0) + quantity);
+    }
+    const itemsNormalized = [...quantities].map(([productId, quantity]) => ({
+      productId,
+      quantity
+    }));
+    if (itemsNormalized.some(it => it.quantity > MAX_QUANTITY)) {
+      return NextResponse.json(
+        { error: `You can order at most ${MAX_QUANTITY} of each product` },
         { status: 400 }
       );
     }
@@ -110,7 +168,20 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      const unitPrice = prod.salePrice ?? prod.price;
+      if (!isPurchasable(prod)) {
+        return NextResponse.json(
+          { error: `${prod.name.trim()} is not available to order right now` },
+          { status: 400 }
+        );
+      }
+      if (it.quantity > prod.stock) {
+        return NextResponse.json(
+          { error: `Only ${prod.stock} of ${prod.name.trim()} left in stock` },
+          { status: 400 }
+        );
+      }
+      // Same rule the storefront uses to display prices.
+      const unitPrice = effectivePrice(prod);
       const line = Math.floor(unitPrice * it.quantity);
       subtotal += line;
       orderItemsData.push({
@@ -163,20 +234,33 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // Product-specific coupons only discount that product's lines.
+      const discountBase = coupon.productId
+        ? orderItemsData
+            .filter(it => it.productId === coupon.productId)
+            .reduce((sum, it) => sum + it.price * it.quantity, 0)
+        : subtotal;
+
       const type = (coupon.discountType || '').toUpperCase();
       if (type === 'PERCENTAGE') {
-        discount = Math.floor(subtotal * (coupon.discountValue / 100));
+        discount = Math.floor(discountBase * (coupon.discountValue / 100));
       } else {
         discount = Math.floor(coupon.discountValue);
       }
 
-      // cap discount
-      discount = Math.max(0, Math.min(discount, subtotal + Number(shipping)));
+      discount = Math.max(0, Math.min(discount, discountBase));
 
       appliedCouponId = coupon.id;
     }
 
-    const total = Math.max(0, subtotal + Number(shipping) - discount);
+    // Delivery is priced from site settings, never from the client.
+    const settings = await prisma.siteSetting.findUnique({ where: { id: 1 } });
+    const shipping =
+      settings?.freeShippingThreshold && subtotal >= settings.freeShippingThreshold
+        ? 0
+        : (settings?.deliveryCost ?? 0);
+
+    const total = Math.max(0, subtotal + shipping - discount);
 
     // generate placement token for confirmation link and save hash in order
     const placementToken = crypto.randomBytes(32).toString('hex');
@@ -217,16 +301,16 @@ export async function POST(req: NextRequest) {
 
         const order = await tx.order.create({
           data: {
-            email: email || null,
+            email: email.trim(),
             name: name || null,
             phone: phone || null,
             shippingAddress,
             note: note || null,
-            paymentMethod: paymentMethod || 'COD',
-            paymentSlipUrl: paymentSlipUrl || null,
+            paymentMethod: method,
+            paymentSlipUrl: method === 'ONLINE' ? paymentSlipUrl : null,
             subtotal,
             discount,
-            shipping: Number(shipping),
+            shipping,
             total,
             status: 'PENDING_CONFIRMATION',
             placedAt: new Date(),

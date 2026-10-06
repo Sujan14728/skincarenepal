@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyToken } from '@/lib/auth';
+import { requireAdmin, verifyToken } from '@/lib/auth';
+import { storeDate } from '@/lib/nepal-time';
 import { sendOrderPlacementEmail } from '@/lib/email';
 import crypto from 'crypto';
 
@@ -105,13 +106,15 @@ export async function GET(req: NextRequest) {
     }
 
     if (date) {
-      const d = new Date(date);
-      if (!Number.isNaN(d.getTime())) {
-        const start = new Date(d);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(d);
-        end.setHours(23, 59, 59, 999);
-        and.push({ placedAt: { gte: start, lte: end } });
+      // The picked day in Nepal time, regardless of the server's timezone.
+      const day = storeDate(date);
+      if (day.isValid()) {
+        and.push({
+          placedAt: {
+            gte: day.startOf('day').toDate(),
+            lte: day.endOf('day').toDate()
+          }
+        });
       }
     }
 
@@ -148,6 +151,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // Unused by the storefront (checkout uses /api/orders/place) and trusts
+  // client prices, so it is admin-only.
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   try {
     const body = await req.json();
     const {

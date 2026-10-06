@@ -1,15 +1,22 @@
 'use client';
-import { useState, useEffect } from 'react';
+
+import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Field,
+  FormFooter,
+  FormSection,
+  ListField
+} from '@/components/dashboard/form';
 
-type CompanyInfo = {
-  id?: number;
-  companyEmail?: string | null;
-  companyPhone?: string | null;
-  companyLocation?: string | null;
+type FormState = {
+  companyEmails: string[];
+  companyPhones: string[];
+  companyLocation: string;
 };
 
 type CompanyInfoBody = {
@@ -18,52 +25,56 @@ type CompanyInfoBody = {
   companyLocation?: string;
 };
 
+const clean = (items: string[]) =>
+  items.map(item => item.trim()).filter(Boolean);
+
 export default function CompanyInfoForm() {
-  const [form, setForm] = useState<CompanyInfo>({
-    companyEmail: '',
-    companyPhone: '',
+  const [form, setForm] = useState<FormState>({
+    companyEmails: [],
+    companyPhones: [],
     companyLocation: ''
   });
+  const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchInfo = async () => {
-      const res = await fetch('/api/companyinfo');
-      const data = await res.json();
-      if (data?.success && data.companyInfo) {
-        setForm({
-          companyEmail: data.companyInfo.companyEmails?.join(', ') || '',
-          companyPhone: data.companyInfo.companyPhones?.join(', ') || '',
-          companyLocation: data.companyInfo.companyLocation || ''
-        });
+      try {
+        const res = await fetch('/api/companyinfo');
+        const data = await res.json();
+        if (data?.success && data.companyInfo) {
+          setForm({
+            companyEmails: data.companyInfo.companyEmails ?? [],
+            companyPhones: data.companyInfo.companyPhones ?? [],
+            companyLocation: data.companyInfo.companyLocation || ''
+          });
+        }
+      } catch {
+        // Nothing saved yet or offline: start from an empty form.
+      } finally {
+        setReady(true);
       }
     };
     fetchInfo();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
     try {
-      const body: CompanyInfoBody = {};
+      const emails = clean(form.companyEmails);
+      const phones = clean(form.companyPhones);
+      const location = form.companyLocation.trim();
+      // Always send all three so removing the last email/phone or the
+      // location actually clears it (the route treats omitted as unchanged).
+      const body: CompanyInfoBody = {
+        companyEmails: emails,
+        companyPhones: phones,
+        companyLocation: location
+      };
 
-      if (form.companyEmail && form.companyEmail.trim() !== '') {
-        body.companyEmails = form.companyEmail.split(',').map(e => e.trim());
-      }
-
-      if (form.companyPhone && form.companyPhone.trim() !== '') {
-        body.companyPhones = form.companyPhone.split(',').map(p => p.trim());
-      }
-
-      if (form.companyLocation && form.companyLocation.trim() !== '') {
-        body.companyLocation = form.companyLocation.trim();
-      }
-
-      if (Object.keys(body).length === 0) {
-        toast.error('No data to update');
+      if (!emails.length && !phones.length && !location) {
+        toast.error('Add at least one detail before saving');
         setLoading(false);
         return;
       }
@@ -77,55 +88,86 @@ export default function CompanyInfoForm() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        toast.success('Company info updated');
-
-        setForm({
-          companyEmail: '',
-          companyPhone: '',
-          companyLocation: ''
-        });
+        toast.success('Contact details saved');
+        setForm(prev => ({
+          ...prev,
+          companyEmails: emails,
+          companyPhones: phones
+        }));
       } else {
-        toast.error(data.error || 'Failed to update');
+        toast.error(data.error || 'Failed to save contact details');
       }
     } catch {
-      toast.error('Network error');
+      toast.error('Network error. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className='rounded-2xl bg-white p-6 shadow-md'>
-      <h2 className='mb-4 text-xl font-semibold'>Company Information</h2>
-      <div className='space-y-3'>
-        <div>
-          <Label>Email</Label>
-          <Input
-            name='companyEmail'
-            value={form.companyEmail || ''}
-            onChange={handleChange}
-          />
-        </div>
-        <div>
-          <Label>Phone</Label>
-          <Input
-            name='companyPhone'
-            value={form.companyPhone || ''}
-            onChange={handleChange}
-          />
-        </div>
-        <div>
-          <Label>Location</Label>
-          <Input
-            name='companyLocation'
-            value={form.companyLocation || ''}
-            onChange={handleChange}
-          />
-        </div>
-        <Button onClick={handleSubmit} disabled={loading}>
-          {loading ? 'Saving...' : 'Save Changes'}
-        </Button>
+    <form
+      onSubmit={handleSubmit}
+      className='flex max-w-3xl flex-col overflow-hidden rounded-xl border bg-card shadow-xs'
+    >
+      <div className='flex flex-col gap-8 p-6'>
+        {!ready ? (
+          <div className='flex flex-col gap-4'>
+            <Skeleton className='h-5 w-40' />
+            <Skeleton className='h-9 w-full' />
+            <Skeleton className='h-5 w-32' />
+            <Skeleton className='h-9 w-full' />
+            <Skeleton className='h-9 w-2/3' />
+          </div>
+        ) : (
+          <>
+            <FormSection
+              title='Address'
+              description='Shown on the contact page and in the site footer.'
+            >
+              <Field
+                label='Location'
+                htmlFor='companyLocation'
+                hint='e.g. New Road, Kathmandu, Nepal'
+              >
+                <Input
+                  id='companyLocation'
+                  value={form.companyLocation}
+                  onChange={e =>
+                    setForm({ ...form, companyLocation: e.target.value })
+                  }
+                  placeholder='Street, city'
+                />
+              </Field>
+            </FormSection>
+
+            <FormSection
+              title='Email and phone'
+              description='How customers reach you from the website.'
+            >
+              <ListField
+                label='Email addresses'
+                items={form.companyEmails}
+                onChange={companyEmails => setForm({ ...form, companyEmails })}
+                placeholder='hello@example.com'
+                addLabel='Add email'
+              />
+              <ListField
+                label='Phone numbers'
+                items={form.companyPhones}
+                onChange={companyPhones => setForm({ ...form, companyPhones })}
+                placeholder='+977 98XXXXXXXX'
+                addLabel='Add phone'
+              />
+            </FormSection>
+          </>
+        )}
       </div>
-    </div>
+      <FormFooter>
+        <Button type='submit' disabled={loading || !ready}>
+          {loading && <Loader2 className='animate-spin' />}
+          Save changes
+        </Button>
+      </FormFooter>
+    </form>
   );
 }

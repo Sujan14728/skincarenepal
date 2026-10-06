@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Bricolage_Grotesque, Geist, Geist_Mono } from 'next/font/google';
 import { Toaster } from 'sonner';
 import Script from 'next/script';
 import './globals.css';
@@ -13,6 +13,14 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
   display: 'swap',
   fallback: ['ui-monospace', 'Menlo', 'Monaco', 'Courier New', 'monospace']
+});
+
+// Admin display face; not preloaded so the storefront never downloads it.
+const bricolage = Bricolage_Grotesque({
+  variable: '--font-bricolage',
+  subsets: ['latin'],
+  preload: false,
+  display: 'swap'
 });
 
 /* -------------------------------------------------
@@ -94,7 +102,7 @@ export default function RootLayout({
       </head>
 
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${bricolage.variable} antialiased`}
       >
         {/* JSON-LD scripts */}
         <Script

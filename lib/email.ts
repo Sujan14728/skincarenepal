@@ -15,6 +15,16 @@ export const transporter = nodemailer.createTransport({
   }
 });
 
+/** Customer-supplied text (address, names) must not inject markup into emails. */
+const escapeHtml = (value: string | null | undefined) =>
+  String(value ?? '').replace(
+    /[&<>"']/g,
+    c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[
+        c
+      ]!
+  );
+
 const EMAIL_CONFIGURED = Boolean(
   process.env.EMAIL_USER && process.env.EMAIL_PASS
 );
@@ -103,7 +113,7 @@ export async function sendOrderPlacementEmail(
       .map(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (i: any) =>
-          `<tr><td style="padding:6px 8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:center">${i.quantity}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price * i.quantity}</td></tr>`
+          `<tr><td style="padding:6px 8px;border-bottom:1px solid #eee">${escapeHtml(i.name)}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:center">${i.quantity}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price * i.quantity}</td></tr>`
       )
       .join('');
 
@@ -112,7 +122,7 @@ export async function sendOrderPlacementEmail(
       : '';
 
     const addressHtml = order?.shippingAddress
-      ? `<div style="margin-top:12px;"><div style="font-weight:600">Shipping address</div><div style="white-space:pre-wrap">${order.shippingAddress}</div></div>`
+      ? `<div style="margin-top:12px;"><div style="font-weight:600">Shipping address</div><div style="white-space:pre-wrap">${escapeHtml(order.shippingAddress)}</div></div>`
       : '';
 
     const html = `
@@ -164,7 +174,7 @@ export async function sendOrderStatusEmail(
     .map(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (i: any) =>
-        `<tr><td style="padding:6px 8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:center">${i.quantity}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price * i.quantity}</td></tr>`
+        `<tr><td style="padding:6px 8px;border-bottom:1px solid #eee">${escapeHtml(i.name)}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:center">${i.quantity}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price * i.quantity}</td></tr>`
     )
     .join('');
 
@@ -173,7 +183,7 @@ export async function sendOrderStatusEmail(
     : '';
 
   const addressHtml = order?.shippingAddress
-    ? `<div style="margin-top:12px;"><div style="font-weight:600">Shipping address</div><div style="white-space:pre-wrap">${order.shippingAddress}</div></div>`
+    ? `<div style="margin-top:12px;"><div style="font-weight:600">Shipping address</div><div style="white-space:pre-wrap">${escapeHtml(order.shippingAddress)}</div></div>`
     : '';
 
   const html = `
@@ -220,7 +230,7 @@ export async function sendCustomOrderEmail(
     .map(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (i: any) =>
-        `<tr><td style="padding:6px 8px;border-bottom:1px solid #eee">${i.name}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:center">${i.quantity}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price * i.quantity}</td></tr>`
+        `<tr><td style="padding:6px 8px;border-bottom:1px solid #eee">${escapeHtml(i.name)}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:center">${i.quantity}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price}</td><td style="padding:6px 8px;border-bottom:1px solid #eee; text-align:right">Rs. ${i.price * i.quantity}</td></tr>`
     )
     .join('');
 

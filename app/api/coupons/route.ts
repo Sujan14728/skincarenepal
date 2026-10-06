@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   try {
     const body = await req.json();
     const {
@@ -61,6 +64,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   try {
     const url = req.nextUrl;
     const page = Number(url.searchParams.get('page') ?? 1);
@@ -97,8 +102,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
     const { id, ...data } = body ?? {};
 
     if (!id) {
@@ -107,13 +114,41 @@ export async function PUT(req: NextRequest) {
         { status: 400 }
       );
     }
+    if (
+      data.discountType !== undefined &&
+      !['PERCENTAGE', 'FIXED'].includes(data.discountType)
+    ) {
+      return NextResponse.json(
+        { error: 'Discount type must be PERCENTAGE or FIXED.' },
+        { status: 400 }
+      );
+    }
 
+    // Explicit fields only; empty optional values clear the column (null).
+    const optionalInt = (v: unknown) =>
+      v === undefined ? undefined : v === null || v === '' ? null : Number(v);
     const updated = await prisma.coupon.update({
       where: { id: Number(id) },
       data: {
-        ...data,
-        validFrom: data.validFrom ? new Date(data.validFrom) : null,
-        validUntil: data.validUntil ? new Date(data.validUntil) : null
+        code: typeof data.code === 'string' ? data.code.trim() : undefined,
+        discountType: data.discountType,
+        discountValue:
+          data.discountValue !== undefined
+            ? Number(data.discountValue)
+            : undefined,
+        minPurchase: optionalInt(data.minPurchase),
+        usageLimit: optionalInt(data.usageLimit),
+        productId: optionalInt(data.productId),
+        isActive:
+          data.isActive !== undefined ? Boolean(data.isActive) : undefined,
+        // validFrom is required in the schema, so a blank value keeps it.
+        validFrom: data.validFrom ? new Date(data.validFrom) : undefined,
+        validUntil:
+          data.validUntil === undefined
+            ? undefined
+            : data.validUntil
+              ? new Date(data.validUntil)
+              : null
       }
     });
 
@@ -128,6 +163,8 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const denied = await requireAdmin(req);
+  if (denied) return denied;
   try {
     const url = req.nextUrl;
     const idParam = url.searchParams.get('id');
