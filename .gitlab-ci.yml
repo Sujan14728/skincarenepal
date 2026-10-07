@@ -129,40 +129,51 @@ deploy:
       echo "Schema already up to date"
     - echo "Restarting application..."
     - |
-      # Try to remove existing pm2 process and free port 3000 with retries.
-      pm2 delete skincarenepal || true
-      for i in 1 2; do
-        if command -v fuser >/dev/null 2>&1; then
-          fuser -k 3000/tcp >/dev/null 2>&1 && break || true
-        fi
-        if command -v lsof >/dev/null 2>&1; then
-          lsof -ti tcp:3000 | xargs -r kill -9 || true
-        fi
-        if command -v sudo >/dev/null 2>&1; then
+      # Free port 3000 before starting the new build.
+      # /proc/net/tcp* is world-readable and records the owning UID of every
+      # socket, so we can tell who holds the port even without root.
+      port_owner_uid() {
+        awk 'NR>1 && $4=="0A" { split($2,a,":"); if (a[2]=="0BB8") print $8 }'           /proc/net/tcp /proc/net/tcp6 2>/dev/null | head -n1
+      }
+      port_pids() {
+        # Socket inodes listening on :3000, then the PIDs (that we can see) holding them.
+        for ino in $(awk 'NR>1 && $4=="0A" { split($2,a,":"); if (a[2]=="0BB8") print $10 }' /proc/net/tcp /proc/net/tcp6 2>/dev/null); do
+          for fd in /proc/[0-9]*/fd/*; do
+            [ "$(readlink "$fd" 2>/dev/null)" = "socket:[$ino]" ] && echo "$fd" | cut -d/ -f3
+          done
+        done | sort -u
+      }
+      port_busy() { [ -n "$(port_owner_uid)" ]; }
+
+      pm2 delete skincarenepal >/dev/null 2>&1 || true
+
+      if port_busy; then
+        OWNER_UID=$(port_owner_uid)
+        OWNER=$(getent passwd "$OWNER_UID" | cut -d: -f1)
+        echo "Port 3000 is held by user '${OWNER:-?}' (uid $OWNER_UID)."
+        echo "Node processes on this host:"
+        ps -eo user:16,pid,lstart,args | awk 'NR==1 || /[n]ode|[n]ext/' || true
+
+        if [ "$OWNER_UID" = "$(id -u)" ]; then
+          PIDS=$(port_pids)
+          echo "Stopping our own stale process(es): ${PIDS:-none found}"
+          [ -n "$PIDS" ] && kill $PIDS 2>/dev/null; sleep 2
+          PIDS=$(port_pids); [ -n "$PIDS" ] && kill -9 $PIDS 2>/dev/null; sleep 1
+        else
+          echo "Process belongs to another user; trying passwordless sudo..."
+          sudo -n -l 2>&1 | sed 's/^/  sudo: /' || true
           sudo -n fuser -k 3000/tcp >/dev/null 2>&1 || true
-          sudo -n pm2 delete skincarenepal >/dev/null 2>&1 || true
+          sudo -n -u "$OWNER" pm2 delete skincarenepal >/dev/null 2>&1 || true
+          sleep 2
         fi
-        sleep 1
-      done
-    - |
-      if command -v ss >/dev/null 2>&1 && ss -ltn '( sport = :3000 )' | grep -q ':3000'; then
-        echo "WARNING: port 3000 is still in use after cleanup attempts."
-        echo "Details:"
-        ss -ltnp '( sport = :3000 )' || true
-        if command -v lsof >/dev/null 2>&1; then
-          lsof -iTCP:3000 -sTCP:LISTEN || true
-        fi
-        echo "Attempting one final sudo cleanup (may require sudo privileges)..."
-        if command -v sudo >/dev/null 2>&1; then
-          sudo -n pm2 delete skincarenepal >/dev/null 2>&1 || true
-          sudo -n fuser -k 3000/tcp >/dev/null 2>&1 || true
-        fi
-        sleep 1
       fi
     - |
-      if command -v ss >/dev/null 2>&1 && ss -ltn '( sport = :3000 )' | grep -q ':3000'; then
-        echo "ERROR: port 3000 still in use after final attempts. Manual intervention required:"
-        echo "  As root on the host run: pm2 delete skincarenepal ; fuser -k 3000/tcp"
+      if port_busy 2>/dev/null || awk 'NR>1 && $4=="0A" { split($2,a,":"); if (a[2]=="0BB8") f=1 } END { exit !f }' /proc/net/tcp /proc/net/tcp6 2>/dev/null; then
+        OWNER=$(getent passwd "$(awk 'NR>1 && $4=="0A" { split($2,a,":"); if (a[2]=="0BB8") { print $8; exit } }' /proc/net/tcp /proc/net/tcp6)" | cut -d: -f1)
+        echo "ERROR: port 3000 is still held by user '$OWNER', which gitlab-runner cannot stop."
+        echo "Fix once, as root on this host:"
+        echo "  sudo -u $OWNER pm2 delete skincarenepal; sudo -u $OWNER pm2 save --force; fuser -k 3000/tcp"
+        echo "  echo 'gitlab-runner ALL=(root) NOPASSWD: /usr/bin/fuser' > /etc/sudoers.d/gitlab-runner-fuser; chmod 440 /etc/sudoers.d/gitlab-runner-fuser"
         exit 1
       fi
     - |
