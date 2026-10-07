@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { Facebook, Instagram } from 'lucide-react';
 import { SiTiktok } from 'react-icons/si';
@@ -8,7 +9,14 @@ export default function SiteFooter({ contact }: { contact: ContactInfo }) {
     <footer className='site-footer'>
       <div className='footer-grid'>
         <div>
-          <div className='footer-logo'>CARE &amp; CLEAN NEPAL</div>
+          <Image
+            className='footer-logo'
+            src='/images/logo.png'
+            alt='Care and Clean Nepal'
+            width={207}
+            height={48}
+            style={{ height: 48, width: 'auto' }}
+          />
           <p>Everyday care for your skincare routine.</p>
           <div className='socials'>
             <a

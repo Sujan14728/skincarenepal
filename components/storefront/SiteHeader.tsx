@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Marquee from 'react-fast-marquee';
@@ -65,7 +66,14 @@ export default function SiteHeader({
           className={`site-nav ${scrolled || !isHome || menuOpen ? 'is-scrolled' : ''}`}
         >
           <Link className='logo' href='/' onClick={closeMenu}>
-            CARE <span>&amp;</span> CLEAN NEPAL
+            <Image
+              src='/images/logo.png'
+              alt='Care and Clean Nepal'
+              width={207}
+              height={48}
+              style={{ height: 48, width: 'auto' }}
+              priority
+            />
           </Link>
           <nav
             className={menuOpen ? 'mobile-open' : ''}

@@ -37,16 +37,17 @@ export const metadata: Metadata = {
 
   /* ---------- ICONS (order matters) ---------- */
   icons: {
-    icon: '/favicon.ico', // primary, .ico → Google loves this
-    shortcut: '/favicon-32x32.png',
-    apple: '/apple-touch-icon.png',
-    other: [
-      { rel: 'icon', url: '/favicon-16x16.png', sizes: '16x16' },
-      { rel: 'icon', url: '/favicon-32x32.png', sizes: '32x32' },
-      { rel: 'icon', url: '/android-chrome-192x192.png', sizes: '192x192' },
-      { rel: 'icon', url: '/android-chrome-512x512.png', sizes: '512x512' }
-    ]
+    icon: [
+      { url: '/favicon.ico', sizes: '48x48' }, // primary, .ico → Google loves this
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' }
+    ],
+    shortcut: '/favicon.ico',
+    apple: { url: '/apple-touch-icon.png', sizes: '180x180' }
   },
+  manifest: '/site.webmanifest',
 
   keywords: [
     'organic skincare',
@@ -65,14 +66,16 @@ export const metadata: Metadata = {
     title: 'Care And Clean',
     description:
       'Shop 100% natural organic face packs in Nepal. Free delivery and best prices.',
-    images: [{ url: '/logo.jpg', width: 800, height: 600 }]
+    images: [
+      { url: '/images/design/hero-collection.jpg', width: 1303, height: 1600 }
+    ]
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Care And Clean',
     description:
       'Shop 100% natural organic face packs in Nepal. Free delivery and best prices.',
-    images: ['/logo.jpg']
+    images: ['/images/design/hero-collection.jpg']
   }
 };
 
@@ -115,7 +118,7 @@ export default function RootLayout({
               '@type': 'Organization',
               name: 'Care And Clean ',
               url: 'https://careandcleannp.com',
-              logo: 'https://careandcleannp.com/logo.jpg',
+              logo: 'https://careandcleannp.com/android-chrome-512x512.png',
               sameAs: []
             })
           }}

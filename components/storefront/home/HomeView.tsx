@@ -22,6 +22,8 @@ import RevealOnScroll from '@/components/storefront/RevealOnScroll';
 import MediaLightbox from '@/components/storefront/MediaLightbox';
 import {
   DESIGN_IMAGES,
+  effectivePrice,
+  formatPrice,
   getRoutineLabel,
   stripHtml,
   type ContactInfo,
@@ -61,6 +63,7 @@ export default function HomeView({
   };
 
   const sameEmail = contact.supportEmail === contact.generalEmail;
+  const featured = products.slice(0, 4);
 
   return (
     <main className='cc-home'>
@@ -148,42 +151,38 @@ export default function HomeView({
               />
             </figure>
           </div>
-          <div className='featured-row'>
-            {products.map((product, i) => (
-              <article
-                key={product.id}
-                className='product-card fade-up'
-                style={{ transitionDelay: `${(i % 5) * 90}ms` }}
-              >
-                <Link
-                  href={`/products/${product.slug}`}
-                  className='photo-frame product-card-photo'
-                  style={{ display: 'block' }}
-                  tabIndex={-1}
-                  aria-hidden='true'
-                >
-                  <img
-                    src={product.images[0] || DESIGN_IMAGES.flatLay}
-                    alt=''
-                    loading='lazy'
-                  />
-                </Link>
-                <div className='product-card-copy'>
-                  <h3>{product.name}</h3>
-                  <p>
-                    {product.excerpt ||
-                      truncate(stripHtml(product.description), 60)}
-                  </p>
+          <div className='featured-marquee'>
+            <div className='featured-track'>
+              {/* Rendered twice so the CSS marquee loops seamlessly. */}
+              {[...featured, ...featured].map((product, i) => {
+                const clone = i >= featured.length;
+                return (
                   <Link
-                    className='button outline small'
+                    key={`${product.id}-${i}`}
                     href={`/products/${product.slug}`}
+                    className='mini-card'
+                    aria-hidden={clone || undefined}
+                    tabIndex={clone ? -1 : undefined}
                   >
-                    Shop Now
+                    <span className='mini-card-photo'>
+                      <img
+                        src={product.images[0] || DESIGN_IMAGES.flatLay}
+                        alt={clone ? '' : product.name}
+                        loading='lazy'
+                      />
+                    </span>
+                    <strong>{product.name}</strong>
+                    <span className='mini-card-price'>
+                      {formatPrice(effectivePrice(product))}
+                    </span>
                   </Link>
-                </div>
-              </article>
-            ))}
+                );
+              })}
+            </div>
           </div>
+          <Link className='button solid centered-button' href='/products'>
+            View Complete Collection <ArrowRight size={16} />
+          </Link>
         </section>
       )}
 
@@ -195,7 +194,7 @@ export default function HomeView({
             <h2>Our Products</h2>
           </div>
           <div className='product-list'>
-            {products.map((product, i) => {
+            {products.slice(0, 2).map((product, i) => {
               const step = String(i + 1).padStart(2, '0');
               const reverse = i % 2 === 1;
               const chips = (
@@ -260,6 +259,9 @@ export default function HomeView({
               );
             })}
           </div>
+          <Link className='button solid centered-button' href='/products'>
+            View All Products <ArrowRight size={16} />
+          </Link>
         </section>
       )}
 

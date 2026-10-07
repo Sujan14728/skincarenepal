@@ -53,7 +53,7 @@ function getOrigin() {
 }
 
 function brandedHeaderHtml() {
-  const logoUrl = `${getOrigin()}/logo.jpg`;
+  const logoUrl = `${getOrigin()}/android-chrome-192x192.png`;
   return `
     <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
       <img src="${logoUrl}" alt="${STORE_NAME} logo" width="36" height="36" style="border-radius:6px; object-fit:cover;" />
