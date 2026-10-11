@@ -6,55 +6,51 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import {
   ArrowRight,
-  Check,
   Clipboard,
   Headphones,
   Leaf,
   Mail,
+  Mountain,
   Phone,
-  Play,
   ShieldCheck,
-  Sparkles,
-  Sun
+  Sparkles
 } from 'lucide-react';
 import FaqAccordion from '@/components/storefront/FaqAccordion';
 import RevealOnScroll from '@/components/storefront/RevealOnScroll';
-import MediaLightbox from '@/components/storefront/MediaLightbox';
+import ProductSlider from './ProductSlider';
+import RoutineCarousel from './RoutineCarousel';
 import {
   DESIGN_IMAGES,
+  displayName,
   effectivePrice,
   formatPrice,
-  getRoutineLabel,
-  stripHtml,
   type ContactInfo,
-  type PublicReview,
   type StorefrontProduct
 } from '@/lib/storefront-utils';
 import type { Faq } from '@/lib/faqs';
 
-const truncate = (text: string, max: number) =>
-  text.length > max ? `${text.slice(0, max).replace(/\s+\S*$/, '')}…` : text;
-
 type HomeViewProps = {
   products: StorefrontProduct[];
+  combo: StorefrontProduct | null;
   routine: StorefrontProduct[];
-  reviews: PublicReview[];
   rating: { average: number | null; count: number };
   contact: ContactInfo;
   faqs: Faq[];
 };
 
+/** Below this, a saving is too small to headline. */
+const MIN_SAVING = 100;
+
 export default function HomeView({
   products,
+  combo,
   routine,
-  reviews,
   rating,
   contact,
   faqs
 }: HomeViewProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [copied, setCopied] = useState('');
-  const [activeReview, setActiveReview] = useState<PublicReview | null>(null);
 
   const copyEmail = (email: string) => {
     navigator.clipboard?.writeText(email);
@@ -63,46 +59,91 @@ export default function HomeView({
   };
 
   const sameEmail = contact.supportEmail === contact.generalEmail;
-  const featured = products.slice(0, 4);
+  // The combo is the hero's campaign; the sliders show the individual products.
+  const singles = products.filter(p => p.routineKey !== 'COMBO');
+  const featured = singles.slice(0, 4);
+
+  const comboPrice = combo ? effectivePrice(combo) : 0;
+  const separateTotal = routine.reduce((sum, p) => sum + effectivePrice(p), 0);
+  const saving = separateTotal - comboPrice;
 
   return (
     <main className='cc-home'>
       <RevealOnScroll />
 
-      {/* ---------- Hero ---------- */}
-      <section id='home' className='hero section-pad'>
+      {/* ---------- Hero: campaign billboard for the combo ---------- */}
+      <section id='home' className='hero billboard section-pad'>
         <div className='hero-copy fade-up'>
-          <p className='eyebrow'>5-Step Herbal Skincare Collection</p>
-          <h1>
-            CARE &amp;
-            <br />
-            CLEAN NEPAL
-          </h1>
-          <p className='hero-subline'>
-            Complete Care for Your Everyday Skincare Routine.
-          </p>
-          <div className='button-row'>
-            <Link className='button solid' href='/products'>
-              Shop Now <ArrowRight size={16} />
-            </Link>
-            <a className='button outline' href='#products'>
-              Explore Products
-            </a>
-          </div>
+          {combo ? (
+            <>
+              <p className='eyebrow'>
+                Combo offer · Complete {routine.length || 5}-step routine
+              </p>
+              <h1>
+                Your Complete Routine,
+                <br />
+                <em>One Combo.</em>
+              </h1>
+              <p className='hero-subline'>
+                Cleanse, treat, soothe, hydrate and protect — every step your
+                skin needs, morning and night, in one herbal set.
+              </p>
+              <div className='billboard-price'>
+                <strong>{formatPrice(comboPrice)}</strong>
+                {saving >= MIN_SAVING && (
+                  <>
+                    <s>{formatPrice(separateTotal)}</s>
+                    <span>Save {formatPrice(saving)}</span>
+                  </>
+                )}
+              </div>
+              <div className='button-row'>
+                <Link className='button solid' href='/routine'>
+                  Shop the Combo <ArrowRight size={16} />
+                </Link>
+                <a className='button outline' href='#products'>
+                  Explore Products
+                </a>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className='eyebrow'>5-Step Herbal Skincare Collection</p>
+              <h1>
+                CARE &amp;
+                <br />
+                CLEAN NEPAL
+              </h1>
+              <p className='hero-subline'>
+                Complete Care for Your Everyday Skincare Routine.
+              </p>
+              <div className='button-row'>
+                <Link className='button solid' href='/products'>
+                  Shop Now <ArrowRight size={16} />
+                </Link>
+                <a className='button outline' href='#products'>
+                  Explore Products
+                </a>
+              </div>
+            </>
+          )}
         </div>
         <div className='hero-visual fade-up'>
           <div className='arch'>
             <figure className='photo-frame hero-photo-frame'>
               <img
                 src={DESIGN_IMAGES.heroCollection}
-                alt='Model beside the complete Care and Clean Nepal skincare range on a white pedestal'
+                alt='Model beside the complete Care and Clean Nepal skincare range'
                 fetchPriority='high'
               />
             </figure>
-            <span className='botanical-dots' aria-hidden='true'>
-              • •<br />•
-            </span>
           </div>
+          {combo && (
+            <Link className='billboard-tag' href='/routine'>
+              <small>Combo Set</small>
+              <b>{formatPrice(comboPrice)}</b>
+            </Link>
+          )}
           {rating.average !== null && (
             <p className='proof'>
               ⭐ {rating.average}/5 from {rating.count.toLocaleString('en-IN')}{' '}
@@ -112,7 +153,63 @@ export default function HomeView({
         </div>
       </section>
 
-      {/* ---------- Trust strip ---------- */}
+      {/* ---------- Our Products: one product per slide ---------- */}
+      {singles.length > 0 && (
+        <section id='products' className='products section-pad'>
+          <div className='section-heading centered fade-up'>
+            <p className='eyebrow'>The complete collection</p>
+            <h2>Our Products</h2>
+          </div>
+          <ProductSlider products={singles} />
+          <Link className='button solid centered-button' href='/products'>
+            View All Products <ArrowRight size={16} />
+          </Link>
+        </section>
+      )}
+
+      {/* ---------- Everyday essentials ---------- */}
+      {featured.length > 0 && (
+        <section className='featured section-pad'>
+          <div className='section-heading centered fade-up'>
+            <p className='eyebrow'>Featured Products</p>
+            <h2>For Your Everyday Essentials</h2>
+          </div>
+          <div className='featured-marquee'>
+            <div className='featured-track'>
+              {/* Rendered twice so the CSS marquee loops seamlessly. */}
+              {[...featured, ...featured].map((product, i) => {
+                const clone = i >= featured.length;
+                return (
+                  <Link
+                    key={`${product.id}-${i}`}
+                    href={`/products/${product.slug}`}
+                    className='mini-card'
+                    aria-hidden={clone || undefined}
+                    tabIndex={clone ? -1 : undefined}
+                  >
+                    <span className='mini-card-photo'>
+                      <img
+                        src={product.images[0] || DESIGN_IMAGES.flatLay}
+                        alt={clone ? '' : displayName(product.name)}
+                        loading='lazy'
+                      />
+                    </span>
+                    <strong>{displayName(product.name)}</strong>
+                    <span className='mini-card-price'>
+                      {formatPrice(effectivePrice(product))}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+          <Link className='button solid centered-button' href='/products'>
+            View Complete Collection <ArrowRight size={16} />
+          </Link>
+        </section>
+      )}
+
+      {/* ---------- Trust strip (below the products) ---------- */}
       <div className='trust-strip'>
         <div className='trust-item fade-up' style={{ transitionDelay: '0ms' }}>
           <Leaf /> <span>Herbal Ingredients</span>
@@ -131,213 +228,24 @@ export default function HomeView({
           className='trust-item fade-up'
           style={{ transitionDelay: '270ms' }}
         >
-          <Sun /> <span>SPF 50+ Protection</span>
+          <Mountain /> <span>Proudly Nepali</span>
         </div>
       </div>
 
-      {/* ---------- Featured products ---------- */}
-      {products.length > 0 && (
-        <section className='featured section-pad'>
-          <div className='featured-head'>
-            <div className='section-heading fade-up'>
-              <p className='eyebrow'>Featured Products</p>
-              <h2>Our Everyday Essentials</h2>
-            </div>
-            <figure className='photo-frame featured-support fade-up'>
-              <img
-                src={DESIGN_IMAGES.flatLay}
-                alt='Care and Clean Nepal product range styled with dried botanicals'
-                loading='lazy'
-              />
-            </figure>
-          </div>
-          <div className='featured-marquee'>
-            <div className='featured-track'>
-              {/* Rendered twice so the CSS marquee loops seamlessly. */}
-              {[...featured, ...featured].map((product, i) => {
-                const clone = i >= featured.length;
-                return (
-                  <Link
-                    key={`${product.id}-${i}`}
-                    href={`/products/${product.slug}`}
-                    className='mini-card'
-                    aria-hidden={clone || undefined}
-                    tabIndex={clone ? -1 : undefined}
-                  >
-                    <span className='mini-card-photo'>
-                      <img
-                        src={product.images[0] || DESIGN_IMAGES.flatLay}
-                        alt={clone ? '' : product.name}
-                        loading='lazy'
-                      />
-                    </span>
-                    <strong>{product.name}</strong>
-                    <span className='mini-card-price'>
-                      {formatPrice(effectivePrice(product))}
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-          <Link className='button solid centered-button' href='/products'>
-            View Complete Collection <ArrowRight size={16} />
-          </Link>
-        </section>
-      )}
-
-      {/* ---------- Product blocks ---------- */}
-      {products.length > 0 && (
-        <section id='products' className='products section-pad'>
-          <div className='section-heading centered fade-up'>
-            <p className='eyebrow'>The complete collection</p>
-            <h2>Our Products</h2>
-          </div>
-          <div className='product-list'>
-            {products.slice(0, 2).map((product, i) => {
-              const step = String(i + 1).padStart(2, '0');
-              const reverse = i % 2 === 1;
-              const chips = (
-                product.keyIngredients.length
-                  ? product.keyIngredients
-                  : product.keyBenefits
-              ).slice(0, 4);
-              return (
-                <article
-                  key={product.id}
-                  className={`product-block ${reverse ? 'reverse' : ''}`}
-                >
-                  <div
-                    className={`product-block-art fade-up ${reverse ? 'slide-in-right' : 'slide-in-left'}`}
-                  >
-                    <span className='step-number'>{step}</span>
-                    <figure className='photo-frame product-block-photo'>
-                      <img
-                        src={product.images[0] || DESIGN_IMAGES.flatLay}
-                        alt={product.name}
-                        loading='lazy'
-                      />
-                    </figure>
-                  </div>
-                  <div className='product-details fade-up'>
-                    <p className='eyebrow'>Step {step}</p>
-                    <h3>{product.name}</h3>
-                    <p>
-                      {truncate(
-                        stripHtml(product.description) || product.excerpt,
-                        260
-                      )}
-                    </p>
-                    {chips.length > 0 && (
-                      <div className='chips'>
-                        {chips.map((chip, n) => (
-                          <span key={n}>{chip}</span>
-                        ))}
-                      </div>
-                    )}
-                    {product.howToUse.length > 0 && (
-                      <>
-                        <h4>How to use</h4>
-                        <ol>
-                          {product.howToUse.map((text, n) => (
-                            <li key={n}>
-                              <b>{n + 1}</b>
-                              <span>{text}</span>
-                            </li>
-                          ))}
-                        </ol>
-                      </>
-                    )}
-                    <Link
-                      className='button solid'
-                      href={`/products/${product.slug}`}
-                    >
-                      Shop Now <ArrowRight size={16} />
-                    </Link>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-          <Link className='button solid centered-button' href='/products'>
-            View All Products <ArrowRight size={16} />
-          </Link>
-        </section>
-      )}
-
-      {/* ---------- Routine ---------- */}
+      {/* ---------- Routine carousel ---------- */}
       {routine.length > 0 && (
         <section id='routine' className='routine section-pad'>
           <div className='section-heading centered fade-up'>
+            <p className='eyebrow'>A little ritual, every day</p>
             <h2>Your Complete {routine.length}-Step Routine</h2>
             <p>Everything your skin needs — morning and night.</p>
           </div>
-          <div className='routine-steps'>
-            {routine.map((product, i) => (
-              <Link
-                key={product.id}
-                href={`/products/${product.slug}`}
-                className='routine-step fade-up'
-                style={{ transitionDelay: `${i * 90}ms` }}
-              >
-                <div className='routine-number'>
-                  {String(i + 1).padStart(2, '0')}
-                </div>
-                <strong>{getRoutineLabel(product.routineKey)}</strong>
-                <figure className='photo-frame routine-photo'>
-                  <img
-                    src={product.images[0] || DESIGN_IMAGES.flatLay}
-                    alt={product.name}
-                    loading='lazy'
-                  />
-                </figure>
-                <span>{product.name.replace('2-in-1 ', '')}</span>
-              </Link>
-            ))}
-          </div>
-          <figure className='photo-frame routine-flatlay fade-up'>
-            <img
-              src={DESIGN_IMAGES.flatLay}
-              alt='The full Care and Clean Nepal daily skincare routine styled together'
-              loading='lazy'
-            />
-          </figure>
-          <Link className='button light-outline' href='/products#routine'>
-            Explore the Routine
+          <RoutineCarousel routine={routine} />
+          <Link className='button solid centered-button' href='/routine'>
+            Shop the Full Routine <ArrowRight size={16} />
           </Link>
         </section>
       )}
-
-      {/* ---------- Reviews ---------- */}
-      {reviews.length > 0 && (
-        <section id='reviews' className='reviews section-pad'>
-          <div className='section-heading fade-up'>
-            <p className='eyebrow'>Customer Reviews</p>
-            <h2>Real Customer Experiences</h2>
-          </div>
-          <div className='review-grid'>
-            {reviews.map(review => (
-              <ReviewTile
-                key={review.id}
-                review={review}
-                onOpen={() => setActiveReview(review)}
-              />
-            ))}
-          </div>
-          <Link className='button solid centered-button' href='/reviews'>
-            Watch Customer Reviews
-          </Link>
-        </section>
-      )}
-
-      {/* ---------- About ---------- */}
-      <section id='about' className='about section-pad'>
-        <div className='section-heading centered fade-up'>
-          <p className='eyebrow'>Our story</p>
-          <h2>About Care &amp; Clean</h2>
-        </div>
-        <AboutGrid />
-      </section>
 
       {/* ---------- Contact ---------- */}
       <section id='contact' className='contact section-pad'>
@@ -413,96 +321,32 @@ export default function HomeView({
         <FaqAccordion faqs={faqs} />
       </section>
 
-      <MediaLightbox
-        review={activeReview}
-        onClose={() => setActiveReview(null)}
-      />
     </main>
   );
 }
 
-function ReviewTile({
-  review,
-  onOpen
-}: {
-  review: PublicReview;
-  onOpen: () => void;
-}) {
-  const kind =
-    review.type === 'VIDEO' && review.mediaUrl
-      ? 'video'
-      : review.type === 'IMAGE' && review.mediaUrl
-        ? 'photo'
-        : 'chat';
-
-  return (
-    <article className={`review-tile ${kind}`}>
-      {kind === 'chat' && (
-        <div className='review-chat-content'>
-          <div className='phone-top'>
-            9:41 <span>•••</span>
-          </div>
-          <div className='chat-bubble'>
-            {'★'.repeat(review.rating)}
-            <br />
-            <span>{review.content}</span>
-          </div>
-          <strong>{review.product?.name ?? 'Care & Clean Nepal'}</strong>
-          <small>{review.customerName}</small>
-        </div>
-      )}
-      {kind === 'photo' && (
-        <figure
-          className='photo-frame review-photo-frame'
-          role='button'
-          tabIndex={0}
-          aria-label={`View photo review by ${review.customerName}`}
-          onClick={onOpen}
-          onKeyDown={e => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onOpen();
-            }
-          }}
-          style={{ cursor: 'zoom-in' }}
-        >
-          <img
-            src={review.mediaUrl!}
-            alt={`Photo review by ${review.customerName}`}
-            loading='lazy'
-          />
-          <figcaption>
-            <strong>Customer Photo</strong>
-          </figcaption>
-        </figure>
-      )}
-      {kind === 'video' && (
-        <>
-          {review.thumbnailUrl && (
-            <img
-              className='video-poster'
-              src={review.thumbnailUrl}
-              alt=''
-              loading='lazy'
-            />
-          )}
-          <div className='review-video-content'>
-            <button
-              type='button'
-              className='play'
-              aria-label={`Play video review by ${review.customerName}`}
-              onClick={onOpen}
-            >
-              <Play fill='currentColor' />
-            </button>
-            <strong>{review.content || 'Video Review'}</strong>
-            <span>{'★'.repeat(review.rating)}</span>
-          </div>
-        </>
-      )}
-    </article>
-  );
-}
+const STORY_HIGHLIGHTS = [
+  {
+    icon: Mountain,
+    title: 'Born in Nepal',
+    text: 'Care & Clean began with a single product — our 2-in-1 Face Pack of papaya, orange peel and multani mitti. It has since grown into a complete everyday routine, made right here in Nepal.'
+  },
+  {
+    icon: Leaf,
+    title: 'Nature First',
+    text: 'Every formula starts with botanicals your skin recognises — aloe vera, papaya, cucumber, orange peel — paired with gentle, proven skincare science. No harsh chemicals, nothing your skin doesn’t need.'
+  },
+  {
+    icon: Sparkles,
+    title: 'Simple Routine, Real Results',
+    text: 'Cleanse, treat, soothe, hydrate, protect. Five steps designed to work together, so caring for your skin takes minutes — not a shelf full of products.'
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Our Promise',
+    text: 'Dermatologically tested, cruelty-free and honestly priced — premium herbal skincare that every Nepali household can make part of its day.'
+  }
+];
 
 export function AboutGrid() {
   return (
@@ -515,58 +359,28 @@ export function AboutGrid() {
         />
         <figcaption>
           <span>
-            CARE &amp;
+            Care from Nature,
             <br />
-            CLEAN NEPAL
+            Clean by Choice.
           </span>
-          <small>Rooted in nature · made for everyday</small>
+          <small>Proudly Nepali · made for everyday</small>
         </figcaption>
       </figure>
       <div className='about-copy'>
-        <article>
-          <Leaf size={24} />
-          <div>
-            <h3>Brand Introduction</h3>
-            <p>
-              Care &amp; Clean Nepal is a homegrown herbal skincare brand built
-              on the belief that everyday skincare should be simple, effective
-              and rooted in nature.
-            </p>
-          </div>
-        </article>
-        <article>
-          <Sparkles size={24} />
-          <div>
-            <h3>Our Approach</h3>
-            <p>
-              We combine time-tested botanical ingredients with modern skincare
-              science to create gentle, result-driven formulas that work for
-              all skin types.
-            </p>
-          </div>
-        </article>
-        <article>
-          <Check size={24} />
-          <div>
-            <h3>Our Products</h3>
-            <p>
-              Every product in our range is carefully formulated — free from
-              harsh chemicals, dermatologically tested and designed to form a
-              complete daily routine.
-            </p>
-          </div>
-        </article>
-        <article>
-          <ShieldCheck size={24} />
-          <div>
-            <h3>Our Commitment</h3>
-            <p>
-              We are committed to cruelty-free, sustainable practices and to
-              making premium herbal skincare accessible to every Nepali
-              household.
-            </p>
-          </div>
-        </article>
+        <p className='about-lead'>
+          We believe good skincare shouldn’t be complicated or out of reach. So
+          we make honest, herbal essentials — rooted in Nepal’s nature, made for
+          your everyday.
+        </p>
+        {STORY_HIGHLIGHTS.map(({ icon: Icon, title, text }) => (
+          <article key={title}>
+            <Icon size={24} />
+            <div>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </div>
+          </article>
+        ))}
       </div>
     </div>
   );

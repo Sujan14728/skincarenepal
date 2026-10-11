@@ -5,9 +5,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Check, Droplets, Leaf, Play, Sparkles } from 'lucide-react';
+import FaqAccordion from '@/components/storefront/FaqAccordion';
 import MediaLightbox from '@/components/storefront/MediaLightbox';
+import { getProductFaqs } from '@/lib/faqs';
 import {
   DESIGN_IMAGES,
+  displayName,
   getRoutineIndex,
   getRoutineLabel,
   isPurchasable,
@@ -57,6 +60,7 @@ export default function ProductDetailView({
     ? product.images
     : [DESIGN_IMAGES.flatLay];
   const purchasable = isPurchasable(product);
+  const faqs = getProductFaqs(product.routineKey);
   const eyebrow =
     product.routineKey === 'CARE'
       ? 'CARE & CLEAN NEPAL'
@@ -159,11 +163,6 @@ export default function ProductDetailView({
               >
                 {buyLabel(product)}
               </button>
-              {routine.length > 0 && (
-                <a className='cc-detail-routine-link' href='#routine'>
-                  Add to Routine →
-                </a>
-              )}
               <ul
                 className='cc-detail-trust'
                 aria-label='Product trust markers'
@@ -228,8 +227,7 @@ export default function ProductDetailView({
                 ))}
 
               {tab === 'INGREDIENTS' &&
-                (product.keyIngredients.length ||
-                product.suitableFor.length ? (
+                (product.keyIngredients.length || product.suitableFor.length ? (
                   <div className='cc-ingredients-grid'>
                     <ul
                       className='cc-detail-chips cc-ingredient-chip-grid'
@@ -316,7 +314,18 @@ export default function ProductDetailView({
           </section>
         )}
 
-        <RoutineBand routine={routine} ctaHref='/products' />
+        {faqs.length > 0 && (
+          <section className='cc-product-faq' aria-labelledby='faq-title'>
+            <div className='cc-detail-shell'>
+              <h3 id='faq-title'>
+                Questions about {displayName(product.name)}
+              </h3>
+              <FaqAccordion faqs={faqs} />
+            </div>
+          </section>
+        )}
+
+        <RoutineBand routine={routine} ctaHref='/routine' />
       </div>
 
       <MediaLightbox

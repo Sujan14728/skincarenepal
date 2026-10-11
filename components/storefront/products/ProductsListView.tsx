@@ -1,12 +1,9 @@
 'use client';
-/* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowDown } from 'lucide-react';
 import {
-  DESIGN_IMAGES,
   ROUTINE_STEPS,
   isPurchasable,
   type StorefrontProduct
@@ -29,7 +26,7 @@ export default function ProductsListView({
   const filters = useMemo(
     () => [
       'ALL',
-      ...ROUTINE_STEPS.map(s => s.key).filter(key =>
+      ...(['COMBO', ...ROUTINE_STEPS.map(s => s.key)] as const).filter(key =>
         products.some(p => p.routineKey === key)
       )
     ],
@@ -60,38 +57,8 @@ export default function ProductsListView({
   return (
     <main className='cc-page'>
       <div className='cc-view cc-view-listing'>
-        <header className='cc-hero' id='top'>
-          <div className='cc-hero-copy'>
-            <p className='cc-eyebrow'>OUR PRODUCTS</p>
-            <h1>
-              Herbal Skincare
-              <br />
-              <em>for Every Day</em>
-            </h1>
-            <p className='cc-hero-subline'>
-              Carefully crafted formulas for your complete daily routine.
-            </p>
-            <div className='cc-hero-actions'>
-              <a className='cc-button' href='#products'>
-                EXPLORE PRODUCTS <ArrowDown size={15} />
-              </a>
-              <a className='cc-button cc-button-outline' href='#routine'>
-                BUILD YOUR ROUTINE
-              </a>
-            </div>
-          </div>
-          <figure className='cc-hero-photo'>
-            <img
-              src={DESIGN_IMAGES.heroCollection}
-              alt='Care and Clean Nepal herbal skincare collection arranged with a model'
-              fetchPriority='high'
-            />
-            <figcaption>Care from nature. Clean by choice.</figcaption>
-          </figure>
-        </header>
-
         <section
-          className='cc-products'
+          className='cc-products cc-products-top'
           id='products'
           aria-labelledby='products-title'
         >
@@ -176,7 +143,7 @@ export default function ProductsListView({
           </div>
         </section>
 
-        <RoutineBand routine={routine} ctaHref='#products' />
+        <RoutineBand routine={routine} ctaHref='/routine' />
       </div>
     </main>
   );

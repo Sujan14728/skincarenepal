@@ -7,11 +7,14 @@ import { toast } from 'sonner';
 import {
   Check,
   Clipboard,
+  Clock,
   Earth,
   Facebook,
   Headphones,
   Instagram,
   Mail,
+  MapPin,
+  MessageCircle,
   Minus,
   Phone,
   Plus
@@ -68,27 +71,23 @@ function SocialLinks({ light = false }: { light?: boolean }) {
 }
 
 function InfoCard({
-  icon,
+  icon: Icon,
   title,
   email,
   phone,
-  note
+  text,
+  note,
+  children
 }: {
-  icon: 'headset' | 'mail' | 'phone' | 'globe';
+  icon: typeof Mail;
   title: string;
   email?: string;
   phone?: string;
-  note: string;
+  text?: string;
+  note?: string;
+  children?: React.ReactNode;
 }) {
   const [copied, setCopied] = useState(false);
-  const Icon =
-    icon === 'headset'
-      ? Headphones
-      : icon === 'mail'
-        ? Mail
-        : icon === 'phone'
-          ? Phone
-          : Earth;
   const value = email ?? phone;
 
   const copy = () => {
@@ -99,55 +98,49 @@ function InfoCard({
   };
 
   return (
-    <article className='group rounded-2xl border border-[#DCE6D3] bg-white p-7 transition duration-300 hover:-translate-y-0.5 hover:border-[#44AB18]'>
-      <Icon
-        className='mb-5 text-[#3A9712]'
-        size={28}
-        strokeWidth={1.5}
-        aria-hidden='true'
-      />
-      <h3 className='mb-2 font-sora text-base font-semibold text-[#17220F]'>
-        {title}
-      </h3>
-      {value ? (
-        <div className='mb-3 flex items-center gap-2'>
-          <a
-            className='break-all font-sora text-sm text-[#3A9712] underline-offset-4 hover:underline'
-            href={email ? `mailto:${email}` : `tel:${value.replace(/\s+/g, '')}`}
-          >
-            {value}
-          </a>
-          <button
-            className='relative min-h-11 min-w-11 shrink-0 rounded-full p-2 text-[#56634F] transition hover:text-[#3A9712] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3A9712]'
-            onClick={copy}
-            aria-label={`Copy ${value}`}
-            type='button'
-          >
-            <Clipboard size={19} strokeWidth={1.7} />
-            {copied && (
-              <span className='absolute bottom-full right-0 mb-2 whitespace-nowrap rounded-md bg-[#1E4E09] px-2 py-1 font-sora text-[11px] text-white'>
-                ✓ Copied!
-              </span>
-            )}
-          </button>
-        </div>
-      ) : (
-        <>
-          <p className='mb-3 font-sora text-sm text-[#56634F]'>
-            Stay updated with new launches, tips and real customer stories.
+    <article className='flex gap-4 rounded-2xl border border-[#DCE6D3] bg-white p-5 transition duration-300 hover:border-[#44AB18] sm:p-6'>
+      <span className='flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E3F1D6] text-[#307D0F]'>
+        <Icon size={20} strokeWidth={1.7} aria-hidden='true' />
+      </span>
+      <div className='min-w-0 flex-1'>
+        <h3 className='font-sora mb-1 text-[15px] font-semibold text-[#17220F]'>
+          {title}
+        </h3>
+        {value && (
+          <div className='flex items-center gap-1'>
+            <a
+              className='font-sora break-all text-sm font-medium text-[#307D0F] underline-offset-4 hover:underline'
+              href={
+                email ? `mailto:${email}` : `tel:${value.replace(/\s+/g, '')}`
+              }
+            >
+              {value}
+            </a>
+            <button
+              className='relative grid h-9 w-9 shrink-0 place-items-center rounded-full text-[#56634F] transition hover:text-[#3A9712] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3A9712]'
+              onClick={copy}
+              aria-label={`Copy ${value}`}
+              type='button'
+            >
+              <Clipboard size={17} strokeWidth={1.7} />
+              {copied && (
+                <span className='font-sora absolute bottom-full right-0 mb-2 whitespace-nowrap rounded-md bg-[#1E4E09] px-2 py-1 text-[11px] text-white'>
+                  ✓ Copied!
+                </span>
+              )}
+            </button>
+          </div>
+        )}
+        {text && (
+          <p className='font-sora text-sm font-medium text-[#17220F]'>{text}</p>
+        )}
+        {children}
+        {note && (
+          <p className='font-sora mt-1 text-xs leading-relaxed text-[#56634F]'>
+            {note}
           </p>
-          <SocialLinks />
-          <a
-            className='mt-4 block font-sora text-[13px] font-semibold text-[#3A9712]'
-            href={SOCIAL_LINKS.instagram}
-            target='_blank'
-            rel='noopener noreferrer'
-          >
-            {SOCIAL_LINKS.instagramHandle}
-          </a>
-        </>
-      )}
-      <p className='font-sora text-xs leading-relaxed text-[#56634F]'>{note}</p>
+        )}
+      </div>
     </article>
   );
 }
@@ -195,48 +188,69 @@ export default function ContactView({
     <div className='cc-contact min-h-screen bg-[#F7FAF3] text-[#17220F]'>
       <main>
         <section
-          className='grid min-h-[544px] lg:grid-cols-2'
+          className='mx-auto grid max-w-[1280px] items-center gap-10 px-5 pb-16 pt-10 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:pb-20 lg:pt-16'
           aria-labelledby='hero-title'
         >
-          <div className='hero-image min-h-[480px] bg-[#ECF9E7] lg:min-h-0'>
+          <div className='hero-copy order-2 lg:order-1'>
+            <p className='font-sora mb-4 text-xs font-semibold uppercase tracking-[0.08em] text-[#3A9712]'>
+              GET IN TOUCH
+            </p>
+            <h1
+              id='hero-title'
+              className='font-fraunces mb-5 text-[40px] leading-[1.08] text-[#17220F] sm:text-[52px] lg:text-[58px]'
+            >
+              We&apos;d love to hear from you.
+            </h1>
+            <p className='font-sora mb-8 max-w-[520px] text-base leading-7 text-[#56634F] sm:text-[17px] sm:leading-8'>
+              A question about your order, help choosing the right product, or
+              just a kind word — reach us whichever way suits you.
+            </p>
+            <div className='flex flex-wrap gap-3'>
+              <a
+                href={`tel:${contact.phone.replace(/\s+/g, '')}`}
+                className='pill-button gap-2 bg-[#307D0F] text-white hover:bg-[#26630C]'
+              >
+                <Phone size={16} /> CALL US
+              </a>
+              <a
+                href={SOCIAL_LINKS.whatsapp}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='pill-button gap-2 border border-[#307D0F] text-[#307D0F] hover:bg-[#307D0F] hover:text-white'
+              >
+                <MessageCircle size={16} /> WHATSAPP
+              </a>
+              <a
+                href={`mailto:${contact.supportEmail}`}
+                className='pill-button gap-2 border border-[#DCE6D3] bg-white text-[#17220F] hover:border-[#307D0F]'
+              >
+                <Mail size={16} /> EMAIL
+              </a>
+            </div>
+            <p className='font-sora mt-6 flex items-center gap-2 text-xs text-[#56634F]'>
+              <Clock size={14} className='shrink-0 text-[#3A9712]' />
+              Typically replies within 24 hours · Sunday – Friday, 9 AM – 7 PM
+            </p>
+          </div>
+          <div className='hero-image order-1 h-[300px] overflow-hidden rounded-[28px] bg-[#ECF9E7] sm:h-[420px] lg:order-2 lg:h-[520px]'>
             <img
               src={DESIGN_IMAGES.aloeModel}
               alt='Smiling woman holding Care & Clean Aloe Vera Gel'
-              className='h-full w-full object-cover'
+              className='h-full w-full object-cover object-[50%_30%]'
               fetchPriority='high'
             />
-          </div>
-          <div className='hero-copy flex items-center bg-[#F7FAF3] px-7 py-20 sm:px-14 lg:px-20'>
-            <div className='max-w-xl'>
-              <p className='mb-5 font-sora text-xs font-semibold uppercase tracking-[0.08em] text-[#3A9712]'>
-                GET IN TOUCH
-              </p>
-              <h1
-                id='hero-title'
-                className='mb-6 font-fraunces text-[48px] leading-[1.1] text-[#17220F] sm:text-[56px]'
-              >
-                We&apos;d love to hear from you.
-              </h1>
-              <p className='mb-7 font-sora text-[17px] leading-8 text-[#56634F] sm:text-lg'>
-                Whether it&apos;s a question about your order, a product query,
-                or just a kind word — we&apos;re here for you.
-              </p>
-              <p className='font-sora text-xs text-[#3A9712]'>
-                ⚡ Typically replies within 24 hours
-              </p>
-            </div>
           </div>
         </section>
 
         <section
           id='contact'
-          className='mx-auto grid max-w-[1280px] gap-7 px-5 py-20 sm:px-8 lg:grid-cols-[1.5fr_1fr] lg:gap-10 lg:py-28'
+          className='mx-auto grid max-w-[1280px] items-start gap-6 px-5 pb-20 sm:px-8 lg:grid-cols-[1.45fr_1fr] lg:gap-8 lg:pb-28'
           aria-labelledby='contact-title'
         >
-          <div className='form-card rounded-2xl border border-[#DCE6D3] bg-white p-6 sm:p-12'>
+          <div className='form-card rounded-2xl border border-[#DCE6D3] bg-white p-6 sm:p-10'>
             <h2
               id='contact-title'
-              className='mb-8 font-sora text-xl font-semibold'
+              className='font-sora mb-8 text-xl font-semibold'
             >
               Send Us a Message
             </h2>
@@ -245,12 +259,12 @@ export default function ContactView({
                 <span className='mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#ECF9E7] text-[#3A9712]'>
                   <Check size={32} strokeWidth={2} />
                 </span>
-                <p className='max-w-sm font-sora text-lg font-semibold text-[#3A9712]'>
+                <p className='font-sora max-w-sm text-lg font-semibold text-[#3A9712]'>
                   Message sent! We&apos;ll get back to you within 24 hours.
                 </p>
                 <button
                   type='button'
-                  className='mt-6 font-sora text-xs font-semibold uppercase tracking-[0.08em] text-[#307D0F] underline underline-offset-4'
+                  className='font-sora mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-[#307D0F] underline underline-offset-4'
                   onClick={() => setSent(false)}
                 >
                   Send another message
@@ -334,44 +348,60 @@ export default function ContactView({
               </form>
             )}
           </div>
-          <div className='space-y-5'>
+          <div className='grid gap-4 sm:grid-cols-2 sm:[&>*:last-child:nth-child(odd)]:col-span-2 lg:grid-cols-1 lg:[&>*:last-child:nth-child(odd)]:col-span-1'>
             <InfoCard
-              icon='headset'
+              icon={Phone}
+              title='Call or WhatsApp'
+              phone={contact.phone}
+              note='Sunday – Friday, 9:00 AM – 7:00 PM.'
+            />
+            <InfoCard
+              icon={Headphones}
               title='Customer Support'
               email={contact.supportEmail}
-              note='For orders, returns and product queries.'
+              note='Orders, returns and product questions.'
             />
-            {sameEmail ? (
+            {!sameEmail && (
               <InfoCard
-                icon='phone'
-                title='Call or WhatsApp'
-                phone={contact.phone}
-                note='Sunday – Friday, 9:00 AM – 7:00 PM.'
-              />
-            ) : (
-              <InfoCard
-                icon='mail'
+                icon={Mail}
                 title='General Enquiries'
                 email={contact.generalEmail}
-                note='For partnerships, press and everything else.'
+                note='Partnerships, press and everything else.'
               />
             )}
-            <InfoCard icon='globe' title='Follow Us' note='' />
+            <InfoCard icon={MapPin} title='Find Us' text={contact.location} />
+            <InfoCard
+              icon={Earth}
+              title='Follow Us'
+              note='New launches, skincare tips and our “Ask Care & Clean” series.'
+            >
+              <div className='mt-2 flex flex-wrap items-center gap-4'>
+                <SocialLinks />
+                <a
+                  className='font-sora text-[13px] font-semibold text-[#3A9712]'
+                  href={SOCIAL_LINKS.instagram}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  @{SOCIAL_LINKS.instagramHandle}
+                </a>
+              </div>
+            </InfoCard>
           </div>
         </section>
 
         <section
-          className='bg-[#ECF9E7] px-5 py-20 sm:px-8 lg:py-28'
+          className='bg-[#E3F1D6] px-5 py-16 sm:px-8 lg:py-24'
           aria-labelledby='faq-title'
         >
           <div className='mx-auto max-w-[760px]'>
             <h2
               id='faq-title'
-              className='text-center font-fraunces text-[38px] leading-tight sm:text-[42px]'
+              className='font-fraunces text-center text-[38px] leading-tight sm:text-[42px]'
             >
               Quick Answers
             </h2>
-            <p className='mb-10 mt-3 text-center font-sora text-sm text-[#56634F] sm:text-base'>
+            <p className='font-sora mb-10 mt-3 text-center text-sm text-[#56634F] sm:text-base'>
               Have questions? We might already have the answer.
             </p>
             <div className='border-y border-[#DCE6D3]'>
@@ -384,7 +414,7 @@ export default function ContactView({
                   >
                     <button
                       type='button'
-                      className='flex min-h-[68px] w-full items-center justify-between gap-5 text-left font-sora text-base font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3A9712]'
+                      className='font-sora flex min-h-[68px] w-full items-center justify-between gap-5 text-left text-base font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3A9712]'
                       onClick={() => setOpenFaq(open ? -1 : i)}
                       aria-expanded={open}
                     >
@@ -398,7 +428,7 @@ export default function ContactView({
                     <div
                       className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
                     >
-                      <p className='min-h-0 overflow-hidden font-sora text-sm leading-7 text-[#56634F]'>
+                      <p className='font-sora min-h-0 overflow-hidden text-sm leading-7 text-[#56634F]'>
                         {faq.answer}
                       </p>
                     </div>
@@ -410,25 +440,30 @@ export default function ContactView({
         </section>
 
         <section
-          className='px-5 py-20 sm:px-8 lg:py-28'
+          className='px-5 py-16 sm:px-8 lg:py-24'
           aria-label='Complete care'
         >
-          <div className='relative mx-auto h-[400px] max-w-[820px] overflow-hidden rounded-[24px] bg-[#ECF9E7]'>
-            <img
-              src={DESIGN_IMAGES.moisturizerModel}
-              alt='Smiling woman holding Care & Clean moisturizer'
-              className='ken-burns h-full w-full object-cover'
-              loading='lazy'
-            />
-            <div className='absolute inset-0 flex flex-col items-center justify-center bg-white/20 px-6 text-center'>
-              <p className='max-w-xl font-fraunces text-[28px] italic leading-tight text-[#17220F] sm:text-[32px]'>
-                Complete Care for Your Everyday Skincare Routine.
+          <div className='mx-auto grid max-w-[1080px] items-center overflow-hidden rounded-[28px] bg-[#ECF9E7] md:grid-cols-2'>
+            <div className='h-[280px] overflow-hidden md:h-[380px]'>
+              <img
+                src={DESIGN_IMAGES.moisturizerModel}
+                alt='Smiling woman holding Care & Clean moisturizer'
+                className='ken-burns h-full w-full object-cover object-[50%_25%]'
+                loading='lazy'
+              />
+            </div>
+            <div className='px-7 py-10 text-center md:px-12 md:text-left'>
+              <p className='font-sora mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#3A9712]'>
+                The complete routine
+              </p>
+              <p className='font-fraunces text-[30px] leading-tight text-[#17220F] sm:text-[36px]'>
+                Complete care for your everyday skincare routine.
               </p>
               <Link
-                href='/products'
+                href='/routine'
                 className='pill-button mt-7 bg-[#307D0F] text-white hover:bg-[#26630C]'
               >
-                SHOP NOW
+                SHOP THE COMBO
               </Link>
             </div>
           </div>

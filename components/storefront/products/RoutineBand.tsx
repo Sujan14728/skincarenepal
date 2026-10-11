@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
-import type { StorefrontProduct } from '@/lib/storefront-utils';
+import { displayName, type StorefrontProduct } from '@/lib/storefront-utils';
 
 export default function RoutineBand({
   routine,
@@ -29,7 +29,7 @@ export default function RoutineBand({
         {routine.map((product, i) => (
           <div key={product.id} className='cc-flow-step'>
             <span>{String(i + 1).padStart(2, '0')}</span>
-            <strong>{product.name}</strong>
+            <strong>{displayName(product.name)}</strong>
             {i < routine.length - 1 ? <i aria-hidden='true' /> : null}
           </div>
         ))}

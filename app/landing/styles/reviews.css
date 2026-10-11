@@ -389,13 +389,11 @@
   color: white;
   display: grid;
   place-items: center;
-  font:
-    500 20px var(--cc-serif);
+  font: 500 20px var(--cc-serif);
   margin-bottom: 16px;
 }
 .cc-reviews .photo-tile h3 {
-  font:
-    600 13px var(--cc-sans);
+  font: 600 13px var(--cc-sans);
   margin: 0 0 10px;
 }
 .cc-reviews .photo-tile .quote {
@@ -482,8 +480,7 @@
   min-width: 200px;
 }
 .cc-reviews .rating-card h3 {
-  font:
-    600 14px var(--cc-sans);
+  font: 600 14px var(--cc-sans);
   line-height: 1.4;
   min-height: 40px;
   margin: 0;
@@ -534,7 +531,8 @@
 
 /* ---------- CTA ---------- */
 .cc-reviews .cta-band {
-  background: var(--cc-forest);
+  /* Pastel, so it stays distinct from the forest-green footer below. */
+  background: var(--cc-pastel);
   padding: 80px clamp(24px, 8vw, 120px);
   display: grid;
   grid-template-columns: 380px 1fr;
@@ -548,11 +546,11 @@
   object-position: center 35%;
   border-radius: 24px;
   box-shadow:
-    0 0 0 10px rgba(242, 201, 76, 0.12),
-    0 22px 48px rgba(0, 0, 0, 0.18);
+    0 0 0 10px #ffffffb3,
+    0 22px 48px rgba(30, 78, 9, 0.14);
 }
 .cc-reviews .cta-copy h2 {
-  color: #e6f5dc;
+  color: var(--cc-ink);
   font-size: clamp(40px, 5vw, 62px);
   line-height: 1.05;
   letter-spacing: -0.04em;
@@ -560,8 +558,7 @@
   max-width: 600px;
 }
 .cc-reviews .cta-copy p {
-  color: #e6f5dc;
-  opacity: 0.8;
+  color: var(--cc-secondary);
   line-height: 1.7;
   font-size: 14px;
   max-width: 450px;
@@ -573,8 +570,7 @@
   gap: 6px;
   border-radius: 999px;
   padding: 13px 21px;
-  font:
-    600 11px var(--cc-sans);
+  font: 600 11px var(--cc-sans);
   letter-spacing: 0.04em;
   cursor: pointer;
   transition:
@@ -588,6 +584,16 @@
 .cc-reviews .outline-button:hover {
   background: #e6f5dc;
   color: var(--cc-forest);
+}
+.cc-reviews .cta-band .outline-button {
+  background: var(--cc-cta);
+  border-color: var(--cc-cta);
+  color: #fff;
+}
+.cc-reviews .cta-band .outline-button:hover {
+  background: var(--cc-cta-hover);
+  border-color: var(--cc-cta-hover);
+  color: #fff;
 }
 
 @media (max-width: 900px) {
@@ -680,5 +686,72 @@
   }
   .cc-reviews .cta-image {
     aspect-ratio: 1/0.95;
+  }
+}
+
+/* ---------- Reviews layered by product ---------- */
+.cc-reviews .product-reviews {
+  padding-top: 64px;
+  padding-bottom: 46px;
+}
+.cc-reviews .product-reviews:nth-of-type(even) {
+  background: var(--cc-mint);
+}
+.cc-reviews .product-reviews .section-heading {
+  align-items: center;
+  margin-bottom: 28px;
+}
+.cc-reviews .section-heading .eyebrow {
+  margin-bottom: 10px;
+}
+.cc-reviews .product-reviews .section-heading p:not(.eyebrow) {
+  margin-top: 10px;
+}
+.cc-reviews .product-reviews .outline-button {
+  color: var(--cc-cta);
+  border-color: var(--cc-cta);
+  flex: none;
+}
+.cc-reviews .product-reviews .outline-button:hover {
+  color: #fff;
+  background: var(--cc-cta);
+}
+.cc-reviews .group-stars {
+  color: var(--cc-sun);
+  letter-spacing: 0.04em;
+}
+.cc-reviews .chat-location {
+  color: var(--cc-secondary);
+  font-weight: 400;
+}
+
+/* ---------- From our DMs: horizontal slider ---------- */
+.cc-reviews .dm-section {
+  background: var(--cc-pastel);
+}
+.cc-reviews .dm-track {
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  gap: 18px;
+  padding-bottom: 6px;
+  display: flex;
+  overflow-x: auto;
+}
+.cc-reviews .dm-track::-webkit-scrollbar {
+  display: none;
+}
+.cc-reviews .dm-track .wall-tile {
+  scroll-snap-align: start;
+  flex: 0 0 min(300px, 82vw);
+  margin: 0;
+}
+.cc-reviews .dm-section .empty-state a {
+  color: var(--cc-cta);
+  font-weight: 600;
+}
+@media (max-width: 680px) {
+  .cc-reviews .product-reviews .section-heading {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

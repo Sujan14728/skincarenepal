@@ -59,8 +59,14 @@ export function CardBody({ product }: { product: StorefrontProduct }) {
   return (
     <>
       <figure className='cc-catalogue-image'>
-        {product.routineKey !== 'CARE' && (
-          <span className='cc-category-badge'>{product.routineKey}</span>
+        {product.routineKey === 'COMBO' ? (
+          <span className='cc-category-badge cc-bestseller-badge'>
+            ★ BESTSELLER
+          </span>
+        ) : (
+          product.routineKey !== 'CARE' && (
+            <span className='cc-category-badge'>{product.routineKey}</span>
+          )
         )}
         {STATUS_LABEL[product.status] && (
           <span className='cc-status-badge'>

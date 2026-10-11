@@ -12,6 +12,9 @@
   --cc-fresh: #44ab18;
   --cc-forest: #1e4e09;
   --cc-mint: #ecf9e7;
+  /* Pastel greens from the logo's rim, for soft section backgrounds. */
+  --cc-pastel: #e3f1d6;
+  --cc-pastel-deep: #c9e2b3;
   --cc-page: #f7faf3;
   --cc-ink: #17220f;
   --cc-secondary: #56634f;
@@ -74,8 +77,7 @@
   height: var(--cc-bar-h);
   background: var(--cc-forest);
   color: #e6f5dc;
-  font:
-    600 11px/34px var(--cc-sans);
+  font: 600 11px/34px var(--cc-sans);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   overflow: hidden;
@@ -139,8 +141,7 @@
 .cc-site .button {
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font:
-    600 12px/1.2 var(--cc-sans);
+  font: 600 12px/1.2 var(--cc-sans);
 }
 .cc-site .site-nav nav a {
   transition: color 0.2s;
@@ -254,8 +255,7 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   margin: 0 0 17px;
-  font:
-    600 11px var(--cc-sans);
+  font: 600 11px var(--cc-sans);
 }
 .cc-site .site-footer a {
   color: var(--cc-mint);

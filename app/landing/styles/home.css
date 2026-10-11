@@ -34,8 +34,7 @@
 .cc-home .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font:
-    600 12px/1.2 var(--cc-sans);
+  font: 600 12px/1.2 var(--cc-sans);
   color: var(--cc-green);
   margin: 0 0 18px;
 }
@@ -65,6 +64,7 @@
 }
 .cc-home .hero-visual {
   text-align: center;
+  position: relative;
 }
 .cc-home .arch {
   background: var(--cc-mint);
@@ -80,8 +80,7 @@
 }
 .cc-home .botanical-dots {
   color: var(--cc-green);
-  font:
-    28px/1 var(--cc-serif);
+  font: 28px/1 var(--cc-serif);
   position: absolute;
   top: 20%;
   left: 13%;
@@ -119,46 +118,9 @@
 .cc-home .hero-photo-frame img {
   object-position: 50% 62%;
 }
-.cc-home .featured-support {
-  align-self: end;
-  height: 250px;
-}
-.cc-home .featured-support img {
-  object-position: 50% 52%;
-}
 .cc-home .product-block-photo {
   border-color: #d6ebca;
   height: 460px;
-}
-.cc-home .routine-photo {
-  background: #2a6a10;
-  border-color: #ecf9e759;
-  border-radius: 50%;
-  width: 82px;
-  height: 82px;
-}
-.cc-home .routine-flatlay {
-  border-color: #ecf9e747;
-  width: min(520px, 100%);
-  height: 170px;
-  margin: 34px auto 0;
-}
-.cc-home .routine-flatlay img {
-  object-position: 50% 54%;
-}
-.cc-home .review-photo-frame {
-  border: 0;
-  border-radius: 20px;
-  width: 100%;
-  height: 100%;
-  min-height: 260px;
-}
-.cc-home .review-photo-frame img {
-  min-height: 260px;
-}
-.cc-home .review-photo-frame figcaption {
-  color: var(--cc-ink);
-  padding: 14px 0 0;
 }
 
 /* ---------- Trust strip ---------- */
@@ -209,16 +171,6 @@
 /* ---------- Featured ---------- */
 .cc-home .featured {
   background: var(--cc-page);
-}
-.cc-home .featured-head {
-  grid-template-columns: 1fr minmax(280px, 420px);
-  align-items: end;
-  gap: 34px;
-  margin-bottom: 30px;
-  display: grid;
-}
-.cc-home .featured-head .section-heading {
-  margin-bottom: 0;
 }
 .cc-home .featured-marquee {
   --cards: 4;
@@ -325,16 +277,14 @@
   color: var(--cc-green);
   z-index: 1;
   text-shadow: 0 1px 0 var(--cc-mint);
-  font:
-    400 80px/1 var(--cc-serif);
+  font: 400 80px/1 var(--cc-serif);
   position: absolute;
   top: -34px;
   left: -10px;
 }
 .cc-home .product-details h3 {
   margin-bottom: 16px;
-  font:
-    500 30px/1.1 var(--cc-serif);
+  font: 500 30px/1.1 var(--cc-serif);
 }
 .cc-home .product-details > p:not(.eyebrow) {
   color: var(--cc-secondary);
@@ -351,8 +301,7 @@
   color: var(--cc-green);
   border-radius: 999px;
   padding: 5px 11px;
-  font:
-    600 11px var(--cc-sans);
+  font: 600 11px var(--cc-sans);
 }
 .cc-home .product-details h4 {
   margin-bottom: 12px;
@@ -385,158 +334,11 @@
 }
 /* ---------- Routine ---------- */
 .cc-home .routine {
-  background: var(--cc-forest);
-  color: var(--cc-mint);
+  background: var(--cc-pastel);
+  color: var(--cc-ink);
   text-align: center;
-}
-.cc-home .routine h2 {
-  color: var(--cc-mint);
-}
-.cc-home .routine .section-heading p {
-  opacity: 0.8;
-  color: var(--cc-mint);
-}
-.cc-home .routine-steps {
-  justify-content: center;
-  align-items: flex-start;
-  display: flex;
-}
-.cc-home .routine-step {
-  flex-direction: column;
-  flex: 1;
-  align-items: center;
-  gap: 8px;
-  display: flex;
-  position: relative;
-}
-.cc-home .routine-step:not(:last-child):after {
-  content: '';
-  background: var(--cc-fresh);
-  z-index: 0;
-  width: 100%;
-  height: 1px;
-  position: absolute;
-  top: 82px;
-  left: 50%;
-}
-.cc-home .routine-number,
-.cc-home .routine-step strong,
-.cc-home .routine-step .routine-photo,
-.cc-home .routine-step > span {
-  z-index: 1;
-  position: relative;
-}
-.cc-home .routine-number {
-  color: var(--cc-sun);
-  font:
-    400 48px/1 var(--cc-serif);
-}
-.cc-home .routine-step strong {
-  color: var(--cc-sun);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 12px;
-}
-.cc-home .routine-step > span {
-  font-size: 13px;
 }
 
-/* ---------- Reviews ---------- */
-.cc-home .reviews {
-  background: var(--cc-mint);
-}
-.cc-home .review-grid {
-  grid-template-columns: repeat(3, 1fr);
-  align-items: start;
-  gap: 16px;
-  display: grid;
-}
-.cc-home .review-tile {
-  border: 1px solid var(--cc-border);
-  text-align: center;
-  background: #fff;
-  border-radius: 20px;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  min-height: 230px;
-  padding: 22px;
-  display: flex;
-  overflow: hidden;
-}
-.cc-home .review-tile.chat {
-  text-align: left;
-  align-items: stretch;
-  min-height: 260px;
-}
-.cc-home .review-tile.photo {
-  background: #fff;
-  min-height: 310px;
-  padding: 0;
-}
-.cc-home .review-tile.video {
-  background: var(--cc-forest);
-  color: var(--cc-mint);
-  gap: 18px;
-  min-height: 280px;
-  position: relative;
-}
-.cc-home .review-tile.video .video-poster {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.35;
-}
-.cc-home .review-chat-content,
-.cc-home .review-video-content {
-  flex-direction: column;
-  justify-content: center;
-  align-items: stretch;
-  width: 100%;
-  display: flex;
-}
-.cc-home .review-video-content {
-  align-items: center;
-  gap: 18px;
-  position: relative;
-}
-.cc-home .phone-top {
-  border-bottom: 1px solid var(--cc-border);
-  margin-bottom: 22px;
-  padding-bottom: 9px;
-  font-size: 11px;
-}
-.cc-home .phone-top span {
-  float: right;
-}
-.cc-home .chat-bubble {
-  background: var(--cc-mint);
-  color: var(--cc-green);
-  border-radius: 14px 14px 14px 3px;
-  margin-bottom: 18px;
-  padding: 13px;
-  font-size: 13px;
-}
-.cc-home .chat-bubble span {
-  color: var(--cc-secondary);
-  font-size: 12px;
-}
-.cc-home .review-tile.chat small {
-  color: var(--cc-secondary);
-  margin-top: 5px;
-}
-.cc-home .play {
-  background: var(--cc-sun);
-  width: 55px;
-  height: 55px;
-  color: var(--cc-forest);
-  border: 0;
-  border-radius: 50%;
-  place-items: center;
-  display: grid;
-}
 .cc-home .centered-button {
   width: max-content;
   margin: 34px auto 0;
@@ -577,8 +379,7 @@
 .cc-home .brand-art span {
   color: var(--cc-ink);
   letter-spacing: -0.035em;
-  font:
-    500 36px/1 var(--cc-serif);
+  font: 500 36px/1 var(--cc-serif);
 }
 .cc-home .brand-art small {
   letter-spacing: 0.06em;
@@ -604,8 +405,7 @@
 }
 .cc-home .about-copy h3 {
   margin: 0 0 6px;
-  font:
-    500 22px var(--cc-serif);
+  font: 500 22px var(--cc-serif);
 }
 .cc-home .about-copy p {
   color: var(--cc-secondary);
@@ -633,8 +433,7 @@
 }
 .cc-home .contact-cards h3 {
   margin: 16px 0 10px;
-  font:
-    500 24px var(--cc-serif);
+  font: 500 24px var(--cc-serif);
 }
 .cc-home .contact-cards p {
   color: var(--cc-secondary);
@@ -702,14 +501,14 @@
 .cc-home .faq {
   background: var(--cc-page);
 }
-.cc-home .faq-list {
+:is(.cc-home, .cc-page) .faq-list {
   max-width: 760px;
   margin: auto;
 }
-.cc-home .faq-list article {
+:is(.cc-home, .cc-page) .faq-list article {
   border-bottom: 1px solid var(--cc-border);
 }
-.cc-home .faq-list button {
+:is(.cc-home, .cc-page) .faq-list button {
   width: 100%;
   color: var(--cc-ink);
   text-align: left;
@@ -718,20 +517,20 @@
   justify-content: space-between;
   gap: 20px;
   padding: 21px 0;
-  font:
-    600 16px var(--cc-sans);
+  font: 600 16px var(--cc-sans);
   display: flex;
 }
-.cc-home .faq-list button svg {
+:is(.cc-home, .cc-page) .faq-list button svg {
   color: var(--cc-green);
   flex: none;
 }
-.cc-home .faq-list p {
+:is(.cc-home, .cc-page) .faq-list p {
   color: var(--cc-secondary);
   margin: -6px 42px 20px 0;
   font-size: 15px;
 }
 
+/* FAQ list is shared with product pages (.cc-page). */
 /* ---------- Team (About page) ---------- */
 .cc-home .team-grid {
   display: grid;
@@ -758,16 +557,14 @@
   height: 100%;
   background: var(--cc-mint);
   color: var(--cc-green);
-  font:
-    400 64px/1 var(--cc-serif);
+  font: 400 64px/1 var(--cc-serif);
 }
 .cc-home .team-card div:last-child {
   padding: 18px;
 }
 .cc-home .team-card h3 {
   margin: 0 0 4px;
-  font:
-    500 20px var(--cc-serif);
+  font: 500 20px var(--cc-serif);
 }
 .cc-home .team-card p {
   color: var(--cc-green);
@@ -779,8 +576,7 @@
 }
 .cc-home .product-details > .founder-quote {
   max-width: none;
-  font:
-    italic 400 24px/1.45 var(--cc-serif);
+  font: italic 400 24px/1.45 var(--cc-serif);
   color: var(--cc-ink);
   margin: 0 0 22px;
 }
@@ -884,13 +680,6 @@
     padding: 0 16px;
     font-size: 11px;
   }
-  .cc-home .featured-head {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-  .cc-home .featured-support {
-    height: 210px;
-  }
   .cc-home .featured-marquee {
     --cards: 2;
   }
@@ -909,59 +698,6 @@
   .cc-home .step-number {
     font-size: 64px;
     top: -25px;
-  }
-  .cc-home .routine-steps {
-    grid-template-columns: 1fr;
-    gap: 22px;
-    max-width: 290px;
-    margin: auto;
-    display: grid;
-  }
-  .cc-home .routine-step {
-    text-align: left;
-    grid-template-columns: 50px 70px 65px 1fr;
-    align-items: center;
-    gap: 10px;
-    display: grid;
-  }
-  .cc-home .routine-step:not(:last-child):after {
-    width: 1px;
-    height: 25px;
-    top: 57px;
-    left: 25px;
-  }
-  .cc-home .routine-photo {
-    width: 54px;
-    height: 54px;
-  }
-  .cc-home .routine-flatlay {
-    height: 140px;
-  }
-  .cc-home .routine-number {
-    font-size: 36px;
-  }
-  .cc-home .routine-step strong {
-    font-size: 10px;
-  }
-  .cc-home .routine-step > span {
-    font-size: 12px;
-  }
-  .cc-home .review-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  .cc-home .review-tile {
-    padding: 16px;
-    min-height: 220px !important;
-  }
-  .cc-home .review-tile.chat {
-    grid-column: span 2;
-    min-height: 260px !important;
-  }
-  .cc-home .review-tile.photo {
-    padding: 0;
-  }
-  .cc-home .review-photo-frame {
-    min-height: 240px;
   }
   .cc-home .about-grid {
     gap: 38px;
@@ -1000,12 +736,6 @@
   .cc-home .hero-photo-frame {
     height: 310px;
   }
-  .cc-home .review-grid {
-    grid-template-columns: 1fr;
-  }
-  .cc-home .review-tile.chat {
-    grid-column: auto;
-  }
   .cc-home .email-row {
     font-size: 12px;
   }
@@ -1021,5 +751,286 @@
   /* Keep the featured strip moving: site.css disables all animations here. */
   .cc-home .featured-track {
     animation: cc-featured-scroll 20s linear infinite !important;
+  }
+}
+
+/* =========================================================
+   Wireframe revision: billboard hero, sliders, routine carousel
+   ========================================================= */
+
+/* ---------- Billboard hero (combo campaign) ---------- */
+.cc-home .billboard h1 em {
+  color: var(--cc-green);
+  font-style: normal;
+}
+.cc-home .billboard-price {
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+  margin: -6px 0 28px;
+  display: flex;
+}
+.cc-home .billboard-price strong {
+  color: var(--cc-cta);
+  font: 500 40px/1 var(--cc-serif);
+}
+.cc-home .billboard-price s {
+  color: var(--cc-secondary);
+  font-size: 17px;
+}
+.cc-home .billboard-price span {
+  background: var(--cc-sun);
+  color: var(--cc-ink);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.cc-home .billboard-tag {
+  background: var(--cc-cta);
+  color: #fff;
+  text-align: center;
+  border-radius: 50%;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 118px;
+  height: 118px;
+  display: flex;
+  position: absolute;
+  top: 46px;
+  right: 18px;
+  transform: rotate(8deg);
+  box-shadow: 0 14px 34px #1e4e0940;
+  transition: transform 0.25s;
+}
+.cc-home .billboard-tag:hover {
+  transform: rotate(0deg) scale(1.05);
+}
+.cc-home .billboard-tag small {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 10px;
+  font-weight: 600;
+}
+.cc-home .billboard-tag b {
+  font: 500 21px/1.1 var(--cc-serif);
+}
+
+/* ---------- Shared slider controls ---------- */
+.cc-home .slider-controls {
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  margin-top: 30px;
+  display: flex;
+}
+.cc-home .slider-arrow {
+  border: 1px solid var(--cc-border);
+  color: var(--cc-ink);
+  cursor: pointer;
+  background: #fff;
+  border-radius: 50%;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+  display: grid;
+}
+.cc-home .slider-arrow:hover {
+  background: var(--cc-cta);
+  border-color: var(--cc-cta);
+  color: #fff;
+}
+.cc-home .slider-dots {
+  gap: 8px;
+  display: flex;
+}
+.cc-home .slider-dots button {
+  background: var(--cc-pastel-deep);
+  cursor: pointer;
+  border: 0;
+  border-radius: 999px;
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  transition:
+    width 0.3s,
+    background 0.3s;
+}
+.cc-home .slider-dots button.active {
+  background: var(--cc-cta);
+  width: 28px;
+}
+
+/* ---------- Our Products slider ---------- */
+.cc-home .product-slider-viewport {
+  overflow: hidden;
+}
+.cc-home .product-slider-track {
+  display: flex;
+  transition: transform 0.6s cubic-bezier(0.22, 0.7, 0.2, 1);
+}
+.cc-home .product-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  overflow: hidden;
+  padding: 40px 12px 6px;
+}
+
+/* ---------- Everyday essentials (single view, no side photo) ---------- */
+.cc-home .featured .section-heading {
+  margin-bottom: 30px;
+}
+
+/* ---------- Routine carousel (pastel) ---------- */
+.cc-home .routine .section-heading p:not(.eyebrow) {
+  color: var(--cc-secondary);
+}
+.cc-home .routine-tabs {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 30px;
+  display: flex;
+}
+.cc-home .routine-tabs button {
+  border: 1px solid var(--cc-pastel-deep);
+  color: var(--cc-forest);
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: #ffffffa6;
+  border-radius: 999px;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  transition:
+    background 0.25s,
+    color 0.25s,
+    border-color 0.25s;
+  display: inline-flex;
+}
+.cc-home .routine-tabs button b {
+  font: 500 15px/1 var(--cc-serif);
+}
+.cc-home .routine-tabs button.active {
+  background: var(--cc-cta);
+  border-color: var(--cc-cta);
+  color: #fff;
+}
+.cc-home .routine-viewport {
+  --gap: 20px;
+  overflow: hidden;
+}
+.cc-home .routine-track {
+  gap: var(--gap);
+  display: flex;
+  transform: translateX(
+    calc(-1 * var(--offset) * (100% + var(--gap)) / var(--per-view))
+  );
+  transition: transform 0.6s cubic-bezier(0.22, 0.7, 0.2, 1);
+}
+.cc-home .routine-card {
+  color: var(--cc-ink);
+  text-align: left;
+  border: 1px solid #fff0;
+  background: #fff;
+  border-radius: 22px;
+  flex: 0 0 calc((100% - (var(--per-view) - 1) * var(--gap)) / var(--per-view));
+  min-width: 0;
+  transition:
+    transform 0.35s,
+    box-shadow 0.35s,
+    border-color 0.35s,
+    opacity 0.35s;
+  overflow: hidden;
+  opacity: 0.72;
+}
+.cc-home .routine-card.active {
+  border-color: var(--cc-pastel-deep);
+  opacity: 1;
+  box-shadow: 0 18px 40px #1e4e091f;
+}
+.cc-home .routine-card:hover {
+  opacity: 1;
+}
+.cc-home .routine-card figure {
+  aspect-ratio: 4/5;
+  background: var(--cc-mint);
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+}
+.cc-home .routine-card img {
+  object-fit: cover;
+  object-position: 50% 30%;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.7s cubic-bezier(0.2, 0.65, 0.2, 1);
+}
+.cc-home .routine-card.active img {
+  transform: scale(1.04);
+}
+.cc-home .routine-card-step {
+  color: #fff;
+  text-shadow: 0 2px 12px #0006;
+  font: 400 54px/1 var(--cc-serif);
+  position: absolute;
+  bottom: 14px;
+  left: 18px;
+}
+.cc-home .routine-card-copy {
+  padding: 20px 22px 24px;
+}
+.cc-home .routine-card-copy .eyebrow {
+  margin-bottom: 8px;
+}
+.cc-home .routine-card-copy h3 {
+  margin-bottom: 6px;
+  font: 500 22px/1.15 var(--cc-serif);
+}
+.cc-home .routine-card-copy p:last-child {
+  color: var(--cc-secondary);
+  margin: 0;
+  font-size: 14px;
+}
+
+
+/* ---------- About ---------- */
+.cc-home .about-copy .about-lead {
+  color: var(--cc-ink);
+  margin: 0 0 8px;
+  font: 400 20px/1.5 var(--cc-serif);
+}
+
+@media (width<=760px) {
+  .cc-home .billboard-price strong {
+    font-size: 32px;
+  }
+  .cc-home .billboard-tag {
+    width: 92px;
+    height: 92px;
+    top: 30px;
+    right: 6px;
+  }
+  .cc-home .billboard-tag b {
+    font-size: 17px;
+  }
+  .cc-home .product-slide {
+    padding: 34px 4px 4px;
+  }
+  .cc-home .routine-tabs button span {
+    display: none;
+  }
+  .cc-home .about-copy .about-lead {
+    font-size: 18px;
   }
 }

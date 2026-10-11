@@ -523,7 +523,7 @@ export default function ReviewForm({
                 <SelectContent>
                   <SelectGroup>
                     <SelectItem value={NO_PRODUCT}>
-                      Not linked to a product
+                      Not linked to a product (shows in “From our DMs”)
                     </SelectItem>
                     {products.map(p => (
                       <SelectItem key={p.id} value={String(p.id)}>

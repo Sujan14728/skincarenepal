@@ -1,19 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import {
-  Award,
-  CheckCircle,
-  Heart,
-  Leaf,
-  Recycle,
-  Users
-} from 'lucide-react';
-import { prisma } from '@/lib/prisma';
+import { Award, CheckCircle, Heart, Leaf, Recycle, Users } from 'lucide-react';
 import { AboutGrid } from '@/components/storefront/home/HomeView';
 import RevealOnScroll from '@/components/storefront/RevealOnScroll';
-
-export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'About Us',
@@ -61,21 +51,8 @@ const VALUES = [
   }
 ];
 
-async function getTeam() {
-  try {
-    return await prisma.teamMember.findMany({
-      orderBy: { id: 'asc' },
-      select: { id: true, name: true, title: true, image: true }
-    });
-  } catch (err) {
-    console.error('Failed to load team members:', err);
-    return [];
-  }
-}
-
-export default async function AboutPage() {
-  const team = await getTeam();
-
+// Team members stay hidden until the team section is ready to go live.
+export default function AboutPage() {
   return (
     <main className='cc-home'>
       <RevealOnScroll />
@@ -113,9 +90,9 @@ export default async function AboutPage() {
                 Nepal.
               </p>
               <p>
-                Our journey started with our very first product, the 2-in-1
-                Face Pack — a unique blend that works as both a scrub and a
-                face pack. It deeply cleanses, smoothens and brightens the skin,
+                Our journey started with our very first product, the 2-in-1 Face
+                Pack — a unique blend that works as both a scrub and a face
+                pack. It deeply cleanses, smoothens and brightens the skin,
                 giving it a fresh, natural glow.
               </p>
               <p>
@@ -125,61 +102,8 @@ export default async function AboutPage() {
               </p>
             </div>
           </article>
-
-          <article className='product-block reverse'>
-            <div className='product-block-art fade-up slide-in-right'>
-              <figure className='photo-frame product-block-photo'>
-                <img
-                  src='/images/team/cofounder.jpg'
-                  alt='Parash Balayar, Co-Founder and Managing Director'
-                  loading='lazy'
-                />
-              </figure>
-            </div>
-            <div className='product-details fade-up'>
-              <p className='eyebrow'>A message from our founder</p>
-              <p className='founder-quote'>
-                “At Care and Clean, we believe that true beauty begins with
-                nature. Our mission is to provide safe, effective and affordable
-                skincare that helps people feel confident in their own skin.
-                Thank you for trusting us and being part of our journey.”
-              </p>
-              <h3 style={{ fontSize: 22, marginBottom: 4 }}>Parash Balayar</h3>
-              <p className='eyebrow' style={{ margin: 0 }}>
-                Co-Founder &amp; Managing Director
-              </p>
-            </div>
-          </article>
         </div>
       </section>
-
-      {team.length > 0 && (
-        <section className='featured section-pad'>
-          <div className='section-heading centered fade-up'>
-            <p className='eyebrow'>The people behind the products</p>
-            <h2>Meet Our Team</h2>
-          </div>
-          <div className='team-grid'>
-            {team.map(member => (
-              <article key={member.id} className='team-card fade-up'>
-                <figure className='photo-frame'>
-                  {member.image?.trim() ? (
-                    <img src={member.image} alt={member.name} loading='lazy' />
-                  ) : (
-                    <span className='team-initial' aria-hidden='true'>
-                      {member.name.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </figure>
-                <div>
-                  <h3>{member.name}</h3>
-                  <p>{member.title}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
 
       <section className='contact section-pad'>
         <div className='section-heading centered fade-up'>
@@ -210,7 +134,7 @@ export default async function AboutPage() {
             and ethical practices.
           </p>
         </div>
-        <Link className='button light-outline' href='/products'>
+        <Link className='button solid' href='/products'>
           Shop the Range
         </Link>
       </section>

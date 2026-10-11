@@ -1,14 +1,15 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Check, Play } from 'lucide-react';
 import MediaLightbox from '@/components/storefront/MediaLightbox';
 import { starString } from '@/components/storefront/products/ProductCard';
 import {
   DESIGN_IMAGES,
-  initials,
+  SOCIAL_LINKS,
+  displayName,
   type PublicReview
 } from '@/lib/storefront-utils';
 
@@ -26,33 +27,41 @@ function wallHeight(review: PublicReview) {
   if (review.type === 'VIDEO') return 'wall-video';
   if (review.type === 'IMAGE') return 'wall-tall';
   const length = review.content?.length ?? 0;
-  return length < 60 ? 'wall-short' : length < 110 ? 'wall-medium' : 'wall-tall';
+  return length < 60
+    ? 'wall-short'
+    : length < 110
+      ? 'wall-medium'
+      : 'wall-tall';
 }
+
+/** Reviews of one product, shown as its own section. */
+export type ReviewGroup = {
+  key: string;
+  title: string;
+  eyebrow: string;
+  slug: string | null;
+  rating: { score: number; count: number } | null;
+  reviews: PublicReview[];
+};
 
 export default function ReviewsView({
   reviews,
+  groups,
+  dms,
   ratings,
   overall
 }: {
   reviews: PublicReview[];
+  groups: ReviewGroup[];
+  dms: PublicReview[];
   ratings: ProductRating[];
   overall: { average: number | null; count: number };
 }) {
-  const [index, setIndex] = useState(0);
   const [barsVisible, setBarsVisible] = useState(false);
   const [activeReview, setActiveReview] = useState<PublicReview | null>(null);
   const ratingsRef = useRef<HTMLElement>(null);
 
-  // Written testimonials power the carousel.
-  const quotes = useMemo(() => reviews.filter(r => r.content), [reviews]);
-  const visibleQuotes = useMemo(
-    () =>
-      Array.from(
-        { length: Math.min(3, quotes.length) },
-        (_, i) => quotes[(index + i) % quotes.length]
-      ),
-    [quotes, index]
-  );
+  const dmTrackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!ratingsRef.current) return;
@@ -64,8 +73,15 @@ export default function ReviewsView({
     return () => observer.disconnect();
   }, []);
 
-  const step = (delta: number) =>
-    setIndex(i => (i + delta + quotes.length) % quotes.length);
+  // Scroll the DM slider by roughly one card.
+  const scrollDms = (direction: number) => {
+    const track = dmTrackRef.current;
+    if (!track) return;
+    track.scrollBy({
+      left: direction * Math.min(track.clientWidth, 340),
+      behavior: 'smooth'
+    });
+  };
 
   return (
     <main className='cc-reviews'>
@@ -112,93 +128,101 @@ export default function ReviewsView({
         </section>
       ) : (
         <>
-          {quotes.length > 0 && (
-            <section className='section' id='testimonials'>
+          {groups.map(group => (
+            <section
+              key={group.key}
+              className='section product-reviews'
+              id={`reviews-${group.key.toLowerCase()}`}
+            >
               <div className='section-heading'>
                 <div>
-                  <h2>What Our Customers Say</h2>
-                  <p>Small rituals. Noticeable changes. Shared with love.</p>
+                  <p className='eyebrow'>{group.eyebrow}</p>
+                  <h2>{group.title}</h2>
+                  {group.rating && (
+                    <p>
+                      <span className='group-stars'>
+                        {starString(group.rating.score)}
+                      </span>{' '}
+                      {group.rating.score} · {group.rating.count}{' '}
+                      {group.rating.count === 1 ? 'review' : 'reviews'}
+                    </p>
+                  )}
                 </div>
-                {quotes.length > 3 && (
-                  <div className='carousel-actions'>
-                    <button
-                      className='arrow-button'
-                      aria-label='Previous reviews'
-                      type='button'
-                      onClick={() => step(-1)}
-                    >
-                      <ArrowLeft size={17} />
-                    </button>
-                    <button
-                      className='arrow-button'
-                      aria-label='Next reviews'
-                      type='button'
-                      onClick={() => step(1)}
-                    >
-                      <ArrowRight size={17} />
-                    </button>
-                  </div>
+                {group.slug && (
+                  <Link
+                    className='outline-button'
+                    href={`/products/${group.slug}`}
+                  >
+                    <span>SHOP {group.title.toUpperCase()}</span>
+                  </Link>
                 )}
               </div>
-              <div className='review-grid'>
-                {visibleQuotes.map(review => (
-                  <article key={review.id} className='review-card'>
-                    <div
-                      className='stars'
-                      aria-label={`${review.rating} out of 5 stars`}
-                    >
-                      {stars(review.rating)}
-                    </div>
-                    <p className='quote'>“{review.content}”</p>
-                    <div className='reviewer'>
-                      <span className='avatar'>
-                        {initials(review.customerName)}
-                      </span>
-                      <div>
-                        <strong>{review.customerName}</strong>
-                        {review.location && <span>{review.location}</span>}
-                      </div>
-                    </div>
-                    {review.product && (
-                      <span className='product-chip'>
-                        {review.product.name}
-                      </span>
-                    )}
-                  </article>
+              <div className='wall'>
+                {group.reviews.map(review => (
+                  <WallTile
+                    key={review.id}
+                    review={review}
+                    onOpen={() => setActiveReview(review)}
+                  />
                 ))}
               </div>
-              {quotes.length > 3 && (
-                <div className='dots' aria-label='Review carousel pages'>
-                  {quotes.map((review, i) => (
-                    <button
-                      key={review.id}
-                      className={`dot ${i === index ? 'active' : ''}`}
-                      type='button'
-                      aria-label={`Show review ${i + 1}`}
-                      onClick={() => setIndex(i)}
-                    />
-                  ))}
-                </div>
-              )}
             </section>
-          )}
+          ))}
 
-          <section className='section community' id='community'>
+          <section className='section dm-section' id='from-our-dms'>
             <div className='section-heading'>
               <div>
-                <h2>From Our Community</h2>
-                <p>Real customers, real skin, real results.</p>
+                <p className='eyebrow'>SOCIAL LOVE</p>
+                <h2>From Our DMs</h2>
+                <p>
+                  The best messages from our Instagram, Facebook and TikTok —
+                  straight from our inbox.
+                </p>
               </div>
+              {dms.length > 1 && (
+                <div className='carousel-actions'>
+                  <button
+                    className='arrow-button'
+                    aria-label='Previous messages'
+                    type='button'
+                    onClick={() => scrollDms(-1)}
+                  >
+                    <ArrowLeft size={17} />
+                  </button>
+                  <button
+                    className='arrow-button'
+                    aria-label='Next messages'
+                    type='button'
+                    onClick={() => scrollDms(1)}
+                  >
+                    <ArrowRight size={17} />
+                  </button>
+                </div>
+              )}
             </div>
-            <div className='wall'>
-              {reviews.map(review => (
-                <WallTile
-                  key={review.id}
-                  review={review}
-                  onOpen={() => setActiveReview(review)}
-                />
-              ))}
-            </div>
+            {dms.length > 0 ? (
+              <div className='dm-track' ref={dmTrackRef}>
+                {dms.map(review => (
+                  <WallTile
+                    key={review.id}
+                    review={review}
+                    onOpen={() => setActiveReview(review)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className='empty-state'>
+                Our favourite DMs are coming soon. Send us yours on{' '}
+                <a
+                  href={SOCIAL_LINKS.instagram}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  Instagram
+                </a>
+                !
+              </p>
+            )}
           </section>
 
           {ratings.length > 0 && (
@@ -216,7 +240,7 @@ export default function ReviewsView({
               <div className='rating-grid'>
                 {ratings.map(rating => (
                   <article key={rating.productId} className='rating-card'>
-                    <h3>{rating.product}</h3>
+                    <h3>{displayName(rating.product)}</h3>
                     <div className='score'>{rating.score}</div>
                     <div className='rating-stars' aria-hidden='true'>
                       {starString(rating.score)}
@@ -262,8 +286,8 @@ export default function ReviewsView({
         <div className='cta-copy'>
           <h2>See the difference for yourself.</h2>
           <p>
-            A considered routine, made with ingredients your skin can
-            understand and results you can feel.
+            A considered routine, made with ingredients your skin can understand
+            and results you can feel.
           </p>
           <Link className='outline-button' href='/products'>
             <Check size={15} /> <span>SHOP THE ROUTINE</span>
@@ -308,7 +332,10 @@ function WallTile({
         <div>
           <h3>{review.content || `${review.customerName}'s review`}</h3>
           <p className='video-product'>
-            {stars(review.rating)} {review.product?.name ?? review.customerName}
+            {stars(review.rating)}{' '}
+            {review.product
+              ? displayName(review.product.name)
+              : review.customerName}
           </p>
           <p className='watch'>WATCH NOW →</p>
         </div>
@@ -336,7 +363,9 @@ function WallTile({
         <div className='tile-stars'>{stars(review.rating)}</div>
         {review.content && <p className='quote'>“{review.content}”</p>}
         {review.product && (
-          <span className='product-chip'>{review.product.name}</span>
+          <span className='product-chip'>
+            {displayName(review.product.name)}
+          </span>
         )}
       </article>
     );
@@ -353,13 +382,20 @@ function WallTile({
         <span className='status-bar' />
       </div>
       <div className='chat-content'>
-        <div className='chat-name'>{review.customerName}</div>
+        <div className='chat-name'>
+          {review.customerName}
+          {review.location && (
+            <span className='chat-location'> · {review.location}</span>
+          )}
+        </div>
         <div className='bubble'>{review.content}</div>
       </div>
       <div className='tile-footer'>
         <span className='tile-stars'>{stars(review.rating)}</span>
         {review.product && (
-          <span className='product-chip'>{review.product.name}</span>
+          <span className='product-chip'>
+            {displayName(review.product.name)}
+          </span>
         )}
       </div>
     </>
