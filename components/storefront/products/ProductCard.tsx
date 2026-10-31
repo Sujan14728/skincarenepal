@@ -56,18 +56,30 @@ export function Price({
 
 /** Image + copy shared by catalogue cards and "Complete Your Routine" cards. */
 export function CardBody({ product }: { product: StorefrontProduct }) {
+  const price = effectivePrice(product);
+  const discount =
+    price < product.price
+      ? Math.round(((product.price - price) / product.price) * 100)
+      : 0;
   return (
     <>
       <figure className='cc-catalogue-image'>
-        {product.routineKey === 'COMBO' ? (
-          <span className='cc-category-badge cc-bestseller-badge'>
-            ★ BESTSELLER
-          </span>
-        ) : (
-          product.routineKey !== 'CARE' && (
-            <span className='cc-category-badge'>{product.routineKey}</span>
-          )
-        )}
+        <span className='cc-card-badges'>
+          {product.routineKey === 'COMBO' ? (
+            <span className='cc-category-badge cc-bestseller-badge'>
+              ★ BESTSELLER
+            </span>
+          ) : (
+            product.routineKey !== 'CARE' && (
+              <span className='cc-category-badge'>{product.routineKey}</span>
+            )
+          )}
+          {discount > 0 && (
+            <span className='cc-category-badge cc-sale-badge'>
+              -{discount}%
+            </span>
+          )}
+        </span>
         {STATUS_LABEL[product.status] && (
           <span className='cc-status-badge'>
             {STATUS_LABEL[product.status]}
@@ -80,6 +92,7 @@ export function CardBody({ product }: { product: StorefrontProduct }) {
         />
       </figure>
       <div className='cc-catalogue-content'>
+        <p className='cc-card-brand'>CARE &amp; CLEAN</p>
         <h3>{product.name}</h3>
         <p className='cc-product-tagline'>{productTagline(product)}</p>
         {product.reviewCount > 0 && (

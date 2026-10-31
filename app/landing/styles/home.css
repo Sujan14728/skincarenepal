@@ -196,7 +196,7 @@
   animation-play-state: paused;
 }
 .cc-home .mini-card {
-  border: 1px solid var(--cc-border);
+  border: 1px solid #ebe8e1;
   background: #fff;
   color: var(--cc-ink);
   border-radius: 16px;
@@ -209,15 +209,17 @@
   padding: 14px 14px 18px;
   display: flex;
   transition:
-    border-color 0.2s,
-    transform 0.2s;
+    border-color 0.25s,
+    box-shadow 0.3s,
+    transform 0.3s;
 }
 .cc-home .mini-card:hover {
-  border-color: #3a971273;
-  transform: translateY(-3px);
+  border-color: #fff0;
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px #1e2a1414;
 }
 .cc-home .mini-card-photo {
-  background: var(--cc-mint);
+  background: var(--cc-photo);
   aspect-ratio: 4/5;
   border-radius: 14px;
   margin-bottom: 12px;
@@ -225,6 +227,7 @@
   overflow: hidden;
 }
 .cc-home .mini-card-photo img {
+  mix-blend-mode: multiply;
   object-fit: contain;
   box-sizing: border-box;
   width: 100%;
@@ -232,6 +235,7 @@
   padding: 14px;
 }
 .cc-home .mini-card strong {
+  text-transform: capitalize;
   white-space: nowrap;
   text-overflow: ellipsis;
   font-size: 17px;
@@ -881,6 +885,22 @@
   min-width: 0;
   overflow: hidden;
   padding: 40px 12px 6px;
+}
+
+.cc-home .product-slide .product-block-photo {
+  aspect-ratio: 1;
+  background: var(--cc-photo);
+  border-color: #ebe8e1;
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  margin: 0 auto;
+}
+.cc-home .product-slide .product-block-photo img {
+  mix-blend-mode: multiply;
+  object-fit: contain;
+  box-sizing: border-box;
+  padding: 6%;
 }
 
 /* ---------- Everyday essentials (single view, no side photo) ---------- */
